@@ -1,6 +1,6 @@
 # ITC Event Ticketing MVP - Project Documentation
 
-**Baseline:** Version 2.5 | **Delivery limit:** 10 weeks | **Status:** Scope locked
+**Baseline:** Version 2.6 | **Delivery limit:** 10 weeks | **Status:** Scope locked
 
 > This MVP is only for events held at ITC. It has three access states: guest, attendee, and admin. There is no organizer role, no organizer approval, and no support for events outside ITC.
 
@@ -22,6 +22,7 @@ The application publishes free events happening at ITC. A guest can browse event
 | Admin interface | Flutter admin-only screens in the same app (see §10.7) |
 | Database | PostgreSQL |
 | Team | 2 beginner/intermediate developers, about 20 hours/week each |
+| Dev environments | Mac + **iOS Simulator**; Windows + **Android Emulator** (see §1.2) |
 | Deadline | 10 weeks maximum |
 
 ### 1.1 Scope rule
@@ -29,6 +30,29 @@ The application publishes free events happening at ITC. A guest can browse event
 The features in this document are the complete MVP. During the ten-week implementation period, do not add or propose additional product features. A mandatory change must replace existing work rather than increase the scope.
 
 Engineering work such as tests, validation, logging, migrations, documentation, and security checks is required to make the fixed features reliable; it is not additional product scope.
+
+### 1.2 Development environment
+
+The team develops on two machines with different primary simulators. Both developers run the full stack locally (Laravel, PostgreSQL, Flutter) on their own computer.
+
+| Developer | Host OS | Primary Flutter target | Laravel API host URL (from app) |
+| --- | --- | --- | --- |
+| Developer A | macOS | iOS Simulator | `http://127.0.0.1:8000` (or `http://localhost:8000`) |
+| Developer B | Windows | Android Emulator | `http://10.0.2.2:8000` |
+
+**Rules**
+
+- Do not hardcode one API base URL in source. Use a single config value (for example `--dart-define=API_BASE_URL=...`, a `.env` file ignored by git, or a small `app_config.dart` per developer) so Mac/iOS and Windows/Android each reach the local Laravel server correctly.
+- `10.0.2.2` is the Android Emulator’s alias for the Windows host loopback. It does **not** work on iOS Simulator or on a physical phone.
+- Each developer runs their own PostgreSQL database during daily work. Share schema through migrations and seeders in git — not by sharing a live database connection.
+- Register **both** an Android app and an iOS app in the same Firebase project. Developer A configures iOS; Developer B configures Android (SHA-1 fingerprint, `google-services.json`).
+- Daily development uses the assigned simulator above. Before Week 10 demo, each developer also runs the app once on the **other** platform (Android on Windows, iOS on Mac) and tests phone/SMS auth and QR scanning on at least one **physical device** per platform where the simulator cannot fully substitute (camera/scanner, real SMS).
+
+**Platform notes**
+
+- **iOS Simulator (Mac):** Google Sign-In and most API flows work; QR scanning and phone/SMS may need a physical iPhone for final verification.
+- **Android Emulator (Windows):** Use `10.0.2.2` for Laravel; enable emulator camera or use a physical Android device for scanner testing in later weeks.
+- **Cross-machine API testing (optional):** To call a teammate’s Laravel instance on the LAN, use the host machine’s local network IP (for example `http://192.168.1.10:8000`) and ensure Laravel binds to `0.0.0.0` for that test only. Default daily work stays on localhost per machine.
 
 ## 2. Fixed MVP scope
 
@@ -115,10 +139,11 @@ If Dara had already used the phone number to create another Firebase account, li
 ### 3.4 Phone authentication setup
 
 - Enable the Phone provider in Firebase Authentication.
-- Add the Android app's SHA-1 fingerprint to Firebase.
-- Configure APNs, push-notification capability, and background remote notifications for iOS.
+- Add the Android app's SHA-1 fingerprint to Firebase (Developer B, Windows/Android).
+- Add the iOS app bundle ID and Google Sign-In URL scheme in Firebase and Xcode (Developer A, Mac/iOS).
+- Configure APNs, push-notification capability, and background remote notifications for iOS phone auth (Developer A).
 - Use Firebase test phone numbers and fixed codes during development so test SMS messages are not sent.
-- Test the final phone flow on physical Android and iOS devices.
+- Test the final phone flow on physical Android and iOS devices before demo week (simulators use Firebase test phone numbers during development).
 - Inform users that their phone number is sent to and stored by Google for spam and abuse prevention.
 
 ## 4. User flows
@@ -749,7 +774,7 @@ If time slips during implementation, simplify admin form validation messages and
 - Widget-test admin event form validation and publish confirmation dialog.
 - Test that successfully linking a second provider preserves the original Firebase UID and Laravel user.
 - Test `provider-already-linked` and `credential-already-in-use` messages without modifying ticket data.
-- Manually test email/password, Google, and phone/SMS sign-in; invalid/expired SMS codes; QR readability; camera permission denial; successful scan; and duplicate scan on the selected Android and iOS targets.
+- Manually test email/password, Google, and phone/SMS sign-in; invalid/expired SMS codes; QR readability; camera permission denial; successful scan; and duplicate scan on **both** platforms (primary: iOS Simulator on Mac, Android Emulator on Windows; confirm on physical devices before release).
 
 ## 13. Ten-week implementation plan
 
@@ -757,7 +782,7 @@ The team has approximately 40 team-hours per week. Weeks 1-8 complete the produc
 
 | Week | Focus | Exit gate |
 | --- | --- | --- |
-| 1 | Repository, Laravel/PostgreSQL, Flutter, GetX, `http`, environments | Flutter calls `GET /api/v1/health` and displays Backend connected. |
+| 1 | Repository, Laravel/PostgreSQL, Flutter, GetX, `http`, dev environments (§1.2) | Each developer’s simulator calls `GET /api/v1/health` and displays Backend connected. |
 | 2 | Firebase email/password and Google auth; user synchronization; `is_admin` | Email/password and Google users call `/me`; seeded admin sees admin section on Profile. |
 | 3 | Phone/SMS authentication, provider linking, conflict handling, and auth tests | A linked provider preserves the UID; already-used credentials show a safe conflict message. |
 | 4 | Event migration/model, admin events API, Flutter Home, detail, and admin events list | Admin creates and publishes an event from Flutter; it displays on Home. |
@@ -804,11 +829,18 @@ itc-event-ticketing/
 
 1. Create and run the Flutter application.
 2. Add GetX and the `http` package.
-3. Create one `ApiClient` wrapping a reusable `http.Client` and the Laravel base URL.
+3. Create one `ApiClient` wrapping a reusable `http.Client` and the Laravel base URL from config (§1.2).
 4. Call `/api/v1/health`.
 5. Display **Backend connected**.
 
-When using Android Emulator, the host machine is normally reached through `10.0.2.2`, not `localhost`. The iOS Simulator normally reaches the host through `127.0.0.1`.
+**API base URL by simulator**
+
+| Machine | Simulator | Laravel base URL |
+| --- | --- | --- |
+| Mac | iOS Simulator | `http://127.0.0.1:8000/api/v1` |
+| Windows | Android Emulator | `http://10.0.2.2:8000/api/v1` |
+
+Run Laravel with `php artisan serve` on the same machine as the simulator. If the health check fails, verify the URL matches §1.2 before debugging auth or business logic.
 
 ### Step 4 - Complete the first real milestone
 
@@ -863,9 +895,9 @@ The Week 3 milestone is complete when:
 - Ticket reservation, cancellation, and check-in use transactions.
 - Flutter admin screens follow the minimal semi-flat UI direction in §10.2 and §10.7 using shared theme and widgets.
 - Critical Laravel feature tests and Flutter unit/widget tests pass.
-- Flutter builds for the selected Android and iOS targets.
+- Flutter builds and runs on **iOS Simulator (Mac)** and **Android Emulator (Windows)**; physical-device smoke tests pass before demo.
 - No secrets, bearer tokens, or personal information appear in source control or QR payloads.
-- Setup, environment, seed, demo, and release instructions are complete.
+- Setup, environment, API base URL config, seed, demo, and release instructions are complete for both Mac/iOS and Windows/Android (§1.2).
 - All P0/P1 defects are closed.
 
 ### 15.3 Final release boundary
