@@ -1,0 +1,5 @@
+package edu.itc.events.itc_events
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
