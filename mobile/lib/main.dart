@@ -1,15 +1,22 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
 import 'package:get/route_manager.dart';
 import 'package:itc_events/app/services/api_client.dart';
-import 'package:itc_events/modules/health/health_binding.dart';
-import 'package:itc_events/modules/health/health_page.dart';
+import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/modules/auth/auth_binding.dart';
+import 'package:itc_events/modules/auth/sign_in_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   // ApiClient lives for the whole app
   final apiClient = ApiClient();
+
   Get.put<ApiClient>(apiClient, permanent: true);
-  runApp(const MyApp());
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -21,13 +28,9 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'ITC Events',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB)),
-        useMaterial3: true,
-      ),
-      // Injects HealthController before HealthPage builds.
-      initialBinding: HealthBinding(),
-      home: const HealthPage(),
+      theme: AppTheme.light,
+      initialBinding: AuthBinding(),
+      home: SignInPage(),
     );
   }
 }

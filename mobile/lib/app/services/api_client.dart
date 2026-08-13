@@ -29,17 +29,26 @@ class ApiClient {
 
   Future<Map<String, dynamic>> getJson(
     String path, {
+    String? idToken,
     Map<String, String>? headers,
   }) async {
     final response = await _client
-        .get(_uri(path), headers: _jsonHeaders(headers))
+        .get(_uri(path), headers: _jsonHeaders(headers, idToken: idToken))
         .timeout(AppConfig.requestTimeout);
     return _decodeJsonResponse(response);
   }
 
   // standard headers
-  Map<String, String> _jsonHeaders(Map<String, String>? extra) {
-    return {'Accept': 'application/json', ...?extra};
+  Map<String, String> _jsonHeaders(
+    Map<String, String>? extra, {
+    String? idToken,
+  }) {
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      if (idToken != null) 'Authorization': 'Bearer $idToken',
+      ...?extra,
+    };
   }
 
   // GET request expecting a JSON object response
