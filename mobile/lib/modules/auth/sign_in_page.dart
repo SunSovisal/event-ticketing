@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
+import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/register_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
@@ -127,6 +128,17 @@ class _SignInPageState extends State<SignInPage> {
                 width: 26,
               ),
               label: Text('Continue with Google'),
+            ),
+            SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _auth.isLoading.value
+                  ? null
+                  : () {
+                      _auth.resetPhoneVerification();
+                      Get.to(() => PhoneSignInPage());
+                    },
+              icon: Icon(Icons.phone),
+              label: Text('Continue with phone'),
             ),
           ],
         );

@@ -13,6 +13,9 @@ class AuthController {
   final RxString errorMessage = ''.obs;
   final Rxn<Map<String, dynamic>> me = Rxn<Map<String, dynamic>>();
 
+  final RxString phoneVerificationId = ''.obs;
+  final RxBool phoneCodeSent = false.obs;
+
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;
   bool get isAdmin => me.value?['is_admin'] == true;
@@ -79,6 +82,85 @@ class AuthController {
     }
   }
 
+  Future<void> sendPhoneCode(String phoneNumber) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    phoneCodeSent.value = false;
+    phoneVerificationId.value = '';
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber.trim(),
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (credential) async {
+          try {
+            await _auth.signInWithCredential(credential);
+            await fetchMe();
+          } catch (error) {
+            errorMessage.value = _messageFor(
+              error,
+              fallback: 'Automatic phone verification failed',
+            );
+          } finally {
+            isLoading.value = false;
+          }
+        },
+        verificationFailed: (error) {
+          errorMessage.value = _messageFor(
+            error,
+            fallback: 'Could not send verification code',
+          );
+          isLoading.value = false;
+        },
+        codeSent: (verificationId, resendToken) {
+          phoneVerificationId.value = verificationId;
+          phoneCodeSent.value = true;
+          isLoading.value = false;
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          phoneVerificationId.value = verificationId;
+          isLoading.value = false;
+        },
+      );
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Could not start phone verification',
+      );
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> confirmPhoneCode(String smsCode) async {
+    if (phoneVerificationId.value.isEmpty) {
+      errorMessage.value = 'Request a verification code first';
+      return;
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: phoneVerificationId.value,
+        smsCode: smsCode.trim(),
+      );
+
+      await _auth.signInWithCredential(credential);
+      await fetchMe();
+
+      phoneVerificationId.value = '';
+      phoneCodeSent.value = false;
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Invalid verification code',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<String?> getIdToken() async {
     return currentUser?.getIdToken();
   }
@@ -135,6 +217,12 @@ class AuthController {
     await GoogleSignIn().signOut();
     me.value = null;
   }
+  
+  void resetPhoneVerification() {
+  errorMessage.value = '';
+  phoneCodeSent.value = false;
+  phoneVerificationId.value = '';
+}
 
   String _messageFor(Object error, {required String fallback}) {
     if (error is FirebaseAuthException) {

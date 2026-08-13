@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
@@ -10,6 +11,16 @@ import 'package:itc_events/modules/auth/sign_in_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  const disablePhoneVerification = bool.fromEnvironment(
+    'DISABLE_PHONE_APP_VERIFICATION',
+  );
+
+  if (disablePhoneVerification) {
+    await FirebaseAuth.instance.setSettings(
+      appVerificationDisabledForTesting: true,
+    );
+  }
 
   // ApiClient lives for the whole app
   final apiClient = ApiClient();

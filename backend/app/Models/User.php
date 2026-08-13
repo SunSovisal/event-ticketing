@@ -72,6 +72,7 @@ class User extends Model
             'name' => $name,
             'phone_number' => $phone,
             'is_admin' => false,
+            'is_active' => true,
         ]);
     }
 }
