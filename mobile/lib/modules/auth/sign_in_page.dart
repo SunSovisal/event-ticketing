@@ -122,7 +122,7 @@ class _SignInPageState extends State<SignInPage> {
                       }
                     },
               icon: Image.asset(
-                '/Users/sunsovisal/Documents/event-ticketing/mobile/assets/google_logo.jpeg',
+                'assets/google_logo.jpeg',
                 height: 26,
                 width: 26,
               ),

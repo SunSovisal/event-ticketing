@@ -70,7 +70,10 @@ class AuthController {
       await _auth.signInWithCredential(credential);
       await fetchMe();
     } catch (error) {
-      errorMessage.value = _messageFor(error, fallback: 'Google sign-in failed');
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Google sign-in failed',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -93,6 +96,38 @@ class AuthController {
       return;
     }
     throw ApiException('Unexpected /me response');
+  }
+
+  Future<void> updateName(String name) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final token = await getIdToken();
+      if (token == null) {
+        throw ApiException('Not signed in', statusCode: 401);
+      }
+
+      final response = await _apiClient.patchJson(
+        '/me',
+        idToken: token,
+        body: {'name': name.trim()},
+      );
+
+      final data = response['data'];
+      if (data is Map<String, dynamic>) {
+        me.value = data;
+      } else {
+        throw ApiException('Unexpected /me response');
+      }
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Could not update name',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> signOut() async {

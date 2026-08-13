@@ -9,6 +9,80 @@ import 'package:itc_events/modules/health/health_page.dart';
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
+  Future<void> _showEditNameDialog(
+    BuildContext context,
+    AuthController auth,
+  ) async {
+    var editedName = auth.me.value?['name']?.toString() ?? '';
+
+    auth.errorMessage.value = '';
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit name'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                initialValue: editedName,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Name'),
+                onChanged: (value) => editedName = value,
+              ),
+              Obx(() {
+                if (auth.errorMessage.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    auth.errorMessage.value,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                );
+              }),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            Obx(
+              () => FilledButton(
+                onPressed: auth.isLoading.value
+                    ? null
+                    : () async {
+                        if (editedName.trim().isEmpty) {
+                          auth.errorMessage.value = 'Name is required';
+                          return;
+                        }
+
+                        await auth.updateName(editedName);
+
+                        if (auth.errorMessage.value.isEmpty &&
+                            dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                        }
+                      },
+                child: auth.isLoading.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
@@ -73,7 +147,9 @@ class ProfilePage extends StatelessWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary.withValues(alpha: 0.1),
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -88,6 +164,11 @@ class ProfilePage extends StatelessWidget {
                                 ],
                               ],
                             ),
+                          ),
+                          IconButton(
+                            tooltip: 'Edit name',
+                            onPressed: () => _showEditNameDialog(context, auth),
+                            icon: const Icon(Icons.edit_outlined),
                           ),
                         ],
                       ),

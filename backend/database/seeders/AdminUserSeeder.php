@@ -10,7 +10,7 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
+        $user = User::firstOrCreate(
             ['email' => 'admin@itc.edu.kh'],
             [
                 'firebase_uid' => 'pending-' . Str::uuid(),
@@ -18,5 +18,10 @@ class AdminUserSeeder extends Seeder
                 'is_admin' => true,
             ]
         );
+
+        $user->update([
+            'name' => 'ITC Admin',
+            'is_admin' => true,
+        ]);
     }
 }

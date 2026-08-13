@@ -59,7 +59,7 @@ class User extends Model
             $user->update([
                 'firebase_uid' => $firebaseUid,
                 'email' => $email ?? $user->email,
-                'name' => $name ?? $user->name,
+                'name' => $user->name ?? $name,
                 'phone_number' => $phone ?? $user->phone_number,
             ]);
 

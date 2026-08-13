@@ -62,7 +62,7 @@ class _BrandHeader extends StatelessWidget {
           height: 200,
           alignment: Alignment.center,
           child: Image.asset(
-            '/Users/sunsovisal/Documents/event-ticketing/mobile/assets/itc_logo.png',
+            'assets/itc_logo.png',
           ),
         ),
         SizedBox(height: 20),

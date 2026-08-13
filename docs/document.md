@@ -1,12 +1,14 @@
 # ITC Event Ticketing MVP - Project Documentation
 
-**Baseline:** Version 2.6 | **Delivery limit:** 10 weeks | **Status:** Scope locked
+**Baseline:** Version 2.7 | **Delivery limit:** 10 weeks | **Status:** Scope locked
+
+> **v2.7 scope change:** one optional **event cover image** stored on Cloudinary. Galleries, profile photos, and other file uploads stay out of scope.
 
 > This MVP is only for events held at ITC. It has three access states: guest, attendee, and admin. There is no organizer role, no organizer approval, and no support for events outside ITC.
 
 ## 1. Project summary
 
-The application publishes free events happening at ITC. A guest can browse events. An attendee can sign in, reserve one place, receive a QR ticket, and view that ticket in the Flutter app. An admin uses the **same Flutter app** with admin-only screens to create, edit, publish, and cancel events, view attendees, scan QR tickets, and enter ticket codes manually when the camera cannot be used. Laravel provides a REST API only — there is no separate web admin panel.
+The application publishes free events happening at ITC. A guest can browse events and see each event’s optional cover image. An attendee can sign in, reserve one place, receive a QR ticket, and view that ticket in the Flutter app. An admin uses the **same Flutter app** with admin-only screens to create, edit, publish, and cancel events, set one cover image per event, view attendees, scan QR tickets, and enter ticket codes manually when the camera cannot be used. Laravel provides a REST API only — there is no separate web admin panel.
 
 | Item | Fixed decision |
 | --- | --- |
@@ -16,11 +18,12 @@ The application publishes free events happening at ITC. A guest can browse event
 | Roles | Guest, attendee, admin |
 | Client | Flutter mobile app (attendee + admin screens; minimal semi-flat card UI — see §10.2) |
 | State, DI, and routing | GetX |
-| HTTP client | Dart/Flutter `http` package |
+| HTTP client | Dart/Flutter `http` package (JSON plus one multipart cover upload) |
 | Authentication | Firebase email/password, Google, and phone/SMS |
 | Backend | Laravel REST API (no Filament, no web admin UI) |
 | Admin interface | Flutter admin-only screens in the same app (see §10.7) |
 | Database | PostgreSQL |
+| Event cover images | Cloudinary (one optional cover per event; see §9.4) |
 | Team | 2 beginner/intermediate developers, about 20 hours/week each |
 | Dev environments | Mac + **iOS Simulator**; Windows + **Android Emulator** (see §1.2) |
 | Deadline | 10 weeks maximum |
@@ -59,7 +62,7 @@ The team develops on two machines with different primary simulators. Both develo
 ### 2.1 Included
 
 - Browse upcoming published ITC events without signing in.
-- View event details, including date, time, ITC room/building, and remaining places.
+- View event details, including cover image (or ITC placeholder), date, time, ITC room/building, and remaining places.
 - Sign in with Firebase email/password, Google, or phone number with an SMS verification code.
 - Link additional sign-in methods to the currently authenticated Firebase account so they share one UID and one ticket history.
 - Reserve one free ticket per attendee per event.
@@ -67,6 +70,7 @@ The team develops on two machines with different primary simulators. Both develo
 - View upcoming, past, and cancelled tickets.
 - Display an opaque QR ticket in Flutter.
 - Let an admin create, edit, publish, and cancel all events through Flutter admin screens.
+- Let an admin set, replace, or remove **one optional cover image** per event. Laravel uploads the file to Cloudinary and stores the returned URL. Flutter Home and event detail display that cover, or the ITC placeholder when none is set.
 - Let an admin view attendees and reservation/check-in counts on the event detail screen in Flutter (no separate analytics dashboard).
 - Provide admin-only QR scanner and manual ticket-code check-in screens in Flutter.
 - Handle loading, empty, validation, sold-out, cancelled, and duplicate-scan states.
@@ -77,7 +81,8 @@ The team develops on two machines with different primary simulators. Both develo
 - Events outside ITC, multiple institutions, city search, maps, geolocation, and directions.
 - Payments, refunds, discount codes, invoices, or paid ticket types.
 - Multiple ticket tiers, assigned seating, waitlists, transfers, or resale.
-- Event images, file uploads, push notifications, and email confirmations.
+- Event image galleries, attendee photos, profile avatars, and any file upload other than the single event cover image (§2.1, §9.4).
+- Push notifications and email confirmations.
 - Apple sign-in, social sharing, public campaigns, and deep links.
 - Offline reservation, offline check-in, and offline ticket synchronization.
 - A separate admin mobile application (admin features live in the same Flutter app, gated by `is_admin`).
@@ -91,7 +96,7 @@ The team develops on two machines with different primary simulators. Both develo
 | --- | --- | --- |
 | Guest | A person who is not signed in. This is not stored as a database role. | Browse published upcoming events and open event details. |
 | Attendee | A signed-in Firebase user with `is_admin = false`. | Manage own profile, reserve a ticket, and view only their own tickets. |
-| Admin | A trusted ITC staff account with `is_admin = true`. | Manage every event, view attendees, and check in any valid ITC ticket. |
+| Admin | A trusted ITC staff account with `is_admin = true`. | Manage every event, set an optional cover image, view attendees, and check in any valid ITC ticket. |
 
 ### 3.1 Authorization rules
 
@@ -177,8 +182,8 @@ flowchart LR
 
 1. The admin signs in to Flutter with Firebase (same flow as attendees).
 2. Profile shows an **Admin** section when `/me` returns `is_admin: true`.
-3. The admin opens **Manage events**, creates a draft event, and supplies its ITC room/building label.
-4. The admin publishes the event; it becomes visible on Home for all users.
+3. The admin opens **Manage events**, creates a draft event, and supplies its ITC room/building label. The admin may also pick one cover image; Laravel stores it on Cloudinary.
+4. The admin publishes the event; it becomes visible on Home for all users, with the cover image or the ITC placeholder.
 5. The admin opens the event to see attendee rows and reservation/check-in counts.
 6. At the event, the admin opens **Admin scanner** and scans attendee QR codes.
 7. If scanning fails, the admin opens **Manual check-in**, enters the same ticket code, and Laravel records check-in through the same `CheckInService`.
@@ -211,7 +216,7 @@ flowchart LR
 - `cancelled` is terminal. A cancelled event is not republished.
 - `past` is calculated from time; it is not stored as an event status.
 - If `ends_at` is absent, Laravel uses `starts_at + 2 hours` as the effective end time.
-- Publishing requires a title, description, future start time, ITC location label, and valid capacity.
+- Publishing requires a title, description, future start time, ITC location label, and valid capacity. A cover image is optional and is not required to publish.
 
 ### 5.2 Ticket states
 
@@ -298,26 +303,31 @@ The fixed MVP check-in window opens two hours before `starts_at` and closes two 
 flowchart LR
   F[Flutter app] -->|sign in| A[Firebase Auth]
   F -->|http + JSON + bearer token| L[Laravel API]
+  F -->|multipart cover image| L
   L -->|verify token| A
   L -->|queries and transactions| P[(PostgreSQL)]
+  L -->|upload cover| C[Cloudinary]
+  F -->|display image_url| C
 ```
 
 | Component | Responsibility |
 | --- | --- |
-| Flutter | Guest browsing, attendee tickets, QR display, admin event management, attendee lists, scanner, manual check-in, and minimal semi-flat card UI (§10.2). |
+| Flutter | Guest browsing, attendee tickets, QR display, admin event management, attendee lists, scanner, manual check-in, cover image picker/display, and minimal semi-flat card UI (§10.2). |
 | GetX | Controllers, reactive UI state, dependency injection, named routes, and route guards. |
-| `http` | Small, explicit HTTP client wrapped by `ApiClient` for requests, bearer tokens, timeouts, JSON, and errors. |
+| `http` | Small, explicit HTTP client wrapped by `ApiClient` for requests, bearer tokens, timeouts, JSON, one multipart cover upload, and errors. |
 | Firebase Auth | Email/password, Google, and phone/SMS identity for all Flutter users (attendees and admin). |
-| Laravel API | Token verification, authorization, validation, ticket rules, check-in rules, and admin event lifecycle. |
-| PostgreSQL | Users, events, tickets, constraints, locks, and audit timestamps. |
+| Laravel API | Token verification, authorization, validation, ticket rules, check-in rules, admin event lifecycle, and Cloudinary cover upload. |
+| PostgreSQL | Users, events (including cover URL), tickets, constraints, locks, and audit timestamps. |
+| Cloudinary | Host, transform, and deliver the single event cover image. PostgreSQL stores only `image_url` and `image_public_id`. |
 
 ### 6.1 Important separation
 
 - GetX controls what the Flutter interface displays. Visual style comes from one shared theme and reusable widgets (§10.2).
 - The `http` package transports requests and responses through one application-owned `ApiClient`.
-- Laravel makes every security and business decision. It exposes JSON endpoints only — no server-rendered admin UI.
+- Laravel makes every security and business decision. It exposes JSON endpoints only — no server-rendered admin UI. The cover upload is multipart in, JSON out.
+- Flutter never talks to Cloudinary with API secrets. Only Laravel uploads, replaces, or deletes covers.
 - Admin and attendee experiences share one Flutter app and one Firebase sign-in flow; `is_admin` unlocks extra routes and API access.
-- PostgreSQL provides the durable source of truth.
+- PostgreSQL provides the durable source of truth for application data. Cloudinary is the durable store for cover image bytes.
 
 ## 7. Database design
 
@@ -345,20 +355,29 @@ users
 
 ```text
 events
-  id              UUID PRIMARY KEY
-  title           VARCHAR(120) NOT NULL
-  description     TEXT NOT NULL
-  starts_at       TIMESTAMPTZ NOT NULL
-  ends_at         TIMESTAMPTZ NULL
-  location_label  VARCHAR(120) NOT NULL
-  capacity        INT NOT NULL CHECK (capacity BETWEEN 1 AND 500)
-  status          VARCHAR NOT NULL
-                  CHECK (status IN ('draft','published','cancelled'))
-  created_at      TIMESTAMPTZ NOT NULL
-  updated_at      TIMESTAMPTZ NOT NULL
+  id               UUID PRIMARY KEY
+  title            VARCHAR(120) NOT NULL
+  description      TEXT NOT NULL
+  starts_at        TIMESTAMPTZ NOT NULL
+  ends_at          TIMESTAMPTZ NULL
+  location_label   VARCHAR(120) NOT NULL
+  capacity         INT NOT NULL CHECK (capacity BETWEEN 1 AND 500)
+  status           VARCHAR NOT NULL
+                   CHECK (status IN ('draft','published','cancelled'))
+  image_url        VARCHAR NULL
+  image_public_id  VARCHAR NULL
+  created_at       TIMESTAMPTZ NOT NULL
+  updated_at       TIMESTAMPTZ NOT NULL
 ```
 
 `location_label` contains only the ITC building/room description, such as `Building A - Room 204`. The application does not store city, latitude, longitude, or a separate public address.
+
+Cover image rules:
+
+- One optional cover per event. Null `image_url` means Flutter shows the ITC placeholder.
+- `image_url` is the HTTPS Cloudinary URL returned on public and admin event JSON.
+- `image_public_id` is stored only so Laravel can replace or delete the Cloudinary asset. Do not expose it on any API response.
+- Do not store image bytes in PostgreSQL, git, or Laravel `storage/`.
 
 ### 7.3 Tickets
 
@@ -396,8 +415,8 @@ tickets
 | --- | --- | --- | --- |
 | GET | `/me` | Attendee/admin | Return profile and `is_admin`. |
 | PATCH | `/me` | Attendee/admin | Update display name. |
-| GET | `/events` | Public | List upcoming published ITC events. |
-| GET | `/events/{id}` | Public | Return event detail and `spots_remaining`. |
+| GET | `/events` | Public | List upcoming published ITC events (includes nullable `image_url`). |
+| GET | `/events/{id}` | Public | Return event detail, `spots_remaining`, and nullable `image_url`. |
 | POST | `/events/{id}/tickets` | Attendee/admin | Return existing ticket or reserve one place. |
 | GET | `/tickets` | Attendee/admin | List the authenticated user's tickets. |
 | GET | `/tickets/{id}` | Ticket owner | Return ticket detail and QR payload. |
@@ -405,6 +424,8 @@ tickets
 | POST | `/admin/events` | Admin | Create a draft event. |
 | GET | `/admin/events/{id}` | Admin | Return event detail, counts, and attendee summary fields. |
 | PATCH | `/admin/events/{id}` | Admin | Update a draft or published event (not cancelled). |
+| POST | `/admin/events/{id}/cover` | Admin | Upload or replace the event cover image (multipart). |
+| DELETE | `/admin/events/{id}/cover` | Admin | Remove the cover from Cloudinary and clear `image_url` / `image_public_id`. |
 | POST | `/admin/events/{id}/publish` | Admin | Publish a draft event via `EventLifecycleService`. |
 | POST | `/admin/events/{id}/cancel` | Admin | Cancel a draft or published event via `EventLifecycleService`. |
 | GET | `/admin/events/{id}/attendees` | Admin | List ticket rows for the event (read-only). |
@@ -425,6 +446,8 @@ Admin endpoints require a valid Firebase token and `is_admin = true`. Non-admin 
 
 `status` is never set directly by the client. Use `/publish` and `/cancel` actions instead.
 
+Create and update stay JSON. Do not send the cover file on these endpoints. After the event exists, the admin form calls `POST /admin/events/{id}/cover` (see §8.1.3).
+
 ### 8.1.2 Admin check-in request body
 
 ```json
@@ -432,6 +455,25 @@ Admin endpoints require a valid Firebase token and `is_admin = true`. Non-admin 
 ```
 
 The scanner and manual check-in screens send the same payload to `POST /admin/check-in`.
+
+### 8.1.3 Admin cover upload
+
+`POST /admin/events/{id}/cover`
+
+| Item | Rule |
+| --- | --- |
+| Access | Admin only (`403` for non-admin) |
+| Content-Type | `multipart/form-data` |
+| Field name | `image` |
+| Allowed types | JPEG, PNG, WebP |
+| Max size | 5 MB |
+| Required | No — events may have a null cover |
+
+Laravel uploads the file to Cloudinary folder `itc-events/covers`, stores `image_url` and `image_public_id`, and returns the event JSON including `image_url`. If a cover already exists, Laravel deletes the previous Cloudinary asset before saving the new one.
+
+`DELETE /admin/events/{id}/cover` deletes the Cloudinary asset (when present), sets both columns to null, and returns the event JSON. Cancelling an event does **not** delete its cover.
+
+Invalid type or oversized file returns `422`. Missing event returns `404`. Missing file on POST returns `422`. Cloudinary failure returns `502` with `COVER_UPLOAD_FAILED` and does not change stored cover columns.
 
 ### 8.2 Response format
 
@@ -468,25 +510,26 @@ The scanner and manual check-in screens send the same payload to `POST /admin/ch
 | 404 | Event, ticket, or ticket code not found. |
 | 409 | Event full or ticket already checked in. |
 | 422 | Invalid input or event/ticket state does not allow the action. |
+| 502 | Cloudinary was unreachable or rejected the cover upload. |
 
 ## 9. Laravel API design
 
-Laravel is a JSON API only. There is no Filament panel, no Blade admin UI, and no Laravel session login for admins. All admin actions go through the REST endpoints in §8.1 and the same service layer as attendee flows.
+Laravel is a JSON API. There is no Filament panel, no Blade admin UI, and no Laravel session login for admins. All admin actions go through the REST endpoints in §8.1 and the same service layer as attendee flows. The cover endpoints accept multipart input and still return the standard JSON envelope.
 
 ### 9.1 Laravel layers
 
 - **Firebase middleware:** verifies ID tokens and resolves the PostgreSQL user.
 - **Admin middleware:** rejects non-admin users on `/admin/*` routes with `403`.
-- **Form Requests:** validate required fields, lengths, capacity, dates, and status values.
+- **Form Requests:** validate required fields, lengths, capacity, dates, status values, and cover image type/size.
 - **Policies/middleware:** enforce ticket ownership and `is_admin`.
 - **Controllers:** translate HTTP input and output; they do not contain transaction logic.
-- **Services:** `TicketService`, `CheckInService`, and `EventLifecycleService` own business workflows.
-- **API Resources:** return stable JSON and prevent accidental field exposure.
+- **Services:** `TicketService`, `CheckInService`, `EventLifecycleService`, and `EventCoverService` own business workflows.
+- **API Resources:** return stable JSON and prevent accidental field exposure (`image_public_id` is never returned).
 - **Database:** enforces constraints and provides transactions and row locks.
 
 ### 9.2 Service reuse rule
 
-Flutter admin screens, the scanner, and manual check-in must all call the same Laravel services (`EventLifecycleService`, `CheckInService`, `TicketService`). Controllers must not duplicate reservation, cancellation, or check-in logic.
+Flutter admin screens, the scanner, and manual check-in must all call the same Laravel services (`EventLifecycleService`, `CheckInService`, `TicketService`, `EventCoverService`). Controllers must not duplicate reservation, cancellation, check-in, or cover-upload logic.
 
 ### 9.3 Admin API response fields
 
@@ -495,8 +538,11 @@ Flutter admin screens, the scanner, and manual check-in must all call the same L
 | Field | Notes |
 | --- | --- |
 | `id`, `title`, `starts_at`, `location_label`, `capacity`, `status` | Same as public event fields plus any status |
+| `image_url` | Nullable HTTPS Cloudinary URL |
 | `reserved_count` | Tickets with status `valid` or `checked_in` |
 | `checked_in_count` | Tickets with status `checked_in` |
+
+Public `GET /events` and `GET /events/{id}` also include nullable `image_url`. Do not return `image_public_id`.
 
 **Attendee row (`GET /admin/events/{id}/attendees`)**
 
@@ -507,20 +553,66 @@ Flutter admin screens, the scanner, and manual check-in must all call the same L
 | `issued_at` | Ticket `created_at` |
 | `checked_in_at` | Nullable |
 
+### 9.4 Event cover images (Cloudinary)
+
+The MVP stores **one optional cover image per event**. That is the only file upload.
+
+**Why Cloudinary**
+
+- Laravel and each teammate's machine do not keep image files on disk.
+- Flutter receives a stable HTTPS URL and can display it with `Image.network`.
+- Cloudinary can serve a resized card thumbnail without extra backend work.
+
+**Setup**
+
+1. Create a Cloudinary free account and a cloud (one shared cloud for the team).
+2. Put credentials in Laravel `.env` only. Never commit them. Never put the API secret in Flutter.
+
+```text
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+3. Install a Cloudinary PHP/Laravel package (`cloudinary-labs/cloudinary-laravel` or the official `cloudinary/cloudinary_php` SDK) and read those env values from `config/services.php`.
+4. Upload into folder `itc-events/covers`.
+
+**Upload path**
+
+```text
+Flutter admin (image_picker)
+  -> multipart POST /api/v1/admin/events/{id}/cover
+  -> EventCoverService
+  -> Cloudinary
+  -> save image_url + image_public_id on events
+  -> JSON { data: { ..., image_url } }
+Flutter Home / event detail
+  -> Image.network(image_url) or ITC placeholder when null
+```
+
+**Rules**
+
+- Only an admin may upload, replace, or delete a cover.
+- Guests and attendees only read `image_url`.
+- Validate MIME type and 5 MB size in Laravel before calling Cloudinary.
+- Replacing a cover deletes the previous Cloudinary public ID.
+- If Cloudinary is unreachable, return `502` with `error.code` `COVER_UPLOAD_FAILED`; do not save a broken URL.
+- Demo seeds may use a small committed placeholder asset uploaded once through the same service, or leave `image_url` null.
+
 ## 10. Flutter and GetX design
 
 ### 10.1 Screens
 
 | Screen | Access | Responsibility |
 | --- | --- | --- |
-| Home | Everyone | Upcoming published ITC events. |
-| Event detail | Everyone | Event information, remaining places, and ticket action. |
+| Home | Everyone | Upcoming published ITC events, each with cover or ITC placeholder. |
+| Event detail | Everyone | Cover image, event information, remaining places, and ticket action. |
 | Sign in | Guest | Firebase email/password, Google, and phone/SMS sign-in. |
 | My Tickets | Attendee/admin | Upcoming, past, and cancelled tickets. |
 | Ticket detail | Ticket owner | QR code, event summary, status, and check-in time. |
 | Profile | Attendee/admin | Name, email/phone, linked sign-in methods, admin section, and sign out. |
-| Admin events list | Admin only | All events with status, counts, and navigation to create/edit. |
-| Admin event form | Admin only | Create or edit draft/published events; Publish and Cancel actions. |
+| Admin events list | Admin only | All events with status, counts, cover thumbnail, and navigation to create/edit. |
+| Admin event form | Admin only | Create or edit draft/published events; optional cover picker; Publish and Cancel actions. |
 | Admin event detail | Admin only | Event summary, reserved/checked-in counts, and attendee list. |
 | Admin scanner | Admin only | Scan one QR at a time and show the server result. |
 | Manual check-in | Admin only | Enter a ticket code when the camera cannot be used. |
@@ -561,6 +653,7 @@ The Flutter app follows a **minimal mobile utility UI**: clean, card-based, semi
 | Component | Use |
 | --- | --- |
 | `AppCard` | Event rows, ticket rows, QR container, profile sections |
+| `EventCoverImage` | Shared cover widget: network image when `image_url` is set, otherwise the ITC header strip / placeholder |
 | `PrimaryButton` | Full-width rounded blue button (Get ticket, Sign in, Reserve) |
 | `SecondaryButton` | Outline or light gray actions (Cancel, Back) |
 | `AppTextField` | Login, profile name, phone verification |
@@ -581,14 +674,14 @@ The Flutter app follows a **minimal mobile utility UI**: clean, card-based, semi
 
 | Screen | Layout |
 | --- | --- |
-| Home | Scrollable list of event cards: title, date/time, location label, spots remaining |
-| Event detail | Summary card + sticky bottom **Get ticket** primary button |
+| Home | Scrollable list of event cards: cover thumbnail, title, date/time, location label, spots remaining |
+| Event detail | Cover image (or ITC placeholder) + summary card + sticky bottom **Get ticket** primary button |
 | Sign in | Centered title, stacked inputs, primary sign-in button, secondary provider buttons |
 | My Tickets | Tabs or segments: Upcoming / Past / Cancelled; each row is a ticket card |
 | Ticket detail | Large QR card centered, event summary card below, status chip |
 | Profile | Avatar circle, name, admin badge, list-style rows for linked sign-in methods, admin section, and sign out |
-| Admin events list | Scrollable event cards with status chip, date, location, reserved/checked-in counts; FAB or app-bar **Create** |
-| Admin event form | Stacked `AppTextField` / date pickers in cards; **Save**, **Publish** (draft only), **Cancel event** actions |
+| Admin events list | Scrollable event cards with cover thumbnail, status chip, date, location, reserved/checked-in counts; FAB or app-bar **Create** |
+| Admin event form | Cover picker + preview in a card; stacked `AppTextField` / date pickers; **Save**, **Publish** (draft only), **Cancel event** actions |
 | Admin event detail | Summary card with counts + scrollable attendee list (read-only rows) |
 | Admin scanner | Camera viewfinder, result banner below; no extra chrome |
 | Manual check-in | Single ticket-code field, **Check in** primary button, result banner |
@@ -617,7 +710,7 @@ mobile/lib/
 **Out of scope for UI polish**
 
 - Custom illustrations, Lottie animations, onboarding carousels, or splash marketing art.
-- Event images, maps, or location previews (product scope already excludes these).
+- Maps, location previews, image galleries, or profile photo upload.
 - Custom icon packs beyond Material Icons.
 - Dark mode (optional post-MVP; do not implement during the ten-week window unless time remains in Week 9).
 
@@ -639,14 +732,14 @@ The Figma file is a **layout baseline** first. A second pass adds icons, placeho
 
 | Screen | Icons | Placeholder visuals | Sample copy |
 | --- | --- | --- | --- |
-| Home | Calendar, location pin, people on each event card | — | Realistic ITC event titles, dates, room labels, `42 of 50 spots left` / `Sold out` |
-| Event detail | Same meta icons in summary card | Light blue **ITC header strip** (logo circle + “ITC”) — not a photo | Full description paragraph, sticky **Get ticket** CTA |
+| Home | Calendar, location pin, people on each event card | Cover thumbnail on the card; ITC placeholder if `image_url` is null | Realistic ITC event titles, dates, room labels, `42 of 50 spots left` / `Sold out` |
+| Event detail | Same meta icons in summary card | Cover image at top; fallback light blue **ITC header strip** (logo circle + “ITC”) when no cover | Full description paragraph, sticky **Get ticket** CTA |
 | Sign in | `mail`, `lock` inside fields; Google / phone on provider buttons | ITC logo circle above title | `you@student.itc.edu.kh`, helper text under title |
 | My Tickets | Status chip icons (`check_circle`, `cancel`) | — | Segments Upcoming / Past / Cancelled; ticket cards with event name + status |
 | Ticket detail | — | **QR code pattern** (grid placeholder, not real code) + monospace `TKT_01JABC123XYZ` | Event summary, `Status: Valid`, helper “Show at entrance” |
 | Profile | Row icons: `edit`, `link`, `event_note`, `qr_code_scanner`, `keyboard`, `logout` | **Avatar** circle with initials `DS` (or generic person silhouette) | Name, email, Admin badge, admin section subtitle |
-| Admin events list | Status chip, calendar, location | — | Draft / Published / Cancelled; `12 reserved · 8 checked in` |
-| Admin event form | Date/time pickers | — | Same fields as API; **Publish** on draft |
+| Admin events list | Status chip, calendar, location | Small cover thumbnail or placeholder | Draft / Published / Cancelled; `12 reserved · 8 checked in` |
+| Admin event form | Date/time pickers, `add_photo_alternate` | Cover preview; **Choose image** / **Remove cover** | Same fields as API; **Publish** on draft |
 | Admin event detail | Attendee status chips | — | Counts header + attendee name rows |
 | Admin scanner | Viewfinder corners | Dark camera area + scan frame; green **success banner** with check icon | “Point camera at attendee QR code”, sample success message |
 | Manual check-in | `confirmation_number` in field | — | Enter code fallback when camera fails |
@@ -672,14 +765,14 @@ The Figma file is a **layout baseline** first. A second pass adds icons, placeho
 
 **Import into Figma:** open the Figma file → add pages per flow → use **html.to.design** plugin on each flow section from the HTML preview, or ask agent to push when MCP limit resets.
 
-**Note:** Event **photos** stay out of scope (§2.2). Use gradients, featured cards, and ITC brand strips instead.
+**Note:** Only **one event cover image** is in scope (§2.1, §9.4). Profile avatars stay initials/silhouette. Do not add galleries or extra photos.
 
 ### 10.3 GetX structure
 
 - `AuthController`: Firebase session, email/password, Google, phone/SMS verification, provider linking, account-conflict errors, `/me`, and sign-out.
 - `EventController`: public event list, event detail, loading, and errors.
 - `TicketController`: reservation, My Tickets, and ticket details.
-- `AdminEventController`: admin events list, create/edit form, publish, cancel, and attendee list.
+- `AdminEventController`: admin events list, create/edit form, cover picker/upload/remove, publish, cancel, and attendee list.
 - `AdminCheckInController`: scanner and manual check-in state, submission, and result feedback.
 - GetX `Bindings`: create route-specific controllers and shared services.
 - `Obx`: render reactive loading, data, and error states.
@@ -691,8 +784,9 @@ Keep route-specific controllers disposable. Keep only shared services such as `A
 
 - Own one reusable `http.Client` rather than creating a new client for every request.
 - Build request URIs from one configured Laravel API base URL.
-- Encode request bodies and decode response bodies as JSON.
-- Attach `Content-Type: application/json` and the current Firebase ID token to protected requests.
+- Encode JSON request bodies and decode JSON response bodies.
+- For `POST /admin/events/{id}/cover` only, send `multipart/form-data` with the `image` file and the Firebase bearer token. Do not set `Content-Type: application/json` on that request.
+- Attach `Content-Type: application/json` and the current Firebase ID token to other protected requests.
 - Apply a Dart `timeout` to each request and convert network failures into typed application errors.
 - Convert Laravel error codes into typed Flutter failures.
 - On one `401`, force-refresh the Firebase token and retry once.
@@ -702,9 +796,9 @@ Keep route-specific controllers disposable. Keep only shared services such as `A
 
 ### 10.5 Why `http` instead of Dio
 
-The MVP has about fifteen REST endpoints, JSON request/response bodies, and no file uploads, download progress, caching, or complex request cancellation. The `http` package is sufficient and introduces fewer concepts for a beginner team.
+The MVP has about seventeen REST endpoints, mostly JSON request/response bodies, and **one** multipart cover upload. The `http` package can send that multipart request through `ApiClient`. Do not switch to Dio for this feature.
 
-Dio would provide built-in interceptors, richer configuration, cancellation, and upload/download helpers. Those capabilities are useful in more complex networking layers, but this project does not require them. With `http`, the team must explicitly implement token attachment and the single retry inside `ApiClient`; that small amount of code is acceptable for this scope.
+Dio would provide built-in interceptors, richer configuration, cancellation, and upload/download helpers. Those capabilities are useful in more complex networking layers, but this project does not require them. With `http`, the team must explicitly implement token attachment, the single retry, and the one multipart method inside `ApiClient`; that small amount of code is acceptable for this scope.
 
 ### 10.6 Packages
 
@@ -713,11 +807,14 @@ Dio would provide built-in interceptors, richer configuration, cancellation, and
 | Authentication | `firebase_core`, `firebase_auth`, `google_sign_in` |
 | State, dependency injection, routing | `get` |
 | HTTP | `http` |
+| Event cover picker | `image_picker` (gallery only is enough; camera is optional) |
 | Typography (optional) | `google_fonts` — Inter, if not using Roboto default |
 | QR display | `qr_flutter` |
 | QR scanning | `mobile_scanner` |
 
 Pin compatible versions in `pubspec.lock` during Week 1. Do not change major package versions during the project unless a blocking defect or security problem requires it.
+
+`image_picker` needs an iOS photo-library usage string (`NSPhotoLibraryUsageDescription`) and the Android photo permission required by the current plugin version. Add those when the cover picker is implemented in Week 7.
 
 ### 10.7 Flutter admin UI policy (minimal)
 
@@ -727,7 +824,8 @@ Admin screens use the same theme, widgets, and card layout as attendee screens (
 
 - Reuse `AppCard`, `PrimaryButton`, `SecondaryButton`, `AppTextField`, `StatusBanner`, `EmptyStateView`, and `LoadingView`.
 - Admin events list with status filter (optional) and create action.
-- Event form with plain text fields and date/time pickers — no rich-text editor.
+- Event form with plain text fields, date/time pickers, and one cover image picker — no rich-text editor.
+- Cover preview on the form with **Choose image** and **Remove cover**. Save event JSON first on create, then call the cover endpoint with the new event id.
 - Publish and Cancel event as confirmation dialogs calling the admin API.
 - Read-only attendee list on event detail.
 - Scanner and manual check-in sharing one `AdminCheckInController` result pattern.
@@ -744,7 +842,8 @@ If time slips during implementation, simplify admin form validation messages and
 - The QR never contains a name, email address, Firebase UID, or event details.
 - Laravel validates the code, event state, ticket state, admin role, and check-in time window.
 - All deployed traffic uses HTTPS.
-- Tokens, passwords, Firebase service credentials, and database credentials are never committed to source control.
+- Tokens, passwords, Firebase service credentials, Cloudinary credentials, and database credentials are never committed to source control.
+- Cloudinary API secret is used only in Laravel. Flutter never embeds Cloudinary keys or unsigned upload presets.
 - Production logs redact authorization headers and show only shortened ticket references.
 - Admin-only Flutter routes and `/admin/*` API endpoints are hidden from non-admin users and independently rejected by Laravel with `403`.
 
@@ -761,6 +860,7 @@ If time slips during implementation, simplify admin form validation messages and
 | Concurrency | Simultaneous reservations never exceed capacity. |
 | Cancellation | Event and related tickets update atomically. |
 | Admin events | Non-admin 403; create draft; publish validates fields; cancel is atomic. |
+| Event cover | Non-admin 403; valid JPEG/PNG/WebP stores `image_url`; oversized/invalid type 422; replace deletes the previous Cloudinary public ID; delete clears both columns; public JSON never includes `image_public_id`. |
 | Admin attendees | Non-admin 403; returns read-only ticket rows for the event. |
 | Check-in | Valid code succeeds; repeat 409; unknown 404; non-admin 403; closed window 422. |
 
@@ -771,7 +871,8 @@ If time slips during implementation, simplify admin form validation messages and
 - Widget-test Home loading, empty, error, and data states.
 - Widget-test the sign-in gate and disabled reservation button while submitting.
 - Widget-test that a non-admin cannot open admin routes (events list, scanner, manual check-in).
-- Widget-test admin event form validation and publish confirmation dialog.
+- Widget-test admin event form validation, cover picker presence, and publish confirmation dialog.
+- Widget-test Home and event detail with a cover URL and with a null cover (placeholder).
 - Test that successfully linking a second provider preserves the original Firebase UID and Laravel user.
 - Test `provider-already-linked` and `credential-already-in-use` messages without modifying ticket data.
 - Manually test email/password, Google, and phone/SMS sign-in; invalid/expired SMS codes; QR readability; camera permission denial; successful scan; and duplicate scan on **both** platforms (primary: iOS Simulator on Mac, Android Emulator on Windows; confirm on physical devices before release).
@@ -785,10 +886,10 @@ The team has approximately 40 team-hours per week. Weeks 1-8 complete the produc
 | 1 | Repository, Laravel/PostgreSQL, Flutter, GetX, `http`, dev environments (§1.2) | Each developer’s simulator calls `GET /api/v1/health` and displays Backend connected. |
 | 2 | Firebase email/password and Google auth; user synchronization; `is_admin` | Email/password and Google users call `/me`; seeded admin sees admin section on Profile. |
 | 3 | Phone/SMS authentication, provider linking, conflict handling, and auth tests | A linked provider preserves the UID; already-used credentials show a safe conflict message. |
-| 4 | Event migration/model, admin events API, Flutter Home, detail, and admin events list | Admin creates and publishes an event from Flutter; it displays on Home. |
+| 4 | Event migration/model (including nullable cover columns), admin events API, Flutter Home, detail, and admin events list | Admin creates and publishes an event from Flutter; it displays on Home with placeholder when `image_url` is null. |
 | 5 | Transactional reservation API and tests | Duplicate and concurrent requests cannot create extra tickets. |
 | 6 | My Tickets, ticket detail, and QR display | Attendee reserves once and displays a scannable QR. |
-| 7 | Cancellation API, admin event form, attendee list, manual check-in screen | Cancellation is atomic; admin edits events and sees attendees in Flutter. |
+| 7 | Cancellation API, admin event form, cover upload to Cloudinary, attendee list, manual check-in screen | Cancellation is atomic; admin edits events, sets a cover, and sees attendees in Flutter. |
 | 8 | Admin check-in API, Flutter scanner, and end-to-end integration | First scan succeeds; duplicate scan is rejected; complete journey passes. |
 | 9 | Authorization audit, performance checks, UX errors, regression | No P0/P1 defects; feature freeze is active. |
 | 10 | Demo seeds, release build, documentation, rehearsal, contingency | Repeatable ITC demo and definition of done approved. |
@@ -799,8 +900,8 @@ The team has approximately 40 team-hours per week. Weeks 1-8 complete the produc
 - Weeks 9-10 contain no new product functionality.
 - Assign one developer as backend/data primary and one as Flutter primary for each weekly goal.
 - Pair on the API contract and end-to-end integration.
-- If time slips, reduce optional Flutter polish (animations, spacing tweaks) first; keep the shared theme and reusable widgets from §10.2.
-- Do not add admin charts, bulk tools, or extra admin screens beyond §10.7.
+- If time slips, reduce optional Flutter polish (animations, spacing tweaks) first; keep the shared theme and reusable widgets from §10.2. Keep the cover **display** path (URL or placeholder). If Cloudinary setup blocks the week, leave covers null and finish upload in the same week as the admin form — do not drop reservation, auth, or check-in.
+- Do not add admin charts, bulk tools, extra admin screens, galleries, or profile photo upload beyond §10.7.
 - Do not remove authentication, authorization, transactions, or critical tests to recover time.
 
 ## 14. Where to start
@@ -882,6 +983,7 @@ The Week 3 milestone is complete when:
 - An attendee can reserve exactly one ticket per event until capacity is reached.
 - An attendee can view their tickets and QR code.
 - The admin can create, edit, publish, and cancel every event through Flutter admin screens.
+- The admin can set, replace, or remove one optional cover image per event. Home and event detail show that image or the ITC placeholder.
 - The admin can view attendees and reservation/check-in counts on the admin event detail screen.
 - The admin can scan a valid ticket in Flutter or enter its code on the manual check-in screen.
 - Duplicate scans, full events, cancelled events, ended events, and invalid codes produce the documented result.
@@ -893,6 +995,7 @@ The Week 3 milestone is complete when:
 - Provider-linking tests confirm that a successful link preserves identity and that account conflicts do not change application data.
 - Admin permission comes from PostgreSQL `is_admin` and is enforced on every `/admin/*` route.
 - Ticket reservation, cancellation, and check-in use transactions.
+- Event cover files are stored on Cloudinary; PostgreSQL stores only `image_url` and `image_public_id`; Cloudinary secrets are not in Flutter or git.
 - Flutter admin screens follow the minimal semi-flat UI direction in §10.2 and §10.7 using shared theme and widgets.
 - Critical Laravel feature tests and Flutter unit/widget tests pass.
 - Flutter builds and runs on **iOS Simulator (Mac)** and **Android Emulator (Windows)**; physical-device smoke tests pass before demo.
@@ -902,4 +1005,4 @@ The Week 3 milestone is complete when:
 
 ### 15.3 Final release boundary
 
-> The MVP is complete when the functional and technical criteria above pass. The system serves ITC events only, with guest, attendee, and admin access. No organizer or multi-location behavior belongs in this release.
+> The MVP is complete when the functional and technical criteria above pass. The system serves ITC events only, with guest, attendee, and admin access. One optional Cloudinary cover image per event is included. No organizer, multi-location, gallery, or profile-photo behavior belongs in this release.

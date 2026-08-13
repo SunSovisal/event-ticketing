@@ -27,6 +27,6 @@ class UserSyncFromFirebaseTest extends TestCase
 
         $this->assertTrue($synced->is($user));
         $this->assertFalse($synced->is_active);
-        $this->assertSame('New Name', $synced->name);
+        $this->assertSame('Old Name', $synced->name);
     }
 }

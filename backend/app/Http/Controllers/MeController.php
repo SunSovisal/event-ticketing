@@ -20,4 +20,24 @@ class MeController extends Controller
             ],
         ]);
     }
+
+    public function update(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120']
+        ]);
+
+        /** @var User $user */
+        $user = $request->attributes->get('auth_user');
+        $user->update([
+            'name' => trim($validated['name'])
+        ]);
+
+        return response()->json([
+            'data' => $user->fresh()->toProfile(),
+            'meta' => [
+                'request_id' => (string) str()->uuid(),
+            ]
+        ]);
+    }
 }

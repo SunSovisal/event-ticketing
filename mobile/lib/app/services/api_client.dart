@@ -1,6 +1,5 @@
 // all http in one place
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:itc_events/app/config/app_config.dart';
 
@@ -37,6 +36,39 @@ class ApiClient {
         .timeout(AppConfig.requestTimeout);
     return _decodeJsonResponse(response);
   }
+
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    required Map<String, dynamic> body,
+    String? idToken,
+    Map<String, String>? header,
+  }) async {
+    final response = await _client
+        .patch(
+          _uri(path),
+          headers: _jsonHeaders(header, idToken: idToken),
+          body: jsonEncode(body),
+        )
+        .timeout(AppConfig.requestTimeout);
+    return _decodeJsonResponse(response);
+  }
+
+  Future<Map<String, dynamic>> postJson(
+  String path, {
+  required Map<String, dynamic> body,
+  String? idToken,
+  Map<String, String>? headers,
+}) async {
+  final response = await _client
+      .post(
+        _uri(path),
+        headers: _jsonHeaders(headers, idToken: idToken),
+        body: jsonEncode(body),
+      )
+      .timeout(AppConfig.requestTimeout);
+
+  return _decodeJsonResponse(response);
+}
 
   // standard headers
   Map<String, String> _jsonHeaders(
