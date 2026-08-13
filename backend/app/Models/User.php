@@ -16,17 +16,19 @@ class User extends Model
         'phone_number',
         'name',
         'is_admin',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'is_admin' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
     /**
-     * @return array{id: string, firebase_uid: string, email: ?string, phone_number: ?string, name: ?string, is_admin: bool}
+     * @return array{id: string, firebase_uid: string, email: ?string, phone_number: ?string, name: ?string, is_admin: bool, is_active: bool}
      */
     public function toProfile(): array
     {
@@ -37,6 +39,7 @@ class User extends Model
             'phone_number' => $this->phone_number,
             'name' => $this->name,
             'is_admin' => $this->is_admin,
+            'is_active' => $this->is_active,
         ];
     }
 

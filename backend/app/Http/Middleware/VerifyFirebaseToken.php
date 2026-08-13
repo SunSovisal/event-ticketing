@@ -50,6 +50,14 @@ class VerifyFirebaseToken
                 $this->optionalClaim($claims->get('phone_number')),
             );
 
+            if (! $user->is_active) {
+                return $this->errorResponse(
+                    'FORBIDDEN',
+                    'This account has been deactivated.',
+                    403,
+                );
+            }
+
             $request->attributes->set('auth_user', $user);
         } catch (FailedToVerifyToken) {
             return $this->errorResponse(
