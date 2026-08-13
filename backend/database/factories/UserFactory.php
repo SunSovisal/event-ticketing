@@ -22,6 +22,7 @@ class UserFactory extends Factory
             'phone_number' => null,
             'name' => fake()->name(),
             'is_admin' => false,
+            'is_active' => true,
         ];
     }
 
@@ -29,6 +30,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_admin' => true,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
         ]);
     }
 }
