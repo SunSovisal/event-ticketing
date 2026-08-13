@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/config/app_config.dart';
+import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/health/health_controller.dart';
 
 /// shows whether GET /api/v1/health succeeded.
@@ -10,25 +11,20 @@ class HealthPage extends GetView<HealthController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF3F4F6, // grey
-      ), 
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
-        title: const Text('ITC Events'),
-        backgroundColor: const Color(0xFF2563EB), // primary blue
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: Text('ITC Events'),
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Card(
             elevation: 1,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: Obx(() {
                 // Obx rebuilds when controller.status / message change.
                 final status = controller.status.value;
@@ -37,32 +33,28 @@ class HealthPage extends GetView<HealthController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(_iconFor(status), size: 56, color: _colorFor(status)),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       controller.message.value,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     // show URL so debugging wrong base URL is easy on simulator.
                     Text(
                       AppConfig.apiBaseUrl,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     if (status == HealthStatus.loading)
-                      const CircularProgressIndicator()
+                      CircularProgressIndicator()
                     else
                       FilledButton(
                         onPressed: controller.checkHealth,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        child: const Text('Check again'),
+                        child: Text('Check again'),
                       ),
                   ],
                 );
@@ -90,12 +82,12 @@ class HealthPage extends GetView<HealthController> {
   Color _colorFor(HealthStatus status) {
     switch (status) {
       case HealthStatus.connected:
-        return const Color(0xFF16A34A); // success green
+        return AppTheme.success;
       case HealthStatus.error:
-        return const Color(0xFFDC2626); // error red
+        return AppTheme.error;
       case HealthStatus.loading:
       case HealthStatus.idle:
-        return const Color(0xFF2563EB); // primary blue
+        return AppTheme.primary;
     }
   }
 }
