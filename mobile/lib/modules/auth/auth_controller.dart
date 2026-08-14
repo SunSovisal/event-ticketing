@@ -20,6 +20,10 @@ class AuthController {
   bool get isSignedIn => currentUser != null;
   bool get isAdmin => me.value?['is_admin'] == true;
 
+  /// Provider IDs currently linked to the signed-in Firebase account
+  List<String> get linkedProviderIds =>
+      currentUser?.providerData.map((p) => p.providerId).toList() ?? [];
+
   Future<void> registerWithEmail(
     String name,
     String email,
@@ -216,6 +220,118 @@ class AuthController {
     await _auth.signOut();
     await GoogleSignIn().signOut();
     me.value = null;
+  }
+
+  // Provider linking
+  /// Links the Google provider to the currently signed-in Firebase account.
+  Future<void> linkWithGoogle() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await currentUser!.linkWithCredential(credential);
+      await currentUser!.reload();
+      await currentUser!.getIdToken(true); // force fresh token with updated claims
+      await fetchMe();                     // sync new claims to the database now
+    } on FirebaseAuthException catch (e) {
+      errorMessage.value = _messageFor(e, fallback: 'Could not link Google');
+    } catch (error) {
+      errorMessage.value = _messageFor(error, fallback: 'Could not link Google');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Sends an SMS verification code for linking a phone number.
+  /// Mirrors sendPhoneCode() but uses linkWithCredential() on auto-retrieval.
+  Future<void> sendPhoneLinkCode(String phoneNumber) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    phoneCodeSent.value = false;
+    phoneVerificationId.value = '';
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber.trim(),
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (credential) async {
+          try {
+            await currentUser!.linkWithCredential(credential);
+            await currentUser!.reload();
+            await currentUser!.getIdToken(true); // force fresh token with updated claims
+            await fetchMe();                     // sync new claims to the database now
+          } catch (error) {
+            errorMessage.value = _messageFor(
+              error,
+              fallback: 'Automatic phone linking failed',
+            );
+          } finally {
+            isLoading.value = false;
+          }
+        },
+        verificationFailed: (error) {
+          errorMessage.value = _messageFor(
+            error,
+            fallback: 'Could not send verification code',
+          );
+          isLoading.value = false;
+        },
+        codeSent: (verificationId, resendToken) {
+          phoneVerificationId.value = verificationId;
+          phoneCodeSent.value = true;
+          isLoading.value = false;
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          phoneVerificationId.value = verificationId;
+          isLoading.value = false;
+        },
+      );
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Could not start phone linking',
+      );
+      isLoading.value = false;
+    }
+  }
+
+  /// Confirms the SMS code and completes phone-provider linking.
+  Future<void> confirmPhoneLinkCode(String smsCode) async {
+    if (phoneVerificationId.value.isEmpty) {
+      errorMessage.value = 'Request a verification code first';
+      return;
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: phoneVerificationId.value,
+        smsCode: smsCode.trim(),
+      );
+
+      await currentUser!.linkWithCredential(credential);
+      await currentUser!.reload();
+      await currentUser!.getIdToken(true); // force fresh token with updated claims
+      await fetchMe();                     // sync new claims to the database now
+
+      phoneVerificationId.value = '';
+      phoneCodeSent.value = false;
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Invalid verification code',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
   
   void resetPhoneVerification() {

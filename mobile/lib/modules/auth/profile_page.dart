@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
+import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
 import 'package:itc_events/modules/health/health_page.dart';
@@ -209,6 +210,8 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                   ],
+                  SizedBox(height: 16),
+                  _LinkedProvidersCard(auth: auth),
                   SizedBox(height: 24),
                   OutlinedButton(
                     onPressed: () async {
@@ -221,5 +224,142 @@ class ProfilePage extends StatelessWidget {
               ),
       );
     });
+  }
+}
+
+// Linked sign-in methods card
+class _LinkedProvidersCard extends StatelessWidget {
+  const _LinkedProvidersCard({required this.auth});
+
+  final AuthController auth;
+
+  static const _providers = [
+    _ProviderMeta(
+      id: 'password',
+      label: 'Email / Password',
+      icon: Icons.email_outlined,
+    ),
+    _ProviderMeta(
+      id: 'google.com',
+      label: 'Google',
+      icon: Icons.g_mobiledata_rounded,
+    ),
+    _ProviderMeta(
+      id: 'phone',
+      label: 'Phone (SMS)',
+      icon: Icons.phone_outlined,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final linked = auth.linkedProviderIds;
+
+      return Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Text(
+                'Linked sign-in methods',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            if (auth.errorMessage.value.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                child: Text(
+                  auth.errorMessage.value,
+                  style: TextStyle(color: AppTheme.error, fontSize: 13),
+                ),
+              ),
+            for (int i = 0; i < _providers.length; i++) ...[
+              if (i > 0) const Divider(height: 1),
+              _ProviderTile(
+                meta: _providers[i],
+                isLinked: linked.contains(_providers[i].id),
+                isLoading: auth.isLoading.value,
+                onLink: () => _handleLink(context, _providers[i].id),
+              ),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
+      );
+    });
+  }
+
+  Future<void> _handleLink(BuildContext context, String providerId) async {
+    auth.errorMessage.value = '';
+    switch (providerId) {
+      case 'google.com':
+        await auth.linkWithGoogle();
+      case 'phone':
+        await Get.to(() => const PhoneSignInPage(linkMode: true));
+      default:
+        // email/password already linked at registration, no action
+        break;
+    }
+  }
+}
+
+class _ProviderMeta {
+  const _ProviderMeta({
+    required this.id,
+    required this.label,
+    required this.icon,
+  });
+
+  final String id;
+  final String label;
+  final IconData icon;
+}
+
+class _ProviderTile extends StatelessWidget {
+  const _ProviderTile({
+    required this.meta,
+    required this.isLinked,
+    required this.isLoading,
+    required this.onLink,
+  });
+
+  final _ProviderMeta meta;
+  final bool isLinked;
+  final bool isLoading;
+  final VoidCallback onLink;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(meta.icon, color: isLinked ? AppTheme.primary : null),
+      title: Text(meta.label),
+      trailing: isLinked
+          ? Chip(
+              avatar: Icon(
+                Icons.check_circle_rounded,
+                size: 16,
+                color: AppTheme.primary,
+              ),
+              label: Text(
+                'Linked',
+                style: TextStyle(fontSize: 12, color: AppTheme.primary),
+              ),
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.08),
+              side: BorderSide.none,
+              padding: EdgeInsets.zero,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            )
+          : meta.id == 'password'
+          ? null // linking email/password isn't available
+          : TextButton(
+              onPressed: isLoading ? null : onLink,
+              child: const Text('Link'),
+            ),
+    );
   }
 }

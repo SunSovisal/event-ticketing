@@ -6,7 +6,11 @@ import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 
 class PhoneSignInPage extends StatefulWidget {
-  const PhoneSignInPage({super.key});
+  // Set linkMode to true when the user is already signed in and wants to
+  // link a phone number to their existing Firebase account.
+  const PhoneSignInPage({super.key, this.linkMode = false});
+
+  final bool linkMode;
 
   @override
   State<PhoneSignInPage> createState() => _PhoneSignInPageState();
@@ -38,21 +42,34 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
       return;
     }
 
-    await _auth.sendPhoneCode(phone);
+    if (widget.linkMode) {
+      await _auth.sendPhoneLinkCode(phone);
+    } else {
+      await _auth.sendPhoneCode(phone);
+    }
   }
 
   Future<void> _confirmCode() async {
     final code = _codeController.text.trim();
-    final name = _auth.me.value?['name']?.toString().trim() ?? '';
 
     if (code.length != 6) {
       _auth.errorMessage.value = 'Enter the six-digit code';
       return;
     }
 
-    await _auth.confirmPhoneCode(code);
+    if (widget.linkMode) {
+      await _auth.confirmPhoneLinkCode(code);
+      if (_auth.errorMessage.value.isEmpty && mounted) {
+        Get.back(); // return to ProfilePage
+      }
+      return;
+    }
 
+    // -- original sign-in path 
+    // read name after fetchMe() to get value from DB
+    await _auth.confirmPhoneCode(code);
     if (_auth.isSignedIn && _auth.me.value != null) {
+      final name = _auth.me.value?['name']?.toString().trim() ?? '';
       if (name.isEmpty) {
         Get.offAll(() => const CompleteProfilePage());
       } else {
@@ -64,9 +81,17 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageLayout(
-      title: 'Phone sign in',
-      subtitle: 'Enter your phone number to receive a verification code.',
-      footer: TextButton(onPressed: Get.back, child: Text('Back to sign in')),
+      title: widget.linkMode ? 'Link phone number' : 'Phone sign in',
+      subtitle: widget.linkMode
+          ? 'Enter your phone number to link it to your account.'
+          : 'Enter your phone number to receive a verification code.',
+      footer: TextButton(
+        onPressed: () {
+          _auth.resetPhoneVerification();
+          Get.back();
+        },
+        child: Text(widget.linkMode ? 'Cancel' : 'Back to sign in'),
+      ),
       child: Obx(() {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
