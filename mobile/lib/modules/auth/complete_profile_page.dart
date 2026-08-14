@@ -13,6 +13,7 @@ class CompleteProfilePage extends StatefulWidget {
 
 class _CompleteProfilePageState extends State<CompleteProfilePage> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   late final AuthController _auth;
 
   @override
@@ -27,8 +28,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     super.dispose();
   }
 
-  Future<void> _saveName() async {
+  Future<void> _saveNameEmail() async {
     final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
 
     if (name.isEmpty) {
       _auth.errorMessage.value = 'Enter your name';
@@ -40,13 +42,20 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       return;
     }
 
-    await _auth.updateName(name);
+    if (email.isEmpty || !GetUtils.isEmail(email)) {
+      _auth.errorMessage.value = 'Enter a valid email';
+      return;
+    }
+
+    await _auth.updateNameEmail(name, email);
 
     if (_auth.errorMessage.value.isEmpty &&
-        _auth.me.value?['name']?.toString().isNotEmpty == true) {
+        _auth.me.value?['name']?.toString().isNotEmpty == true && _auth.me.value?['email']?.toString().isNotEmpty == true) {
       Get.offAll(() => const ProfilePage());
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +72,22 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 controller: _nameController,
                 autofocus: true,
                 textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _saveName(),
+                onSubmitted: (_) => _saveNameEmail(),
                 decoration: const InputDecoration(
                   labelText: 'Full name',
                   prefixIcon: Icon(Icons.person_outline),
+                ),
+              ),
+              const SizedBox(height: 16,),
+              TextField(
+                controller: _emailController,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _saveNameEmail(),
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
               ),
               if (_auth.errorMessage.value.isNotEmpty) ...[
@@ -75,7 +96,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
               ],
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: _auth.isLoading.value ? null : _saveName,
+                onPressed: _auth.isLoading.value ? null : _saveNameEmail,
                 child: _auth.isLoading.value
                     ? const SizedBox(
                         width: 22,

@@ -184,7 +184,7 @@ class AuthController {
     throw ApiException('Unexpected /me response');
   }
 
-  Future<void> updateName(String name) async {
+  Future<void> updateNameEmail(String name, String email) async {
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -197,7 +197,9 @@ class AuthController {
       final response = await _apiClient.patchJson(
         '/me',
         idToken: token,
-        body: {'name': name.trim()},
+        body: {'name': name.trim(),
+        'email' : email.trim()
+        },
       );
 
       final data = response['data'];

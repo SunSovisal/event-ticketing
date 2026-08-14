@@ -15,6 +15,7 @@ class ProfilePage extends StatelessWidget {
     AuthController auth,
   ) async {
     var editedName = auth.me.value?['name']?.toString() ?? '';
+    var editedEmail = auth.me.value?['email']?.toString() ?? '';
 
     auth.errorMessage.value = '';
 
@@ -31,6 +32,13 @@ class ProfilePage extends StatelessWidget {
                 autofocus: true,
                 decoration: const InputDecoration(labelText: 'Name'),
                 onChanged: (value) => editedName = value,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: editedEmail,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Email'),
+                onChanged: (value) => editedEmail = value,
               ),
               Obx(() {
                 if (auth.errorMessage.value.isEmpty) {
@@ -57,12 +65,13 @@ class ProfilePage extends StatelessWidget {
                 onPressed: auth.isLoading.value
                     ? null
                     : () async {
-                        if (editedName.trim().isEmpty) {
-                          auth.errorMessage.value = 'Name is required';
+                        if (editedName.trim().isEmpty &&
+                            editedEmail.trim().isEmpty) {
+                          auth.errorMessage.value = 'Name & Email is required';
                           return;
                         }
 
-                        await auth.updateName(editedName);
+                        await auth.updateNameEmail(editedName, editedEmail);
 
                         if (auth.errorMessage.value.isEmpty &&
                             dialogContext.mounted) {

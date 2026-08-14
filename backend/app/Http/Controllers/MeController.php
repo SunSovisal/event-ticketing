@@ -24,13 +24,15 @@ class MeController extends Controller
     public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:120']
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:255'],
         ]);
 
         /** @var User $user */
         $user = $request->attributes->get('auth_user');
         $user->update([
-            'name' => trim($validated['name'])
+            'name' => trim($validated['name']),
+            'email' => trim($validated['email']),
         ]);
 
         return response()->json([
