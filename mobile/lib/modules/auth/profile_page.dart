@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/modules/admin/admin_events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
 import 'package:itc_events/modules/health/health_page.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -111,7 +113,7 @@ class ProfilePage extends StatelessWidget {
               )
             : null,
         body: me == null
-            ? Center(child: Text('No profile loaded'))
+            ? const _SignedOutProfile()
             : ListView(
                 padding: EdgeInsets.all(24),
                 children: [
@@ -195,7 +197,11 @@ class ProfilePage extends StatelessWidget {
                               color: AppTheme.primary,
                             ),
                             title: Text('Manage events'),
-                            subtitle: Text('Week 4'),
+                            subtitle: Text(
+                              'Create, publish, and cancel events',
+                            ),
+                            trailing: Icon(Icons.chevron_right),
+                            onTap: () => Get.to(() => const AdminEventsPage()),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -204,7 +210,8 @@ class ProfilePage extends StatelessWidget {
                               color: AppTheme.primary,
                             ),
                             title: Text('Admin scanner'),
-                            subtitle: Text('Week 8'),
+                            subtitle: Text('Coming later'),
+                            trailing: Icon(Icons.chevron_right),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -213,7 +220,8 @@ class ProfilePage extends StatelessWidget {
                               color: AppTheme.primary,
                             ),
                             title: Text('Manual check-in'),
-                            subtitle: Text('Week 7'),
+                            subtitle: Text('Coming later'),
+                            trailing: Icon(Icons.chevron_right),
                           ),
                         ],
                       ),
@@ -225,7 +233,7 @@ class ProfilePage extends StatelessWidget {
                   OutlinedButton(
                     onPressed: () async {
                       await auth.signOut();
-                      Get.offAll(() => SignInPage());
+                      openMainShell();
                     },
                     child: Text('Sign out'),
                   ),
@@ -233,6 +241,35 @@ class ProfilePage extends StatelessWidget {
               ),
       );
     });
+  }
+}
+
+class _SignedOutProfile extends StatelessWidget {
+  const _SignedOutProfile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Spacer(),
+          Icon(Icons.person_outline, size: 56, color: AppTheme.textSecondary),
+          const SizedBox(height: 16),
+          Text(
+            'Sign in to reserve tickets and manage your profile.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () => Get.to(() => const SignInPage()),
+            child: const Text('Sign in'),
+          ),
+          const Spacer(),
+        ],
+      ),
+    );
   }
 }
 

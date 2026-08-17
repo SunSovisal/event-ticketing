@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class CompleteProfilePage extends StatefulWidget {
   const CompleteProfilePage({super.key});
@@ -51,7 +51,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
     if (_auth.errorMessage.value.isEmpty &&
         _auth.me.value?['name']?.toString().isNotEmpty == true && _auth.me.value?['email']?.toString().isNotEmpty == true) {
-      Get.offAll(() => const ProfilePage());
+      openMainShell();
     }
   }
 

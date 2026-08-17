@@ -9,38 +9,52 @@ class AuthPageLayout extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.footer,
+    this.showBack = false,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final Widget? footer;
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _BrandHeader(title: title, subtitle: subtitle),
-                  SizedBox(height: 32),
-                  Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: child,
-                    ),
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _BrandHeader(title: title, subtitle: subtitle),
+                      SizedBox(height: 32),
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: child,
+                        ),
+                      ),
+                      if (footer != null) ...[SizedBox(height: 20), footer!],
+                    ],
                   ),
-                  if (footer != null) ...[SizedBox(height: 20), footer!],
-                ],
+                ),
               ),
             ),
-          ),
+            if (showBack)
+              Positioned(
+                left: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios),
+                  onPressed: () => Navigator.maybePop(context),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -61,9 +75,7 @@ class _BrandHeader extends StatelessWidget {
           width: 200,
           height: 200,
           alignment: Alignment.center,
-          child: Image.asset(
-            'assets/itc_logo.png',
-          ),
+          child: Image.asset('assets/itc_logo.png'),
         ),
         SizedBox(height: 20),
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
@@ -94,11 +106,7 @@ class AuthErrorBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: AppTheme.error,
-            size: 20,
-          ),
+          Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 20),
           SizedBox(width: 8),
           Expanded(
             child: Text(

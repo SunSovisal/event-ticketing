@@ -11,6 +11,14 @@ abstract final class AppTheme {
   static const Color success = Color(0xFF16A34A);
   static const Color error = Color(0xFFDC2626);
   static const Color warning = Color(0xFFEA580C);
+  static const Color heroBlue = Color(0xFF1E3A8A);
+  static const Color heroIndigo = Color(0xFF4338CA);
+
+  static const LinearGradient splashGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
+  );
 
   static ThemeData get light {
     final colorScheme = ColorScheme(

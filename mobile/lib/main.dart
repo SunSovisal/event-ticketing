@@ -6,7 +6,7 @@ import 'package:get/route_manager.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_binding.dart';
-import 'package:itc_events/modules/auth/sign_in_page.dart';
+import 'package:itc_events/modules/events/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialBinding: AuthBinding(),
-      home: SignInPage(),
+      home: const SplashPage(),
     );
   }
 }

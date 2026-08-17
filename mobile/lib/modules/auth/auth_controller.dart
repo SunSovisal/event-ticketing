@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
 
 class AuthController {
@@ -8,6 +11,11 @@ class AuthController {
 
   final ApiClient _apiClient;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: AppConfig.firebaseWebClientId.isEmpty
+        ? null
+        : AppConfig.firebaseWebClientId,
+  );
 
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
@@ -67,7 +75,7 @@ class AuthController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -110,6 +118,9 @@ class AuthController {
           }
         },
         verificationFailed: (error) {
+          log("Firebase Auth Error Code: ${error.code}");
+          log("Firebase Auth Error Message: ${error.message}");
+
           errorMessage.value = _messageFor(
             error,
             fallback: 'Could not send verification code',
@@ -127,11 +138,13 @@ class AuthController {
         },
       );
     } catch (error) {
-      errorMessage.value = _messageFor(
-        error,
-        fallback: 'Could not start phone verification',
-      );
-      isLoading.value = false;
+      if (error is FirebaseAuthException) {
+        errorMessage.value = _messageFor(
+          error,
+          fallback: 'Could not start phone verification',
+        );
+        isLoading.value = false;
+      }
     }
   }
 
@@ -165,12 +178,22 @@ class AuthController {
     }
   }
 
-  Future<String?> getIdToken() async {
-    return currentUser?.getIdToken();
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    return currentUser?.getIdToken(forceRefresh);
+  }
+
+  Future<void> restoreSession() async {
+    if (currentUser == null || me.value != null) return;
+    try {
+      await fetchMe();
+    } catch (_) {
+      // Profile stays in the signed-out layout until the user signs in again.
+    }
   }
 
   Future<void> fetchMe() async {
-    final token = await getIdToken();
+    // Fresh token for /me so Laravel always gets the latest Firebase ID token.
+    final token = await getIdToken(forceRefresh: true);
     if (token == null) {
       throw ApiException('Not signed in', statusCode: 401);
     }
@@ -197,9 +220,7 @@ class AuthController {
       final response = await _apiClient.patchJson(
         '/me',
         idToken: token,
-        body: {'name': name.trim(),
-        'email' : email.trim()
-        },
+        body: {'name': name.trim(), 'email': email.trim()},
       );
 
       final data = response['data'];
@@ -220,7 +241,7 @@ class AuthController {
 
   Future<void> signOut() async {
     await _auth.signOut();
-    await GoogleSignIn().signOut();
+    await _googleSignIn.signOut();
     me.value = null;
   }
 
@@ -230,7 +251,7 @@ class AuthController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -239,12 +260,17 @@ class AuthController {
       );
       await currentUser!.linkWithCredential(credential);
       await currentUser!.reload();
-      await currentUser!.getIdToken(true); // force fresh token with updated claims
-      await fetchMe();                     // sync new claims to the database now
+      await currentUser!.getIdToken(
+        true,
+      ); // force fresh token with updated claims
+      await fetchMe(); // sync new claims to the database now
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _messageFor(e, fallback: 'Could not link Google');
     } catch (error) {
-      errorMessage.value = _messageFor(error, fallback: 'Could not link Google');
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'Could not link Google',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -266,8 +292,10 @@ class AuthController {
           try {
             await currentUser!.linkWithCredential(credential);
             await currentUser!.reload();
-            await currentUser!.getIdToken(true); // force fresh token with updated claims
-            await fetchMe();                     // sync new claims to the database now
+            await currentUser!.getIdToken(
+              true,
+            ); // force fresh token with updated claims
+            await fetchMe(); // sync new claims to the database now
           } catch (error) {
             errorMessage.value = _messageFor(
               error,
@@ -321,8 +349,10 @@ class AuthController {
 
       await currentUser!.linkWithCredential(credential);
       await currentUser!.reload();
-      await currentUser!.getIdToken(true); // force fresh token with updated claims
-      await fetchMe();                     // sync new claims to the database now
+      await currentUser!.getIdToken(
+        true,
+      ); // force fresh token with updated claims
+      await fetchMe(); // sync new claims to the database now
 
       phoneVerificationId.value = '';
       phoneCodeSent.value = false;
@@ -335,12 +365,12 @@ class AuthController {
       isLoading.value = false;
     }
   }
-  
+
   void resetPhoneVerification() {
-  errorMessage.value = '';
-  phoneCodeSent.value = false;
-  phoneVerificationId.value = '';
-}
+    errorMessage.value = '';
+    phoneCodeSent.value = false;
+    phoneVerificationId.value = '';
+  }
 
   String _messageFor(Object error, {required String fallback}) {
     if (error is FirebaseAuthException) {

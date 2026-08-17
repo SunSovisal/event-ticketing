@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
-import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/register_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -37,7 +37,7 @@ class _SignInPageState extends State<SignInPage> {
       _passwordController.text,
     );
     if (_auth.isSignedIn && _auth.me.value != null) {
-      Get.off(() => ProfilePage());
+      openMainShell();
     }
   }
 
@@ -46,6 +46,7 @@ class _SignInPageState extends State<SignInPage> {
     return AuthPageLayout(
       title: 'Welcome back',
       subtitle: 'Sign in to browse events and manage your tickets.',
+      showBack: true,
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -119,7 +120,7 @@ class _SignInPageState extends State<SignInPage> {
                   : () async {
                       await _auth.signInWithGoogle();
                       if (_auth.isSignedIn && _auth.me.value != null) {
-                        Get.off(() => ProfilePage());
+                        openMainShell();
                       }
                     },
               icon: Image.asset(

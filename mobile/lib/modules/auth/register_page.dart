@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -52,7 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     await _auth.registerWithEmail(name, email, password);
     if (_auth.isSignedIn && _auth.me.value != null) {
-      Get.off(() => ProfilePage());
+      openMainShell();
     }
   }
 

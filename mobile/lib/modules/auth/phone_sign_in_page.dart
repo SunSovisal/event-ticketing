@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/complete_profile_page.dart';
-import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class PhoneSignInPage extends StatefulWidget {
   // Set linkMode to true when the user is already signed in and wants to
@@ -73,7 +73,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
       if (name.isEmpty) {
         Get.offAll(() => const CompleteProfilePage());
       } else {
-        Get.offAll(() => const ProfilePage());
+        openMainShell();
       }
     }
   }
