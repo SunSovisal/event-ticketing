@@ -59,10 +59,18 @@ class VerifyFirebaseToken
             }
 
             $request->attributes->set('auth_user', $user);
-        } catch (FailedToVerifyToken) {
+        } catch (FailedToVerifyToken $exception) {
+            report($exception);
+
+            $message = 'Invalid or expired token.';
+            if (config('app.debug')) {
+                $message .= ' Debug: '.$exception->getMessage();
+                $message .= '. '.$this->debugTokenContext($token);
+            }
+
             return $this->errorResponse(
                 'UNAUTHORIZED',
-                'Invalid or expired token.',
+                $message,
                 401,
             );
         } catch (\Throwable $exception) {
@@ -85,6 +93,31 @@ class VerifyFirebaseToken
         }
 
         return $value;
+    }
+
+    private function debugTokenContext(string $token): string
+    {
+        $parts = explode('.', $token);
+        if (count($parts) < 2) {
+            return 'Token format invalid.';
+        }
+
+        $payloadJson = base64_decode(strtr($parts[1], '-_', '+/'), true);
+        $payload = is_string($payloadJson) ? json_decode($payloadJson, true) : null;
+
+        $aud = is_array($payload) ? ($payload['aud'] ?? 'missing') : 'unreadable';
+        $iss = is_array($payload) ? ($payload['iss'] ?? 'missing') : 'unreadable';
+
+        $backendProject = 'unknown';
+        $credentialsPath = config('firebase.projects.app.credentials');
+        if (is_string($credentialsPath) && is_readable($credentialsPath)) {
+            $credentials = json_decode((string) file_get_contents($credentialsPath), true);
+            if (is_array($credentials)) {
+                $backendProject = $credentials['project_id'] ?? 'missing';
+            }
+        }
+
+        return "Token aud={$aud}, iss={$iss}; backend project_id={$backendProject}";
     }
 
     private function errorResponse(string $code, string $message, int $status): Response

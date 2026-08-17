@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "674255742143",
+    "project_id": "itc-events",
+    "storage_bucket": "itc-events.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674255742143:android:bf5fe2b6e4a21819a5d20a",
+        "android_client_info": {
+          "package_name": "edu.itc.events.itc_events"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "674255742143-4qguvcjga976i94g8ehiuvfivv3b0n9d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.itc.events.itc_events",
+            "certificate_hash": "b86ff6ec90f0a8e672ba2635937957b288fabdf4"
+          }
+        },
+        {
+          "client_id": "674255742143-da251k5gdgdp4pf5a3cf8bh5s2tpc39j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDrBCUHHfpxLgInjGAUFP8HzhdkyCaE7E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "674255742143-da251k5gdgdp4pf5a3cf8bh5s2tpc39j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "674255742143-bq6f7rsh3hrk8erlvea35rkisk8i5h00.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "edu.itc.events.itcEvents"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
