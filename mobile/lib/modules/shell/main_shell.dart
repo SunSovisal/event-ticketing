@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
+import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/auth/profile_page.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';
@@ -26,6 +28,11 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
+    if (!Get.isRegistered<EventController>()) {
+      Get.put(EventController(apiClient: Get.find<ApiClient>()));
+    } else {
+      Get.find<EventController>().fetchEvents();
+    }
     Get.find<AuthController>().restoreSession();
   }
 
