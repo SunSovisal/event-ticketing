@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Model
 {
@@ -25,6 +26,36 @@ class User extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function profile(): HasOne
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    /**
+     * Create or update campus fields. A missing profile is created only when
+     * at least one campus value is non-null.
+     *
+     * @param  array{student_id?: ?string, department?: ?string, year?: ?int}  $campus
+     */
+    public function syncCampusProfile(array $campus): void
+    {
+        if ($campus === []) {
+            return;
+        }
+
+        $allNull = collect($campus)->every(fn (mixed $value) => $value === null);
+        $profile = $this->profile;
+
+        if ($profile === null && $allNull) {
+            return;
+        }
+
+        $this->profile()->updateOrCreate(
+            ['user_id' => $this->id],
+            $campus,
+        );
+    }
+
     protected function casts(): array
     {
         return [
@@ -34,10 +65,12 @@ class User extends Model
     }
 
     /**
-     * @return array{id: string, firebase_uid: string, email: ?string, phone_number: ?string, name: ?string, is_admin: bool, is_active: bool}
+     * @return array{id: string, firebase_uid: string, email: ?string, phone_number: ?string, name: ?string, is_admin: bool, is_active: bool, student_id: ?string, department: ?string, year: ?int}
      */
     public function toProfile(): array
     {
+        $profile = $this->profile;
+
         return [
             'id' => $this->id,
             'firebase_uid' => $this->firebase_uid,
@@ -46,6 +79,9 @@ class User extends Model
             'name' => $this->name,
             'is_admin' => $this->is_admin,
             'is_active' => $this->is_active,
+            'student_id' => $profile?->student_id,
+            'department' => $profile?->department,
+            'year' => $profile?->year,
         ];
     }
 

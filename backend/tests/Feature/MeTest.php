@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 use Lcobucci\JWT\Token\DataSet;
@@ -13,7 +14,7 @@ use Tests\TestCase;
 class MeTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     public function test_me_requires_a_bearer_token(): void
     {
         $this->getJson('/api/v1/me')
@@ -50,6 +51,130 @@ class MeTest extends TestCase
             ->getJson('/api/v1/me')
             ->assertOk()
             ->assertJsonPath('data.name', 'ITC Admin')
-            ->assertJsonPath('data.is_admin', true);
+            ->assertJsonPath('data.is_admin', true)
+            ->assertJsonPath('data.student_id', null)
+            ->assertJsonPath('data.department', null)
+            ->assertJsonPath('data.year', null);
+    }
+
+    public function test_patch_me_creates_campus_profile(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Dara',
+            'email' => 'dara@student.itc.edu.kh',
+        ]);
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'student_id' => 'e20240001',
+                'department' => 'GIC',
+                'year' => 3,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Dara')
+            ->assertJsonPath('data.student_id', 'e20240001')
+            ->assertJsonPath('data.department', 'GIC')
+            ->assertJsonPath('data.year', 3);
+
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'student_id' => 'e20240001',
+            'department' => 'GIC',
+            'year' => 3,
+        ]);
+    }
+
+    public function test_patch_me_omitted_campus_fields_are_unchanged(): void
+    {
+        $user = User::factory()->create();
+        UserProfile::factory()->create([
+            'user_id' => $user->id,
+            'student_id' => 'e20240001',
+            'department' => 'GIC',
+            'year' => 2,
+        ]);
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'name' => 'Updated Name',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Updated Name')
+            ->assertJsonPath('data.student_id', 'e20240001')
+            ->assertJsonPath('data.department', 'GIC')
+            ->assertJsonPath('data.year', 2);
+    }
+
+    public function test_patch_me_rejects_duplicate_student_id(): void
+    {
+        $owner = User::factory()->create();
+        UserProfile::factory()->create([
+            'user_id' => $owner->id,
+            'student_id' => 'e20240001',
+        ]);
+
+        $other = User::factory()->create();
+
+        $this->actingAsFirebaseUser($other)
+            ->patchJson('/api/v1/me', [
+                'student_id' => 'e20240001',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'STUDENT_ID_TAKEN')
+            ->assertJsonPath('error.message', 'Student ID already used.');
+
+        $this->assertDatabaseMissing('user_profiles', [
+            'user_id' => $other->id,
+        ]);
+    }
+
+    public function test_patch_me_allows_keeping_own_student_id(): void
+    {
+        $user = User::factory()->create();
+        UserProfile::factory()->create([
+            'user_id' => $user->id,
+            'student_id' => 'e20240001',
+            'department' => 'GEE',
+            'year' => 1,
+        ]);
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'student_id' => 'e20240001',
+                'department' => 'GIC',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.student_id', 'e20240001')
+            ->assertJsonPath('data.department', 'GIC')
+            ->assertJsonPath('data.year', 1);
+    }
+
+    public function test_patch_me_does_not_create_empty_profile(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'student_id' => '',
+                'department' => null,
+                'year' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.student_id', null);
+
+        $this->assertDatabaseMissing('user_profiles', [
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_patch_me_rejects_invalid_year(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'year' => 9,
+            ])
+            ->assertUnprocessable();
     }
 }
