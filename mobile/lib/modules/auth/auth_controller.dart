@@ -381,4 +381,40 @@ class AuthController {
     }
     return error.toString();
   }
+
+  Future<void> forgotPassword(String email) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+
+      Get.snackbar(
+        'Success',
+        'Password reset email has been sent to ${email.trim()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on FirebaseAuthException catch (e) {
+      errorMessage.value = _messageFor(
+        e,
+        fallback: 'Could not send password reset email',
+      );
+
+      Get.snackbar(
+        'Error',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (error) {
+      errorMessage.value = error.toString();
+
+      Get.snackbar(
+        'Error',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
