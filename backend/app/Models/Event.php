@@ -46,6 +46,39 @@ class Event extends Model
         return $this->ends_at ?? $this->starts_at->copy()->addHours(2);
     }
 
+    public function hasEnded(?Carbon $at = null): bool
+    {
+        return ($at ?? now())->gte($this->effectiveEndsAt());
+    }
+
+    public function checkInOpensAt(): Carbon
+    {
+        return $this->starts_at->copy()->subHours(2);
+    }
+
+    public function checkInClosesAt(): Carbon
+    {
+        return $this->effectiveEndsAt()->copy()->addHours(2);
+    }
+
+    /**
+     * @return 'too_early'|'too_late'|null
+     */
+    public function checkInWindowResult(?Carbon $at = null): ?string
+    {
+        $at ??= now();
+
+        if ($at->lt($this->checkInOpensAt())) {
+            return 'too_early';
+        }
+
+        if ($at->gt($this->checkInClosesAt())) {
+            return 'too_late';
+        }
+
+        return null;
+    }
+
     public function spotsRemaining(): int
     {
         $reserved = (int) ($this->reserved_count ?? 0);
