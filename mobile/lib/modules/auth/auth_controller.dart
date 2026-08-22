@@ -207,7 +207,13 @@ class AuthController {
     throw ApiException('Unexpected /me response');
   }
 
-  Future<void> updateNameEmail(String name, String email) async {
+  Future<void> updateProfile({
+    required String name,
+    required String email,
+    String? studentId,
+    String? department,
+    int? year,
+  }) async {
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -220,7 +226,13 @@ class AuthController {
       final response = await _apiClient.patchJson(
         '/me',
         idToken: token,
-        body: {'name': name.trim(), 'email': email.trim()},
+        body: {
+          'name': name.trim(),
+          'email': email.trim(),
+          'student_id': _blankToNull(studentId),
+          'department': _blankToNull(department),
+          'year': year,
+        },
       );
 
       final data = response['data'];
@@ -232,11 +244,19 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Could not update name',
+        fallback: 'Could not update profile',
       );
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String? _blankToNull(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return null;
+    }
+    return trimmed;
   }
 
   Future<void> signOut() async {

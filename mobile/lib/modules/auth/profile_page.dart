@@ -5,6 +5,7 @@ import 'package:itc_events/modules/admin/admin_events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
+import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
 import 'package:itc_events/modules/health/health_page.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
@@ -12,86 +13,15 @@ import 'package:itc_events/modules/shell/main_shell.dart';
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  Future<void> _showEditNameDialog(
+  Future<void> _showEditProfileDialog(
     BuildContext context,
     AuthController auth,
   ) async {
-    var editedName = auth.me.value?['name']?.toString() ?? '';
-    var editedEmail = auth.me.value?['email']?.toString() ?? '';
-
     auth.errorMessage.value = '';
 
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit name'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: editedName,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Name'),
-                onChanged: (value) => editedName = value,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: editedEmail,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Email'),
-                onChanged: (value) => editedEmail = value,
-              ),
-              Obx(() {
-                if (auth.errorMessage.value.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    auth.errorMessage.value,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                );
-              }),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            Obx(
-              () => FilledButton(
-                onPressed: auth.isLoading.value
-                    ? null
-                    : () async {
-                        if (editedName.trim().isEmpty &&
-                            editedEmail.trim().isEmpty) {
-                          auth.errorMessage.value = 'Name & Email is required';
-                          return;
-                        }
-
-                        await auth.updateNameEmail(editedName, editedEmail);
-
-                        if (auth.errorMessage.value.isEmpty &&
-                            dialogContext.mounted) {
-                          Navigator.pop(dialogContext);
-                        }
-                      },
-                child: auth.isLoading.value
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (dialogContext) => _EditProfileDialog(auth: auth),
     );
   }
 
@@ -101,6 +31,14 @@ class ProfilePage extends StatelessWidget {
 
     return Obx(() {
       final me = auth.me.value;
+      final studentId = me?['student_id']?.toString();
+      final department = me?['department']?.toString();
+      final year = me?['year'];
+      final campusParts = <String>[
+        if (studentId != null && studentId.isNotEmpty) studentId,
+        if (department != null && department.isNotEmpty) department,
+        if (year != null) 'Year $year',
+      ];
 
       return Scaffold(
         appBar: AppBar(title: Text('Profile')),
@@ -151,6 +89,13 @@ class ProfilePage extends StatelessWidget {
                                   me['email']?.toString() ?? '',
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
+                                if (campusParts.isNotEmpty) ...[
+                                  SizedBox(height: 4),
+                                  Text(
+                                    campusParts.join(' · '),
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
                                 if (auth.isAdmin) ...[
                                   SizedBox(height: 8),
                                   Container(
@@ -178,8 +123,9 @@ class ProfilePage extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Edit name',
-                            onPressed: () => _showEditNameDialog(context, auth),
+                            tooltip: 'Edit profile',
+                            onPressed: () =>
+                                _showEditProfileDialog(context, auth),
                             icon: const Icon(Icons.edit_outlined),
                           ),
                         ],
@@ -242,6 +188,151 @@ class ProfilePage extends StatelessWidget {
       );
     });
   }
+}
+
+class _EditProfileDialog extends StatefulWidget {
+  const _EditProfileDialog({required this.auth});
+
+  final AuthController auth;
+
+  @override
+  State<_EditProfileDialog> createState() => _EditProfileDialogState();
+}
+
+class _EditProfileDialogState extends State<_EditProfileDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _studentIdController;
+  String? _department;
+  int? _year;
+
+  @override
+  void initState() {
+    super.initState();
+    final me = widget.auth.me.value;
+    _nameController = TextEditingController(text: me?['name']?.toString() ?? '');
+    _emailController = TextEditingController(text: me?['email']?.toString() ?? '');
+    _studentIdController = TextEditingController(
+      text: me?['student_id']?.toString() ?? '',
+    );
+    _department = me?['department']?.toString();
+    _year = _yearFrom(me?['year']);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _studentIdController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (name.isEmpty || email.isEmpty) {
+      widget.auth.errorMessage.value = 'Name and email are required';
+      return;
+    }
+
+    if (!GetUtils.isEmail(email)) {
+      widget.auth.errorMessage.value = 'Enter a valid email';
+      return;
+    }
+
+    await widget.auth.updateProfile(
+      name: name,
+      email: email,
+      studentId: _studentIdController.text,
+      department: _department,
+      year: _year,
+    );
+
+    if (widget.auth.errorMessage.value.isEmpty && mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit profile'),
+      content: SizedBox(
+        width: 360,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              const SizedBox(height: 16),
+              CampusProfileFields(
+                studentIdController: _studentIdController,
+                department: _department,
+                year: _year,
+                onDepartmentChanged: (value) =>
+                    setState(() => _department = value),
+                onYearChanged: (value) => setState(() => _year = value),
+              ),
+              Obx(() {
+                if (widget.auth.errorMessage.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    widget.auth.errorMessage.value,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        Obx(
+          () => FilledButton(
+            onPressed: widget.auth.isLoading.value ? null : _save,
+            child: widget.auth.isLoading.value
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Save'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+int? _yearFrom(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString() ?? '');
 }
 
 class _SignedOutProfile extends StatelessWidget {
