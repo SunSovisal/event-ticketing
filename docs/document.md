@@ -1,6 +1,8 @@
 # ITC Event Ticketing MVP - Project Documentation
 
-**Baseline:** Version 2.7 | **Delivery limit:** 10 weeks | **Status:** Scope locked
+**Baseline:** Version 2.8 | **Delivery limit:** 10 weeks | **Status:** Scope locked
+
+> **v2.8 scope change:** additive tables `user_profiles`, `saved_events`, and `check_in_attempts`. The existing `users`, `events`, and `tickets` tables are **unchanged** (no new columns). Campus profile fields, event bookmarks, and check-in attempt logs live in the new tables only.
 
 > **v2.7 scope change:** one optional **event cover image** stored on Cloudinary. Galleries, profile photos, and other file uploads stay out of scope.
 
@@ -8,7 +10,7 @@
 
 ## 1. Project summary
 
-The application publishes free events happening at ITC. A guest can browse events and see each event’s optional cover image. An attendee can sign in, reserve one place, receive a QR ticket, and view that ticket in the Flutter app. An admin uses the **same Flutter app** with admin-only screens to create, edit, publish, and cancel events, set one cover image per event, view attendees, scan QR tickets, and enter ticket codes manually when the camera cannot be used. Laravel provides a REST API only — there is no separate web admin panel.
+The application publishes free events happening at ITC. A guest can browse events and see each event’s optional cover image. An attendee can sign in, optionally complete a campus profile, save events, reserve one place, receive a QR ticket, and view that ticket in the Flutter app. An admin uses the **same Flutter app** with admin-only screens to create, edit, publish, and cancel events, set one cover image per event, view attendees, scan QR tickets, and enter ticket codes manually when the camera cannot be used. Every scan attempt is logged. Laravel provides a REST API only — there is no separate web admin panel.
 
 | Item | Fixed decision |
 | --- | --- |
@@ -65,6 +67,8 @@ The team develops on two machines with different primary simulators. Both develo
 - View event details, including cover image (or ITC placeholder), date, time, ITC room/building, and remaining places.
 - Sign in with Firebase email/password, Google, or phone number with an SMS verification code.
 - Link additional sign-in methods to the currently authenticated Firebase account so they share one UID and one ticket history.
+- Let an attendee store optional campus profile fields (student ID, department, year) in `user_profiles`. Display name stays on `users`.
+- Let a signed-in attendee save and unsave events (`saved_events`). Saving does not reserve a seat and does not count toward capacity.
 - Reserve one free ticket per attendee per event.
 - Enforce event capacity without overselling.
 - View upcoming, past, and cancelled tickets.
@@ -73,6 +77,7 @@ The team develops on two machines with different primary simulators. Both develo
 - Let an admin set, replace, or remove **one optional cover image** per event. Laravel uploads the file to Cloudinary and stores the returned URL. Flutter Home and event detail display that cover, or the ITC placeholder when none is set.
 - Let an admin view attendees and reservation/check-in counts on the event detail screen in Flutter (no separate analytics dashboard).
 - Provide admin-only QR scanner and manual ticket-code check-in screens in Flutter.
+- Record every admin check-in attempt (success and failure) in `check_in_attempts`. Successful check-in still updates `tickets` only; that table gains no new columns.
 - Handle loading, empty, validation, sold-out, cancelled, and duplicate-scan states.
 
 ### 2.2 Excluded
@@ -95,8 +100,8 @@ The team develops on two machines with different primary simulators. Both develo
 | Role | Meaning | Allowed actions |
 | --- | --- | --- |
 | Guest | A person who is not signed in. This is not stored as a database role. | Browse published upcoming events and open event details. |
-| Attendee | A signed-in Firebase user with `is_admin = false`. | Manage own profile, reserve a ticket, and view only their own tickets. |
-| Admin | A trusted ITC staff account with `is_admin = true`. | Manage every event, set an optional cover image, view attendees, and check in any valid ITC ticket. |
+| Attendee | A signed-in Firebase user with `is_admin = false`. | Manage own profile (display name and optional campus fields), save events, reserve a ticket, and view only their own tickets. |
+| Admin | A trusted ITC staff account with `is_admin = true`. | Manage every event, set an optional cover image, view attendees, check in any valid ITC ticket, and view check-in attempt history for an event. |
 
 ### 3.1 Authorization rules
 
@@ -105,7 +110,8 @@ The team develops on two machines with different primary simulators. Both develo
 - Firebase claims do not grant admin access by themselves.
 - An attendee's user ID always comes from the verified Firebase token, never from request input.
 - An attendee may retrieve only tickets whose `user_id` matches the authenticated user.
-- Only an admin may call admin API endpoints or open admin-only Flutter routes (event management, scanner, manual check-in).
+- An attendee may read and update only their own `user_profiles` row and `saved_events` rows.
+- Only an admin may call admin API endpoints or open admin-only Flutter routes (event management, scanner, manual check-in, check-in attempt history).
 - Admin Flutter routes are hidden from non-admin users and independently rejected by Laravel.
 - There is no `organizer_id` and no event-ownership policy because every event belongs to the single ITC application.
 
@@ -176,7 +182,9 @@ flowchart LR
 5. Laravel validates the event, duplicate-ticket rule, time, and capacity.
 6. Laravel returns an existing ticket or creates a new ticket.
 7. Flutter displays the opaque ticket code as a QR image.
-8. At ITC, the admin scans the code and Laravel records one check-in.
+8. At ITC, the admin scans the code and Laravel records one check-in on `tickets` and one row in `check_in_attempts`.
+
+A signed-in attendee may save an event from Home or event detail without reserving. Save and unsave write only to `saved_events`.
 
 ### 4.2 Admin flow
 
@@ -187,6 +195,7 @@ flowchart LR
 5. The admin opens the event to see attendee rows and reservation/check-in counts.
 6. At the event, the admin opens **Admin scanner** and scans attendee QR codes.
 7. If scanning fails, the admin opens **Manual check-in**, enters the same ticket code, and Laravel records check-in through the same `CheckInService`.
+8. `CheckInService` inserts a `check_in_attempts` row for every try (success, duplicate, unknown code, wrong window). The admin may open check-in history on the admin event detail screen.
 
 ### 4.3 Edge-case behavior
 
@@ -198,7 +207,8 @@ flowchart LR
 | Event cancelled | Reject reservation and check-in. | Event cancelled |
 | Event ended | Reject new reservations and late check-in. | Event has ended |
 | Non-admin uses scanner endpoint | Return `403 FORBIDDEN`. | Admin access required |
-| Unknown ticket code | Return `404 INVALID_TICKET`. | Ticket not found |
+| Unknown ticket code | Return `404 INVALID_TICKET` and insert `check_in_attempts` with `result = not_found`. | Ticket not found |
+| Duplicate student ID | Return `409 STUDENT_ID_TAKEN`. | Student ID already used |
 
 ## 5. Business logic
 
@@ -267,26 +277,45 @@ The number displayed in Flutter is informational. The transaction is the final a
 ### 5.4 Check-in logic
 
 ```text
-function checkIn(ticketCode, authenticatedAdmin):
+function checkIn(ticketCode, authenticatedAdmin, method):
     reject 403 unless authenticatedAdmin.is_admin
+
+    method = method or 'qr'   # qr | manual
+    ticket = SELECT ticket + event WHERE ticket_code = code
+    result = classify(ticket) # success path uses FOR UPDATE as below
+
     begin transaction
+    if ticket exists:
+        ticket = SELECT ticket + event
+                 WHERE ticket_code = code FOR UPDATE
+        if event.status is not published:          result = event_cancelled
+        else if outside the event check-in window: result = too_early or too_late
+        else if ticket.status is checked_in:       result = already_checked_in
+        else if ticket.status is not valid:        result = cancelled
+        else:
+            set ticket.status = checked_in
+            set ticket.checked_in_at = now UTC
+            set ticket.checked_in_by = authenticatedAdmin.id
+            result = success
+    else:
+        result = not_found
 
-    ticket = SELECT ticket + event
-             WHERE ticket_code = code FOR UPDATE
+    insert check_in_attempts (
+        scanned_by, ticket_id, event_id, scanned_code, method, result
+    )
+    # ticket_id and event_id are null when result is not_found
+    commit
 
-    reject 404 if ticket does not exist
-    reject 422 if event.status is not published
-    reject 422 if outside the event check-in window
-    reject 409 with checked_in_at if ticket is already checked_in
-    reject 422 if ticket.status is not valid
-
-    set ticket.status = checked_in
-    set ticket.checked_in_at = now UTC
-    set ticket.checked_in_by = authenticatedAdmin.id
-    commit and return 200
+    reject 404 if result is not_found
+    reject 409 with checked_in_at if result is already_checked_in
+    reject 422 if result is cancelled, event_cancelled, too_early, or too_late
+    return 200 if result is success
 ```
 
-The fixed MVP check-in window opens two hours before `starts_at` and closes two hours after the effective event end. Flutter scanning and manual entry must call the same Laravel `CheckInService` so their behavior cannot diverge.
+- `tickets.checked_in_at` and `tickets.checked_in_by` remain the source of truth for a successful check-in.
+- `check_in_attempts` is append-only. Never update or delete an attempt row.
+- Insert an attempt for **every** scan, including failures and unknown codes.
+- The fixed MVP check-in window opens two hours before `starts_at` and closes two hours after the effective event end. Flutter scanning and manual entry must call the same Laravel `CheckInService` so their behavior cannot diverge.
 
 ### 5.5 Cancellation logic
 
@@ -312,12 +341,12 @@ flowchart LR
 
 | Component | Responsibility |
 | --- | --- |
-| Flutter | Guest browsing, attendee tickets, QR display, admin event management, attendee lists, scanner, manual check-in, cover image picker/display, and minimal semi-flat card UI (§10.2). |
+| Flutter | Guest browsing, attendee tickets, QR display, campus profile, saved events, admin event management, attendee lists, scanner, manual check-in, cover image picker/display, and minimal semi-flat card UI (§10.2). |
 | GetX | Controllers, reactive UI state, dependency injection, named routes, and route guards. |
 | `http` | Small, explicit HTTP client wrapped by `ApiClient` for requests, bearer tokens, timeouts, JSON, one multipart cover upload, and errors. |
 | Firebase Auth | Email/password, Google, and phone/SMS identity for all Flutter users (attendees and admin). |
-| Laravel API | Token verification, authorization, validation, ticket rules, check-in rules, admin event lifecycle, and Cloudinary cover upload. |
-| PostgreSQL | Users, events (including cover URL), tickets, constraints, locks, and audit timestamps. |
+| Laravel API | Token verification, authorization, validation, ticket rules, check-in rules, campus profile, saved events, admin event lifecycle, and Cloudinary cover upload. |
+| PostgreSQL | Users, events (including cover URL), tickets, user profiles, saved events, check-in attempts, constraints, locks, and audit timestamps. |
 | Cloudinary | Host, transform, and deliver the single event cover image. PostgreSQL stores only `image_url` and `image_public_id`. |
 
 ### 6.1 Important separation
@@ -330,6 +359,20 @@ flowchart LR
 - PostgreSQL provides the durable source of truth for application data. Cloudinary is the durable store for cover image bytes.
 
 ## 7. Database design
+
+Core tables `users`, `events`, and `tickets` are frozen. v2.8 attaches campus identity, bookmarks, and scan history through new tables only.
+
+```mermaid
+erDiagram
+  users ||--o| user_profiles : has
+  users ||--o{ tickets : reserves
+  users ||--o{ saved_events : bookmarks
+  events ||--o{ tickets : sells
+  events ||--o{ saved_events : saved_by
+  tickets ||--o{ check_in_attempts : scanned
+  users ||--o{ check_in_attempts : scans
+  events ||--o{ check_in_attempts : at_door
+```
 
 ### 7.1 Users
 
@@ -396,12 +439,83 @@ tickets
   UNIQUE (event_id, user_id)
 ```
 
-### 7.4 Required indexes
+`users`, `events`, and `tickets` are frozen. v2.8 adds no columns to them. New facts attach through foreign keys on the tables below.
+
+### 7.4 User profiles
+
+Campus identity, not login identity. `users` keeps Firebase, email, phone, display name, and `is_admin`.
+
+```text
+user_profiles
+  id           UUID PRIMARY KEY
+  user_id      UUID NOT NULL UNIQUE REFERENCES users(id)
+  student_id   VARCHAR(32) NULL UNIQUE
+  department   VARCHAR(80) NULL
+  year         SMALLINT NULL
+               CHECK (year IS NULL OR year BETWEEN 1 AND 8)
+  created_at   TIMESTAMPTZ NOT NULL
+  updated_at   TIMESTAMPTZ NOT NULL
+```
+
+- One row per user, created lazily on first campus-field write (complete-profile or `PATCH /me`).
+- All campus fields are nullable so existing accounts keep working.
+- `student_id` is unique when present so two accounts cannot claim the same ITC ID.
+- Tickets still print `users.name`. Department and year are for profile display and admin attendee context later.
+- Do not store a profile photo. Avatars stay initials/silhouette (§10.2).
+
+### 7.5 Saved events
+
+Bookmarks only. Does not reserve a seat and does not count toward capacity.
+
+```text
+saved_events
+  id          UUID PRIMARY KEY
+  user_id     UUID NOT NULL REFERENCES users(id)
+  event_id    UUID NOT NULL REFERENCES events(id)
+  created_at  TIMESTAMPTZ NOT NULL
+  UNIQUE (user_id, event_id)
+```
+
+- Insert = save. Delete the row = unsave. There is no `status` column.
+- Guests cannot save events.
+- Saving a cancelled or past event is allowed; list endpoints may hide those in the UI.
+- Unique `(user_id, event_id)` prevents double-saves.
+
+### 7.6 Check-in attempts
+
+Append-only scan log. Successful check-in remains on `tickets`.
+
+```text
+check_in_attempts
+  id           UUID PRIMARY KEY
+  scanned_by   UUID NOT NULL REFERENCES users(id)
+  ticket_id    UUID NULL REFERENCES tickets(id)
+  event_id     UUID NULL REFERENCES events(id)
+  scanned_code VARCHAR(64) NOT NULL
+  method       VARCHAR NOT NULL
+               CHECK (method IN ('qr','manual'))
+  result       VARCHAR NOT NULL
+               CHECK (result IN (
+                 'success','not_found','already_checked_in',
+                 'cancelled','too_early','too_late','event_cancelled'
+               ))
+  created_at   TIMESTAMPTZ NOT NULL
+```
+
+- Write every scan, including failures.
+- `ticket_id` and `event_id` are null when `result` is `not_found`.
+- When a ticket is found, copy `event_id` from that ticket so door history can be queried per event.
+- No `updated_at`. Never edit an attempt row; insert another if they scan again.
+
+### 7.7 Required indexes
 
 - `events(status, starts_at)` for the public event list.
 - `tickets(user_id, created_at)` for My Tickets.
 - `tickets(event_id, status)` for capacity and attendee totals.
-- Unique indexes for `users.firebase_uid`, `tickets.ticket_code`, and `(event_id, user_id)`.
+- Unique indexes for `users.firebase_uid`, `tickets.ticket_code`, and `tickets(event_id, user_id)`.
+- Unique `user_profiles.user_id` and unique `user_profiles.student_id` (nullable).
+- Unique `saved_events(user_id, event_id)` and `saved_events(user_id, created_at)` for the saved list.
+- `check_in_attempts(ticket_id, created_at)`, `check_in_attempts(event_id, created_at)`, and `check_in_attempts(scanned_by, created_at)`.
 
 ## 8. REST API
 
@@ -413,11 +527,14 @@ tickets
 
 | Method | Endpoint | Access | Purpose |
 | --- | --- | --- | --- |
-| GET | `/me` | Attendee/admin | Return profile and `is_admin`. |
-| PATCH | `/me` | Attendee/admin | Update display name. |
+| GET | `/me` | Attendee/admin | Return profile, `is_admin`, and nullable campus fields from `user_profiles`. |
+| PATCH | `/me` | Attendee/admin | Update display name and optional campus fields (`student_id`, `department`, `year`). |
 | GET | `/events` | Public | List upcoming published ITC events (includes nullable `image_url`). |
-| GET | `/events/{id}` | Public | Return event detail, `spots_remaining`, and nullable `image_url`. |
+| GET | `/events/{id}` | Public | Return event detail, `spots_remaining`, and nullable `image_url`. When authenticated, also `is_saved`. |
 | POST | `/events/{id}/tickets` | Attendee/admin | Return existing ticket or reserve one place. |
+| POST | `/events/{id}/save` | Attendee/admin | Save the event for the authenticated user. Idempotent if already saved. |
+| DELETE | `/events/{id}/save` | Attendee/admin | Unsave the event. Idempotent if not saved. |
+| GET | `/saved-events` | Attendee/admin | List the authenticated user's saved events, newest first. |
 | GET | `/tickets` | Attendee/admin | List the authenticated user's tickets. |
 | GET | `/tickets/{id}` | Ticket owner | Return ticket detail and QR payload. |
 | GET | `/admin/events` | Admin | List all events (any status), with reserved and checked-in counts. |
@@ -429,7 +546,8 @@ tickets
 | POST | `/admin/events/{id}/publish` | Admin | Publish a draft event via `EventLifecycleService`. |
 | POST | `/admin/events/{id}/cancel` | Admin | Cancel a draft or published event via `EventLifecycleService`. |
 | GET | `/admin/events/{id}/attendees` | Admin | List ticket rows for the event (read-only). |
-| POST | `/admin/check-in` | Admin | Validate a ticket code and record check-in. |
+| GET | `/admin/events/{id}/check-in-attempts` | Admin | List scan attempts for tickets of this event, newest first. Unknown-code attempts are not listed here (`event_id` is null). |
+| POST | `/admin/check-in` | Admin | Validate a ticket code, record check-in on success, and always insert a `check_in_attempts` row. |
 
 Admin endpoints require a valid Firebase token and `is_admin = true`. Non-admin callers receive `403 FORBIDDEN`.
 
@@ -446,17 +564,34 @@ Admin endpoints require a valid Firebase token and `is_admin = true`. Non-admin 
 
 `status` is never set directly by the client. Use `/publish` and `/cancel` actions instead.
 
-Create and update stay JSON. Do not send the cover file on these endpoints. After the event exists, the admin form calls `POST /admin/events/{id}/cover` (see §8.1.3).
+Create and update stay JSON. Do not send the cover file on these endpoints. After the event exists, the admin form calls `POST /admin/events/{id}/cover` (see §8.1.4).
 
-### 8.1.2 Admin check-in request body
+### 8.1.2 Attendee profile and save bodies
+
+`PATCH /me` may include any of:
+
+| Field | Rules |
+| --- | --- |
+| `name` | Optional, display name on `users` |
+| `student_id` | Optional, max 32; unique among profiles when not null |
+| `department` | Optional, max 80 (for example `GIC`) |
+| `year` | Optional integer 1–8 |
+
+Omitted fields are left unchanged. A duplicate `student_id` returns `409 STUDENT_ID_TAKEN`.
+
+`GET /me` returns the existing profile fields plus nullable `student_id`, `department`, and `year`. Missing `user_profiles` row means those three are null.
+
+`POST /events/{id}/save` and `DELETE /events/{id}/save` have empty JSON bodies. Both are idempotent (`200`). Unknown or unpublished events still return `404` on save if the event does not exist; saving a cancelled event is allowed.
+
+### 8.1.3 Admin check-in request body
 
 ```json
-{ "ticket_code": "TKT_01JABC123XYZ" }
+{ "ticket_code": "TKT_01JABC123XYZ", "method": "qr" }
 ```
 
-The scanner and manual check-in screens send the same payload to `POST /admin/check-in`.
+`method` is optional and must be `qr` or `manual` (default `qr`). The scanner sends `qr`; the manual check-in screen sends `manual`. Both screens call `POST /admin/check-in`. Laravel always inserts a `check_in_attempts` row before returning the HTTP result.
 
-### 8.1.3 Admin cover upload
+### 8.1.4 Admin cover upload
 
 `POST /admin/events/{id}/cover`
 
@@ -508,7 +643,7 @@ Invalid type or oversized file returns `422`. Missing event returns `404`. Missi
 | 401 | Missing, invalid, or expired Firebase identity. |
 | 403 | The signed-in user is not an admin or does not own the requested ticket. |
 | 404 | Event, ticket, or ticket code not found. |
-| 409 | Event full or ticket already checked in. |
+| 409 | Event full, ticket already checked in, or student ID already taken. |
 | 422 | Invalid input or event/ticket state does not allow the action. |
 | 502 | Cloudinary was unreachable or rejected the cover upload. |
 
@@ -523,13 +658,13 @@ Laravel is a JSON API. There is no Filament panel, no Blade admin UI, and no Lar
 - **Form Requests:** validate required fields, lengths, capacity, dates, status values, and cover image type/size.
 - **Policies/middleware:** enforce ticket ownership and `is_admin`.
 - **Controllers:** translate HTTP input and output; they do not contain transaction logic.
-- **Services:** `TicketService`, `CheckInService`, `EventLifecycleService`, and `EventCoverService` own business workflows.
+- **Services:** `TicketService`, `CheckInService`, `EventLifecycleService`, `EventCoverService`, and `SavedEventService` own business workflows. Campus profile writes stay on the `/me` path (create/update `user_profiles` when campus fields are sent).
 - **API Resources:** return stable JSON and prevent accidental field exposure (`image_public_id` is never returned).
 - **Database:** enforces constraints and provides transactions and row locks.
 
 ### 9.2 Service reuse rule
 
-Flutter admin screens, the scanner, and manual check-in must all call the same Laravel services (`EventLifecycleService`, `CheckInService`, `TicketService`, `EventCoverService`). Controllers must not duplicate reservation, cancellation, check-in, or cover-upload logic.
+Flutter admin screens, the scanner, and manual check-in must all call the same Laravel services (`EventLifecycleService`, `CheckInService`, `TicketService`, `EventCoverService`). Controllers must not duplicate reservation, cancellation, check-in, cover-upload, or check-in-attempt logic. `CheckInService` is the only writer of `check_in_attempts`.
 
 ### 9.3 Admin API response fields
 
@@ -549,6 +684,7 @@ Public `GET /events` and `GET /events/{id}` also include nullable `image_url`. D
 | Field | Notes |
 | --- | --- |
 | Attendee name | From linked user; fall back to email or phone |
+| `student_id`, `department`, `year` | Nullable campus fields from `user_profiles` |
 | `ticket_status` | `valid`, `checked_in`, or `cancelled` |
 | `issued_at` | Ticket `created_at` |
 | `checked_in_at` | Nullable |
@@ -605,15 +741,16 @@ Flutter Home / event detail
 
 | Screen | Access | Responsibility |
 | --- | --- | --- |
-| Home | Everyone | Upcoming published ITC events, each with cover or ITC placeholder. |
-| Event detail | Everyone | Cover image, event information, remaining places, and ticket action. |
+| Home | Everyone | Upcoming published ITC events, each with cover or ITC placeholder. Signed-in users can save from the card or detail. |
+| Event detail | Everyone | Cover image, event information, remaining places, ticket action, and save/unsave when signed in. |
 | Sign in | Guest | Firebase email/password, Google, and phone/SMS sign-in. |
 | My Tickets | Attendee/admin | Upcoming, past, and cancelled tickets. |
 | Ticket detail | Ticket owner | QR code, event summary, status, and check-in time. |
-| Profile | Attendee/admin | Name, email/phone, linked sign-in methods, admin section, and sign out. |
+| Saved events | Attendee/admin | Bookmarked events, newest first. Opened from Profile (not a fourth tab). |
+| Profile | Attendee/admin | Name, optional campus fields, email/phone, linked sign-in methods, saved events row, admin section, and sign out. |
 | Admin events list | Admin only | All events with status, counts, cover thumbnail, and navigation to create/edit. |
 | Admin event form | Admin only | Create or edit draft/published events; optional cover picker; Publish and Cancel actions. |
-| Admin event detail | Admin only | Event summary, reserved/checked-in counts, and attendee list. |
+| Admin event detail | Admin only | Event summary, reserved/checked-in counts, attendee list, and check-in attempt history. |
 | Admin scanner | Admin only | Scan one QR at a time and show the server result. |
 | Manual check-in | Admin only | Enter a ticket code when the camera cannot be used. |
 
@@ -656,7 +793,7 @@ The Flutter app follows a **minimal mobile utility UI**: clean, card-based, semi
 | `EventCoverImage` | Shared cover widget: network image when `image_url` is set, otherwise the ITC header strip / placeholder |
 | `PrimaryButton` | Full-width rounded blue button (Get ticket, Sign in, Reserve) |
 | `SecondaryButton` | Outline or light gray actions (Cancel, Back) |
-| `AppTextField` | Login, profile name, phone verification |
+| `AppTextField` | Login, profile name, campus profile, phone verification |
 | `ListMenuRow` | Profile menu: linked sign-in methods, admin section entries, sign out |
 | `StatusBanner` | Inline success, error, and warning feedback |
 | `EmptyStateView` | No events, no tickets, sold out |
@@ -668,21 +805,23 @@ The Flutter app follows a **minimal mobile utility UI**: clean, card-based, semi
 - **Top app bar** on inner screens: back arrow, screen title, no extra actions unless required.
 - **Admin section** on Profile (visible only when `/me` returns `is_admin: true`): **Manage events**, **Admin scanner**, **Manual check-in**. Not main tabs.
 - Event detail opens from Home as a pushed screen (not a tab).
-- Admin event form and attendee list open as pushed screens from the admin events list.
+- Saved events opens from a Profile list row as a pushed screen (not a tab).
+- Admin event form, attendee list, and check-in attempt history open as pushed screens from the admin events list.
 
 **Screen layout notes**
 
 | Screen | Layout |
 | --- | --- |
-| Home | Scrollable list of event cards: cover thumbnail, title, date/time, location label, spots remaining |
-| Event detail | Cover image (or ITC placeholder) + summary card + sticky bottom **Get ticket** primary button |
+| Home | Scrollable list of event cards: cover thumbnail, title, date/time, location label, spots remaining; bookmark control when signed in |
+| Event detail | Cover image (or ITC placeholder) + summary card + sticky bottom **Get ticket** primary button; save/unsave in the app bar |
 | Sign in | Centered title, stacked inputs, primary sign-in button, secondary provider buttons |
 | My Tickets | Tabs or segments: Upcoming / Past / Cancelled; each row is a ticket card |
 | Ticket detail | Large QR card centered, event summary card below, status chip |
-| Profile | Avatar circle, name, admin badge, list-style rows for linked sign-in methods, admin section, and sign out |
+| Saved events | Same event cards as Home; empty state when none saved |
+| Profile | Avatar circle, name, campus fields, admin badge, list-style rows for saved events, linked sign-in methods, admin section, and sign out |
 | Admin events list | Scrollable event cards with cover thumbnail, status chip, date, location, reserved/checked-in counts; FAB or app-bar **Create** |
 | Admin event form | Cover picker + preview in a card; stacked `AppTextField` / date pickers; **Save**, **Publish** (draft only), **Cancel event** actions |
-| Admin event detail | Summary card with counts + scrollable attendee list (read-only rows) |
+| Admin event detail | Summary card with counts + scrollable attendee list (read-only rows) + check-in attempt list |
 | Admin scanner | Camera viewfinder, result banner below; no extra chrome |
 | Manual check-in | Single ticket-code field, **Check in** primary button, result banner |
 
@@ -737,7 +876,8 @@ The Figma file is a **layout baseline** first. A second pass adds icons, placeho
 | Sign in | `mail`, `lock` inside fields; Google / phone on provider buttons | ITC logo circle above title | `you@student.itc.edu.kh`, helper text under title |
 | My Tickets | Status chip icons (`check_circle`, `cancel`) | — | Segments Upcoming / Past / Cancelled; ticket cards with event name + status |
 | Ticket detail | — | **QR code pattern** (grid placeholder, not real code) + monospace `TKT_01JABC123XYZ` | Event summary, `Status: Valid`, helper “Show at entrance” |
-| Profile | Row icons: `edit`, `link`, `event_note`, `qr_code_scanner`, `keyboard`, `logout` | **Avatar** circle with initials `DS` (or generic person silhouette) | Name, email, Admin badge, admin section subtitle |
+| Profile | Row icons: `edit`, `bookmark`, `link`, `event_note`, `qr_code_scanner`, `keyboard`, `logout` | **Avatar** circle with initials `DS` (or generic person silhouette) | Name, student ID, department, year, email, Admin badge, **Saved events**, admin section subtitle |
+| Saved events | Same meta icons as Home | Cover thumbnails | Empty: “No saved events yet” |
 | Admin events list | Status chip, calendar, location | Small cover thumbnail or placeholder | Draft / Published / Cancelled; `12 reserved · 8 checked in` |
 | Admin event form | Date/time pickers, `add_photo_alternate` | Cover preview; **Choose image** / **Remove cover** | Same fields as API; **Publish** on draft |
 | Admin event detail | Attendee status chips | — | Counts header + attendee name rows |
@@ -747,6 +887,7 @@ The Figma file is a **layout baseline** first. A second pass adds icons, placeho
 **Prototype linking (optional)**
 
 - Home card → Event detail → Get ticket → Sign in → Ticket detail  
+- Event detail bookmark → Profile → Saved events  
 - Profile → Manage events → Event form → Publish → Home (event visible)  
 - Profile → Admin scanner / Manual check-in (admin only)  
 - My Tickets row → Ticket detail  
@@ -769,11 +910,11 @@ The Figma file is a **layout baseline** first. A second pass adds icons, placeho
 
 ### 10.3 GetX structure
 
-- `AuthController`: Firebase session, email/password, Google, phone/SMS verification, provider linking, account-conflict errors, `/me`, and sign-out.
-- `EventController`: public event list, event detail, loading, and errors.
+- `AuthController`: Firebase session, email/password, Google, phone/SMS verification, provider linking, account-conflict errors, `/me` (including campus fields), and sign-out.
+- `EventController`: public event list, event detail, save/unsave, loading, and errors.
 - `TicketController`: reservation, My Tickets, and ticket details.
-- `AdminEventController`: admin events list, create/edit form, cover picker/upload/remove, publish, cancel, and attendee list.
-- `AdminCheckInController`: scanner and manual check-in state, submission, and result feedback.
+- `AdminEventController`: admin events list, create/edit form, cover picker/upload/remove, publish, cancel, attendee list, and check-in attempt history.
+- `AdminCheckInController`: scanner and manual check-in state, submission (`method` `qr` or `manual`), and result feedback.
 - GetX `Bindings`: create route-specific controllers and shared services.
 - `Obx`: render reactive loading, data, and error states.
 - `GetMaterialApp` and named `GetPage` routes: navigation and admin route guards (redirect non-admin users away from `/admin/*` routes).
@@ -796,7 +937,7 @@ Keep route-specific controllers disposable. Keep only shared services such as `A
 
 ### 10.5 Why `http` instead of Dio
 
-The MVP has about seventeen REST endpoints, mostly JSON request/response bodies, and **one** multipart cover upload. The `http` package can send that multipart request through `ApiClient`. Do not switch to Dio for this feature.
+The MVP has about twenty-one REST endpoints, mostly JSON request/response bodies, and **one** multipart cover upload. The `http` package can send that multipart request through `ApiClient`. Do not switch to Dio for this feature.
 
 Dio would provide built-in interceptors, richer configuration, cancellation, and upload/download helpers. Those capabilities are useful in more complex networking layers, but this project does not require them. With `http`, the team must explicitly implement token attachment, the single retry, and the one multipart method inside `ApiClient`; that small amount of code is acceptable for this scope.
 
@@ -828,6 +969,7 @@ Admin screens use the same theme, widgets, and card layout as attendee screens (
 - Cover preview on the form with **Choose image** and **Remove cover**. Save event JSON first on create, then call the cover endpoint with the new event id.
 - Publish and Cancel event as confirmation dialogs calling the admin API.
 - Read-only attendee list on event detail.
+- Check-in attempt history on admin event detail (newest first; result chip).
 - Scanner and manual check-in sharing one `AdminCheckInController` result pattern.
 
 **Do not build**
@@ -856,13 +998,15 @@ If time slips during implementation, simplify admin form validation messages and
 | Authentication | Valid token maps a user; invalid/missing token returns 401; `is_admin` comes from PostgreSQL. |
 | Public events | Only published, not-ended ITC events are returned. |
 | Ticket ownership | A user cannot read another attendee's ticket. |
+| Campus profile | `PATCH /me` writes `user_profiles`; duplicate `student_id` returns 409; campus fields are nullable. |
+| Saved events | Save is idempotent; unsave is idempotent; a user cannot read another user's saved list; save does not create a ticket. |
 | Reservation | Create once, return existing on duplicate, reject full/cancelled/ended event. |
 | Concurrency | Simultaneous reservations never exceed capacity. |
 | Cancellation | Event and related tickets update atomically. |
 | Admin events | Non-admin 403; create draft; publish validates fields; cancel is atomic. |
 | Event cover | Non-admin 403; valid JPEG/PNG/WebP stores `image_url`; oversized/invalid type 422; replace deletes the previous Cloudinary public ID; delete clears both columns; public JSON never includes `image_public_id`. |
 | Admin attendees | Non-admin 403; returns read-only ticket rows for the event. |
-| Check-in | Valid code succeeds; repeat 409; unknown 404; non-admin 403; closed window 422. |
+| Check-in | Valid code succeeds; repeat 409; unknown 404; non-admin 403; closed window 422. Every outcome inserts one `check_in_attempts` row. |
 
 ### 12.2 Flutter tests
 
@@ -873,6 +1017,7 @@ If time slips during implementation, simplify admin form validation messages and
 - Widget-test that a non-admin cannot open admin routes (events list, scanner, manual check-in).
 - Widget-test admin event form validation, cover picker presence, and publish confirmation dialog.
 - Widget-test Home and event detail with a cover URL and with a null cover (placeholder).
+- Widget-test save/unsave on event detail for a signed-in user.
 - Test that successfully linking a second provider preserves the original Firebase UID and Laravel user.
 - Test `provider-already-linked` and `credential-already-in-use` messages without modifying ticket data.
 - Manually test email/password, Google, and phone/SMS sign-in; invalid/expired SMS codes; QR readability; camera permission denial; successful scan; and duplicate scan on **both** platforms (primary: iOS Simulator on Mac, Android Emulator on Windows; confirm on physical devices before release).
@@ -884,13 +1029,13 @@ The team has approximately 40 team-hours per week. Weeks 1-8 complete the produc
 | Week | Focus | Exit gate |
 | --- | --- | --- |
 | 1 | Repository, Laravel/PostgreSQL, Flutter, GetX, `http`, dev environments (§1.2) | Each developer’s simulator calls `GET /api/v1/health` and displays Backend connected. |
-| 2 | Firebase email/password and Google auth; user synchronization; `is_admin` | Email/password and Google users call `/me`; seeded admin sees admin section on Profile. |
+| 2 | Firebase email/password and Google auth; user synchronization; `is_admin`; `user_profiles` on `/me` | Email/password and Google users call `/me`; seeded admin sees admin section on Profile; campus fields round-trip on `PATCH /me`. |
 | 3 | Phone/SMS authentication, provider linking, conflict handling, and auth tests | A linked provider preserves the UID; already-used credentials show a safe conflict message. |
 | 4 | Event migration/model (including nullable cover columns), admin events API, Flutter Home, detail, and admin events list | Admin creates and publishes an event from Flutter; it displays on Home with placeholder when `image_url` is null. |
-| 5 | Transactional reservation API and tests | Duplicate and concurrent requests cannot create extra tickets. |
+| 5 | Transactional reservation API, `saved_events`, and tests | Duplicate and concurrent requests cannot create extra tickets; save/unsave does not affect capacity. |
 | 6 | My Tickets, ticket detail, and QR display | Attendee reserves once and displays a scannable QR. |
-| 7 | Cancellation API, admin event form, cover upload to Cloudinary, attendee list, manual check-in screen | Cancellation is atomic; admin edits events, sets a cover, and sees attendees in Flutter. |
-| 8 | Admin check-in API, Flutter scanner, and end-to-end integration | First scan succeeds; duplicate scan is rejected; complete journey passes. |
+| 7 | Cancellation API, admin event form, cover upload to Cloudinary, attendee list, manual check-in screen | Cancellation is atomic; admin edits events, sets a cover, and sees attendees (including campus fields) in Flutter. |
+| 8 | Admin check-in API, `check_in_attempts`, Flutter scanner, and end-to-end integration | First scan succeeds; duplicate scan is rejected; both write attempt rows; complete journey passes. |
 | 9 | Authorization audit, performance checks, UX errors, regression | No P0/P1 defects; feature freeze is active. |
 | 10 | Demo seeds, release build, documentation, rehearsal, contingency | Repeatable ITC demo and definition of done approved. |
 
@@ -901,7 +1046,7 @@ The team has approximately 40 team-hours per week. Weeks 1-8 complete the produc
 - Assign one developer as backend/data primary and one as Flutter primary for each weekly goal.
 - Pair on the API contract and end-to-end integration.
 - If time slips, reduce optional Flutter polish (animations, spacing tweaks) first; keep the shared theme and reusable widgets from §10.2. Keep the cover **display** path (URL or placeholder). If Cloudinary setup blocks the week, leave covers null and finish upload in the same week as the admin form — do not drop reservation, auth, or check-in.
-- Do not add admin charts, bulk tools, extra admin screens, galleries, or profile photo upload beyond §10.7.
+- Do not add admin charts, bulk tools, extra admin screens, galleries, waitlists, or profile photo upload beyond §10.7.
 - Do not remove authentication, authorization, transactions, or critical tests to recover time.
 
 ## 14. Where to start
@@ -981,12 +1126,14 @@ The Week 3 milestone is complete when:
 - An attendee can link another sign-in method and retain the same Firebase UID, PostgreSQL user, and tickets.
 - A credential that belongs to another Firebase account produces a safe conflict message and does not merge or corrupt ticket data.
 - An attendee can reserve exactly one ticket per event until capacity is reached.
+- An attendee can save and unsave events without reserving a ticket.
+- An attendee can view and update optional campus profile fields (student ID, department, year).
 - An attendee can view their tickets and QR code.
 - The admin can create, edit, publish, and cancel every event through Flutter admin screens.
 - The admin can set, replace, or remove one optional cover image per event. Home and event detail show that image or the ITC placeholder.
 - The admin can view attendees and reservation/check-in counts on the admin event detail screen.
 - The admin can scan a valid ticket in Flutter or enter its code on the manual check-in screen.
-- Duplicate scans, full events, cancelled events, ended events, and invalid codes produce the documented result.
+- Duplicate scans, full events, cancelled events, ended events, and invalid codes produce the documented result and a `check_in_attempts` row.
 
 ### 15.2 Technical
 
@@ -995,6 +1142,7 @@ The Week 3 milestone is complete when:
 - Provider-linking tests confirm that a successful link preserves identity and that account conflicts do not change application data.
 - Admin permission comes from PostgreSQL `is_admin` and is enforced on every `/admin/*` route.
 - Ticket reservation, cancellation, and check-in use transactions.
+- `users`, `events`, and `tickets` gain no new columns; campus profile, bookmarks, and scan history live in `user_profiles`, `saved_events`, and `check_in_attempts`.
 - Event cover files are stored on Cloudinary; PostgreSQL stores only `image_url` and `image_public_id`; Cloudinary secrets are not in Flutter or git.
 - Flutter admin screens follow the minimal semi-flat UI direction in §10.2 and §10.7 using shared theme and widgets.
 - Critical Laravel feature tests and Flutter unit/widget tests pass.
@@ -1005,4 +1153,4 @@ The Week 3 milestone is complete when:
 
 ### 15.3 Final release boundary
 
-> The MVP is complete when the functional and technical criteria above pass. The system serves ITC events only, with guest, attendee, and admin access. One optional Cloudinary cover image per event is included. No organizer, multi-location, gallery, or profile-photo behavior belongs in this release.
+> The MVP is complete when the functional and technical criteria above pass. The system serves ITC events only, with guest, attendee, and admin access. One optional Cloudinary cover image per event is included. Campus profile, saved events, and check-in attempt logs are included as additive tables. No organizer, multi-location, gallery, or profile-photo behavior belongs in this release.
