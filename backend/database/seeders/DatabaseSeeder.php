@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(AdminUserSeeder::class);
+        $this->call(EventSeeder::class);
         // Users are created by VerifyFirebaseToken on the first authenticated request.
     }
 }

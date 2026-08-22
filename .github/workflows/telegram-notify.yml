@@ -1,0 +1,116 @@
+name: Telegram Notifications
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, closed, reopened, synchronize]
+
+jobs:
+  notify:
+    name: Send Telegram Notification
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── PUSH ──────────────────────────────────────────────────────────────
+      - name: Notify on Push
+        if: github.event_name == 'push'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 << 'PY'
+          import html
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          commits = event.get("commits") or []
+          if not commits and event.get("head_commit"):
+              commits = [event["head_commit"]]
+
+          repo = os.environ.get("GITHUB_REPOSITORY", "")
+          branch = os.environ.get("GITHUB_REF_NAME", "")
+          actor = os.environ.get("GITHUB_ACTOR", "")
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+
+          for commit in commits:
+              author = (
+                  (commit.get("author") or {}).get("username")
+                  or (commit.get("author") or {}).get("name")
+                  or actor
+              )
+              text = (
+                  "<b>New Push</b>\n\n"
+                  f"<b>Repo:</b> <code>{html.escape(repo)}</code>\n"
+                  f"<b>Branch:</b> <code>{html.escape(branch)}</code>\n"
+                  f"<b>Author:</b> {html.escape(author)}\n"
+                  f"<b>Commit:</b> {html.escape(commit.get('message') or '')}\n"
+                  f"<a href=\"{html.escape(commit.get('url') or '', quote=True)}\">View Commit</a>"
+              )
+              payload = urllib.parse.urlencode(
+                  {
+                      "chat_id": chat_id,
+                      "text": text,
+                      "parse_mode": "HTML",
+                      "disable_web_page_preview": "true",
+                  }
+              ).encode()
+              request = urllib.request.Request(
+                  f"https://api.telegram.org/bot{token}/sendMessage",
+                  data=payload,
+                  method="POST",
+              )
+              with urllib.request.urlopen(request) as response:
+                  response.read()
+          PY
+
+      # ── PR OPENED / REOPENED ───────────────────────────────────────────────
+      - name: Notify on PR (Opened / Reopened)
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened')
+        run: |
+          ICON=$([[ "${{ github.event.action }}" == "reopened" ]] && echo "PR Reopened" || echo "New Pull Request")
+          MESSAGE="<b>${ICON} #${{ github.event.pull_request.number }}</b>%0A%0A<b>Repo:</b> <code>${{ github.repository }}</code>%0A<b>Title:</b> ${{ github.event.pull_request.title }}%0A<b>Author:</b> ${{ github.event.pull_request.user.login }}%0A<b>Branch:</b> <code>${{ github.event.pull_request.head.ref }}</code> -> <code>${{ github.event.pull_request.base.ref }}</code>%0A<a href='${{ github.event.pull_request.html_url }}'>View Pull Request</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true"
+
+      # ── PR MERGED ─────────────────────────────────────────────────────────
+      - name: Notify on PR (Merged)
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: |
+          MESSAGE="<b>PR Merged #${{ github.event.pull_request.number }}</b>%0A%0A<b>Repo:</b> <code>${{ github.repository }}</code>%0A<b>Title:</b> ${{ github.event.pull_request.title }}%0A<b>Author:</b> ${{ github.event.pull_request.user.login }}%0A<b>Merged by:</b> ${{ github.event.pull_request.merged_by.login }}%0A<b>Branch:</b> <code>${{ github.event.pull_request.head.ref }}</code> -> <code>${{ github.event.pull_request.base.ref }}</code>%0A<a href='${{ github.event.pull_request.html_url }}'>View Pull Request</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true"
+
+      # ── PR CLOSED (not merged) ─────────────────────────────────────────────
+      - name: Notify on PR (Closed without merge)
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false
+        run: |
+          MESSAGE="<b>PR Closed (Not Merged) #${{ github.event.pull_request.number }}</b>%0A%0A<b>Repo:</b> <code>${{ github.repository }}</code>%0A<b>Title:</b> ${{ github.event.pull_request.title }}%0A<b>Author:</b> ${{ github.event.pull_request.user.login }}%0A<a href='${{ github.event.pull_request.html_url }}'>View Pull Request</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true"
+
+      # ── PR NEW COMMITS ─────────────────────────────────────────────────────
+      - name: Notify on PR (New Commits Pushed)
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        run: |
+          MESSAGE="<b>New Commits on PR #${{ github.event.pull_request.number }}</b>%0A%0A<b>Repo:</b> <code>${{ github.repository }}</code>%0A<b>PR:</b> ${{ github.event.pull_request.title }}%0A<b>Pushed by:</b> ${{ github.actor }}%0A<b>Branch:</b> <code>${{ github.event.pull_request.head.ref }}</code>%0A<a href='${{ github.event.pull_request.html_url }}'>View Pull Request</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true"
