@@ -13,7 +13,7 @@ class HealthPage extends GetView<HealthController> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
-        title: Text('ITC Events'),
+        title: Text('GoITC'),
       ),
       body: Center(
         child: Padding(

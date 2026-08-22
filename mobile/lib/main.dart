@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'ITC Events',
+      title: 'GoITC',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialBinding: AuthBinding(),

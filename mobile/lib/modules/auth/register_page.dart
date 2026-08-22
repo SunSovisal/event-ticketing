@@ -60,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return AuthPageLayout(
       title: 'Create account',
-      subtitle: 'Join ITC Events to discover and book tickets.',
+      subtitle: 'Join GoITC to discover and book tickets.',
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

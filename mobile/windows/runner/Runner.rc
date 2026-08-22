@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "edu.itc.events" "\0"
-            VALUE "FileDescription", "itc_events" "\0"
+            VALUE "FileDescription", "Book tickets for ITC campus events." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "itc_events" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 edu.itc.events. All rights reserved." "\0"
             VALUE "OriginalFilename", "itc_events.exe" "\0"
-            VALUE "ProductName", "itc_events" "\0"
+            VALUE "ProductName", "GoITC" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
