@@ -9,6 +9,9 @@ class EventSeeder extends Seeder
 {
     public function run(): void
     {
+        if (Event::query()->exists()) {
+            return;
+        }
         Event::factory()->published()->create([
             'title' => 'Intro to Flutter Workshop',
             'description' => 'Hands-on session covering Flutter widgets, navigation, and calling the ITC Events API.',

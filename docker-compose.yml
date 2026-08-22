@@ -11,6 +11,36 @@ services:
       POSTGRES_PASSWORD: itc_secret
     volumes:
       - itc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itc -d itc_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: itc_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: itc_events
+      DB_USERNAME: itc
+      DB_PASSWORD: itc_secret
+      FIREBASE_CREDENTIALS: /var/www/html/storage/app/firebase/itc-events-firebase-adminsdk-fbsvc-1778ccc128.json
+    volumes:
+      - ./backend/storage/app/firebase:/var/www/html/storage/app/firebase
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "php artisan migrate --force
+      && php artisan db:seed --force
+      && php artisan serve --host=0.0.0.0 --port=8000"
 
 volumes:
   itc_postgres_data:
