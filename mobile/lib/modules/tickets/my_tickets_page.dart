@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:itc_events/app/services/api_client.dart';
+import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/tickets/view_ticket_page.dart';
 
 // Standalone dummy data generator for local testing
 List<Event> _getMockEvents() {
@@ -36,7 +40,9 @@ class MyTicketsPage extends StatefulWidget {
 }
 
 class _MyTicketsPageState extends State<MyTicketsPage> {
-  List<Event> _events = [];
+  final _apiClient = Get.find<ApiClient>();
+  final _auth = Get.find<AuthController>();
+  List<Ticket> _tickets = [];
   bool _isLoading = true;
 
   @override
@@ -45,17 +51,43 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     _fetchMyTickets();
   }
 
+ 
   Future<void> _fetchMyTickets() async {
-    // Simulate brief network delay for testing loading states
-    await Future.delayed(const Duration(milliseconds: 600));
+  try {
+    // 1. Retrieve the authentication token
+    final token = await _auth.getIdToken();
+    if (token == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
 
+    // 2. Make backend API request
+    final response = await _apiClient.getJson('/tickets', idToken: token);
+    
+    // 3. Extract tickets list safely
+    final List data = response['data'] ?? [];
+
+    // 4. Update state with parsed Event objects
     if (mounted) {
       setState(() {
-        _events = _getMockEvents();
+        _tickets = data
+    .where((item) => item['event'] != null)
+    .map<Ticket>(
+      (item) => Ticket.fromJson(
+        item as Map<String, dynamic>,
+      ),
+    )
+    .toList();
         _isLoading = false;
       });
     }
+  } catch (e) {
+    // Handle error & turn off loader
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -83,24 +115,21 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              '${_events.length} upcoming · swipe for QR at entrance',
+              '${_tickets.length} upcoming · tap for QR at entrance',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
             ),
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: _events.isEmpty
+            child: _tickets.isEmpty
                 ? const Center(child: Text('No upcoming tickets found.'))
-                : InkWell(
-                    onTap: () {},
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _events.length,
-                      itemBuilder: (context, index) {
-                        return _TicketCard(event: _events[index]);
-                      },
-                    ),
-                  ),
+                : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _tickets.length,
+                  itemBuilder: (context, index) {
+                    return _TicketCard(ticket: _tickets[index]);
+                  },
+                ),
           ),
         ],
       ),
@@ -109,9 +138,11 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 }
 
 class _TicketCard extends StatelessWidget {
-  const _TicketCard({required this.event});
+  const _TicketCard({required this.ticket});
 
-  final Event event;
+  final Ticket ticket;
+
+  Event get event => ticket.event;
 
   // Simple date formatter (e.g., "15/10/2026 09:00")
   String _formatDate(DateTime dt) {
@@ -125,54 +156,65 @@ class _TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      height: 120,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+  onTap: () {
+    Get.to(
+      () => ViewTicketPage(
+        event: event,
+        ticketId: ticket.id,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'UPCOMING',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
+    );
+  },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        height: 120,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'UPCOMING',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  event.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  const SizedBox(height: 4),
+                  Text(
+                    event.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Text(
-              '${_formatDate(event.startsAt)} · ${event.locationLabel}',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 12,
+                ],
               ),
-            ),
-          ],
+              Text(
+                '${_formatDate(event.startsAt)} · ${event.locationLabel}',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

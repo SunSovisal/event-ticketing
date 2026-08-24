@@ -5,9 +5,14 @@ import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/tickets/view_ticket_page.dart';
 
 class ConfirmTicketPage extends StatelessWidget {
-  const ConfirmTicketPage({super.key, required this.event});
+  const ConfirmTicketPage({
+    super.key,
+    required this.event,
+    required this.ticketId,
+  });
 
   final Event event;
+  final String ticketId;
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +51,23 @@ class ConfirmTicketPage extends StatelessWidget {
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: const TextStyle(color: Colors.grey, fontSize: 14, height: 1.4),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
                   children: [
                     const TextSpan(text: 'Your ticket for '),
                     TextSpan(
                       text: event.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                    const TextSpan(text: ' is ready. Show the QR at the entrance.'),
+                    const TextSpan(
+                      text: ' is ready. Show the QR at the entrance.',
+                    ),
                   ],
                 ),
               ),
@@ -64,19 +78,29 @@ class ConfirmTicketPage extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blue.shade200, width: 1.5, style: BorderStyle.solid),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                    width: 1.5,
+                    style: BorderStyle.solid,
+                  ),
                 ),
                 child: Column(
                   children: [
                     Text(
                       event.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       EventDate.formatShort(event.startsAt),
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -89,16 +113,24 @@ class ConfirmTicketPage extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () {
                     // Navigate to View Ticket or Ticket List
-                    Get.to(() => ViewTicketPage(event: event, ticketId: 'TKT_01JABC123XYZ'));
+                    Get.to(
+                      () => ViewTicketPage(event: event, ticketId: ticketId),
+                    );
                   },
                   child: const Text(
                     'View my ticket',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
