@@ -7,12 +7,31 @@ import 'package:itc_events/app/widgets/info_tile.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/widgets/sign_in_sheet.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
+
 
 class EventDetailPage extends StatelessWidget {
   const EventDetailPage({super.key, required this.event});
 
   final Event event;
 
+  // Future<void> _onGetTicket(BuildContext context) async {
+  //   final auth = Get.find<AuthController>();
+
+  //   if (!auth.isSignedIn) {
+  //     final signedIn = await showSignInSheet(context);
+  //     if (!signedIn || !context.mounted) return;
+  //   }
+
+  //   if (!context.mounted) return;
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text(
+  //         'Reservation will be wired when the tickets API is ready.',
+  //       ),
+  //     ),
+  //   );
+  // }
   Future<void> _onGetTicket(BuildContext context) async {
     final auth = Get.find<AuthController>();
 
@@ -22,13 +41,8 @@ class EventDetailPage extends StatelessWidget {
     }
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Reservation will be wired when the tickets API is ready.',
-        ),
-      ),
-    );
+
+    Get.to(() => ConfirmTicketPage(event: event));
   }
 
   @override
@@ -121,7 +135,11 @@ class EventDetailPage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline, color: AppTheme.error, size: 20),
+                        Icon(
+                          Icons.info_outline,
+                          color: AppTheme.error,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
