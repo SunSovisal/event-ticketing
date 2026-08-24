@@ -54,21 +54,32 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> postJson(
-  String path, {
-  required Map<String, dynamic> body,
-  String? idToken,
-  Map<String, String>? headers,
-}) async {
-  final response = await _client
-      .post(
-        _uri(path),
-        headers: _jsonHeaders(headers, idToken: idToken),
-        body: jsonEncode(body),
-      )
-      .timeout(AppConfig.requestTimeout);
+    String path, {
+    required Map<String, dynamic> body,
+    String? idToken,
+    Map<String, String>? headers,
+  }) async {
+    final response = await _client
+        .post(
+          _uri(path),
+          headers: _jsonHeaders(headers, idToken: idToken),
+          body: jsonEncode(body),
+        )
+        .timeout(AppConfig.requestTimeout);
 
-  return _decodeJsonResponse(response);
-}
+    return _decodeJsonResponse(response);
+  }
+
+  Future<Map<String, dynamic>> deleteJson(
+    String path, {
+    String? idToken,
+    Map<String, String>? headers,
+  }) async {
+    final response = await _client
+        .delete(_uri(path), headers: _jsonHeaders(headers, idToken: idToken))
+        .timeout(AppConfig.requestTimeout);
+    return _decodeJsonResponse(response);
+  }
 
   // standard headers
   Map<String, String> _jsonHeaders(
@@ -97,9 +108,12 @@ class ApiClient {
     }
     // match Laravel error shape
     final error = body?['error'];
-    final message = error is Map
-        ? (error['message'] as String? ?? 'Request failed')
-        : 'Request failed (${response.statusCode})';
+    var message = 'Request failed ${response.statusCode}';
+    if (error is Map) {
+      message = error['message'] as String? ?? message;
+    } else if (body?['message'] is String) {
+      message = body!['message'] as String;
+    }
     throw ApiException(message, statusCode: response.statusCode);
   }
 
