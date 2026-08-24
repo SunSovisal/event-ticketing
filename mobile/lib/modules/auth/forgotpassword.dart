@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
@@ -31,32 +32,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your email address',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.error('Please enter your email address');
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      Get.snackbar(
-        'Error',
-        'Please enter a valid email address',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.error('Please enter a valid email address');
       return;
     }
 
     await _auth.forgotPassword(email);
-
-    if (_auth.errorMessage.value.isEmpty) {
-      Get.snackbar(
-        'Success',
-        'Password reset email has been sent to $email',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
   }
 
   @override
