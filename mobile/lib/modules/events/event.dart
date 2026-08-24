@@ -28,9 +28,16 @@ class Event {
   final int reservedCount;
   final int checkedInCount;
 
-  bool get isSoldOut => spotsRemaining <= 0;
+  bool get isCancelled => status == 'cancelled';
+  bool get isDraft => status == 'draft';
   bool get isPublished => status == 'published';
+  bool get isSoldOut => spotsRemaining <= 0;
   bool get isFree => true;
+  bool get canEdit => !isCancelled;
+  bool get canPublish => isDraft;
+  bool get canDelete => isDraft;
+  bool get canCancelEvent => isPublished;
+
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(

@@ -4,6 +4,7 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/admin/admin_event_controller.dart';
+import 'package:itc_events/modules/admin/admin_event_form_page.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
@@ -38,13 +39,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage events')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Create event form comes in a later week.'),
-            ),
-          );
-        },
+        onPressed: () => Get.to(() => AdminEventFormPage()),
         child: const Icon(Icons.add),
       ),
       body: Obx(() {
@@ -81,7 +76,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
               return EventListCard(
                 event: event,
                 showAdminCounts: true,
-                onTap: () => Get.to(() => EventDetailPage(event: event)),
+                onTap: () => Get.to(() => AdminEventFormPage(event: event)),
               );
             },
           ),

@@ -24,4 +24,34 @@ void main() {
     expect(event.imageUrl, isNull);
     expect(event.isPublished, isTrue);
   });
+
+  test('Event status helpers match Laravel values', () {
+    final draft = Event.fromJson({
+      'id': 'evt-draft',
+      'title': 'Draft workshop',
+      'description': 'Hidden until published.',
+      'starts_at': '2026-09-12T07:00:00+00:00',
+      'location_label': 'Building A - Room 101',
+      'capacity': 40,
+      'spots_remaining': 40,
+      'status': 'draft',
+    });
+    final cancelled = Event.fromJson({
+      'id': 'evt-cancelled',
+      'title': 'Cancelled meetup',
+      'description': 'Called off.',
+      'starts_at': '2026-09-12T07:00:00+00:00',
+      'location_label': 'Building B - Room 204',
+      'capacity': 60,
+      'spots_remaining': 60,
+      'status': 'cancelled',
+    });
+
+    expect(draft.isDraft, isTrue);
+    expect(draft.canPublish, isTrue);
+    expect(draft.canDelete, isTrue);
+    expect(cancelled.isCancelled, isTrue);
+    expect(cancelled.canEdit, isFalse);
+    expect(cancelled.canPublish, isFalse);
+  });
 }
