@@ -6,6 +6,7 @@ import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
 import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
+import 'package:itc_events/modules/events/saved_events_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
 import 'package:itc_events/modules/health/health_page.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
@@ -130,6 +131,18 @@ class ProfilePage extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Card(
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.bookmark_outline,
+                        color: AppTheme.primary,
+                      ),
+                      title: Text('Saved events'),
+                      trailing: Icon(Icons.chevron_right),
+                      onTap: () => Get.to(() => const SavedEventsPage()),
                     ),
                   ),
                   if (auth.isAdmin) ...[

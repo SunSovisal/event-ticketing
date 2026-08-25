@@ -6,6 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/app/widgets/app_snackbar.dart';
 
 class AuthController {
   AuthController({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -203,6 +205,7 @@ class AuthController {
     final data = response['data'];
     if (data is Map<String, dynamic>) {
       me.value = data;
+      _refreshHomeEvents();
       return;
     }
     throw ApiException('Unexpected /me response');
@@ -264,6 +267,13 @@ class AuthController {
     await _auth.signOut();
     await _googleSignIn.signOut();
     me.value = null;
+    _refreshHomeEvents();
+  }
+
+  void _refreshHomeEvents() {
+    if (Get.isRegistered<EventController>()) {
+      Get.find<EventController>().fetchEvents();
+    }
   }
 
   // Provider linking
