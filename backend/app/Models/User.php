@@ -26,6 +26,11 @@ class User extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function savedEvents(): HasMany
+    {
+        return $this->hasMany(SavedEvent::class);
+    }
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);

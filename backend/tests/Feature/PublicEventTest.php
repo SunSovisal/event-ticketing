@@ -39,6 +39,7 @@ class PublicEventTest extends TestCase
         $this->assertTrue($ids->contains($upcoming->id));
         $this->assertArrayNotHasKey('image_public_id', $response->json('data.1'));
         $this->assertArrayNotHasKey('reserved_count', $response->json('data.1'));
+        $this->assertArrayNotHasKey('is_saved', $response->json('data.1'));
     }
 
     public function test_public_show_returns_a_published_upcoming_event(): void

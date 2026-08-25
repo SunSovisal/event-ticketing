@@ -5,6 +5,9 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
+import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/app/widgets/app_snackbar.dart';
 
 class AuthController {
   AuthController({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -202,6 +205,7 @@ class AuthController {
     final data = response['data'];
     if (data is Map<String, dynamic>) {
       me.value = data;
+      _refreshHomeEvents();
       return;
     }
     throw ApiException('Unexpected /me response');
@@ -263,6 +267,13 @@ class AuthController {
     await _auth.signOut();
     await _googleSignIn.signOut();
     me.value = null;
+    _refreshHomeEvents();
+  }
+
+  void _refreshHomeEvents() {
+    if (Get.isRegistered<EventController>()) {
+      Get.find<EventController>().fetchEvents();
+    }
   }
 
   // Provider linking
@@ -409,10 +420,8 @@ class AuthController {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
 
-      Get.snackbar(
-        'Success',
+      AppSnackbar.success(
         'Password reset email has been sent to ${email.trim()}',
-        snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _messageFor(
@@ -420,19 +429,11 @@ class AuthController {
         fallback: 'Could not send password reset email',
       );
 
-      Get.snackbar(
-        'Error',
-        errorMessage.value,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.error(errorMessage.value);
     } catch (error) {
       errorMessage.value = error.toString();
 
-      Get.snackbar(
-        'Error',
-        errorMessage.value,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.error(errorMessage.value);
     } finally {
       isLoading.value = false;
     }

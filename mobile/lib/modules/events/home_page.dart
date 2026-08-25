@@ -5,9 +5,11 @@ import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
+import 'package:itc_events/modules/events/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
+import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -104,6 +106,8 @@ class _HomePageState extends State<HomePage> {
                     event: featured,
                     onTap: () =>
                         Get.to(() => EventDetailPage(event: featured)),
+                    onBookmark: () => toggleEventBookmark(context, featured),
+                    isBookmarkBusy: events.savingIds.contains(featured.id),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -127,6 +131,9 @@ class _HomePageState extends State<HomePage> {
                         event: event,
                         onTap: () =>
                             Get.to(() => EventDetailPage(event: event)),
+                        onBookmark: () =>
+                            toggleEventBookmark(context, event),
+                        isBookmarkBusy: events.savingIds.contains(event.id),
                       ),
                     ),
                   ),
@@ -140,10 +147,17 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _FeaturedCard extends StatelessWidget {
-  const _FeaturedCard({required this.event, required this.onTap});
+  const _FeaturedCard({
+    required this.event,
+    required this.onTap,
+    required this.onBookmark,
+    required this.isBookmarkBusy,
+  });
 
   final Event event;
   final VoidCallback onTap;
+  final VoidCallback onBookmark;
+  final bool isBookmarkBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -161,11 +175,22 @@ class _FeaturedCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Featured',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+              Row(
+                children: [
+                  Text(
+                    'Featured',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  ),
+                  const Spacer(),
+                  EventBookmarkButton(
+                    isSaved: event.isSaved,
+                    isBusy: isBookmarkBusy,
+                    onDark: true,
+                    onPressed: onBookmark,
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               Text(

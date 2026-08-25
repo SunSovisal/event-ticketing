@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/home_page.dart';
+import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
 Event _sampleEvent({String? imageUrl}) {
   return Event(
@@ -67,5 +69,42 @@ void main() {
     expect(find.text('Intro to Flutter Workshop'), findsWidgets);
     expect(find.text('ITC'), findsOneWidget);
     expect(find.text('50 of 50 spots left'), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark_border), findsWidgets);
+  });
+
+  testWidgets('Event detail shows bookmark control', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(home: EventDetailPage(event: _sampleEvent())),
+    );
+
+    expect(find.byIcon(Icons.bookmark_border), findsOneWidget);
+    expect(find.text('Get ticket'), findsOneWidget);
+  });
+
+  testWidgets('Cancelled event card shows Cancelled status', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: EventListCard(
+            event: Event(
+              id: 'evt-cancelled',
+              title: 'Open Source Meetup',
+              description: 'Called off.',
+              startsAt: DateTime.utc(2026, 8, 26, 14, 11),
+              locationLabel: 'Building B - Room 204',
+              capacity: 60,
+              spotsRemaining: 60,
+              status: 'cancelled',
+              isSaved: true,
+            ),
+            onTap: () {},
+            onBookmark: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Cancelled'), findsOneWidget);
+    expect(find.text('Event cancelled'), findsOneWidget);
   });
 }

@@ -11,10 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyFirebaseToken
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
+        $optional = $mode === 'optional';
         $header = $request->header('Authorization', '');
         if (! str_starts_with($header, 'Bearer ')) {
+            if ($optional) {
+                return $next($request);
+            }
+
             return $this->errorResponse(
                 'UNAUTHORIZED',
                 'Missing bearer token.',
@@ -24,6 +29,10 @@ class VerifyFirebaseToken
 
         $token = trim(substr($header, 7));
         if ($token === '') {
+            if ($optional) {
+                return $next($request);
+            }
+
             return $this->errorResponse(
                 'UNAUTHORIZED',
                 'Missing bearer token.',
