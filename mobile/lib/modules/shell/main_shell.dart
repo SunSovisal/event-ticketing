@@ -30,16 +30,22 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     _index = widget.initialIndex;
     if (!Get.isRegistered<EventController>()) {
-      Get.put(EventController(apiClient: Get.find<ApiClient>()));
+      Get.put(
+        EventController(apiClient: Get.find<ApiClient>(), fetchOnStart: false),
+      );
+    }
+    if (!Get.isRegistered<TicketController>()) {
+      Get.put(
+        TicketController(apiClient: Get.find<ApiClient>(), fetchOnStart: true),
+      );
+    }
+
+    final auth = Get.find<AuthController>();
+    if (auth.isSignedIn) {
+      auth.restoreSession();
     } else {
       Get.find<EventController>().fetchEvents();
     }
-    if (!Get.isRegistered<TicketController>()) {
-      Get.put(TicketController(apiClient: Get.find<ApiClient>()));
-    } else {
-      Get.find<TicketController>().fetchTickets();
-    }
-    Get.find<AuthController>().restoreSession();
   }
 
   @override
