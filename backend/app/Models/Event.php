@@ -41,6 +41,11 @@ class Event extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function savedEvents(): HasMany
+    {
+        return $this->hasMany(SavedEvent::class);
+    }
+
     public function effectiveEndsAt(): Carbon
     {
         return $this->ends_at ?? $this->starts_at->copy()->addHours(2);
@@ -114,6 +119,21 @@ class Event extends Model
         return $query->withCount([
             'tickets as reserved_count' => fn (Builder $tickets) => $tickets->whereIn('status', ['valid', 'checked_in']),
             'tickets as checked_in_count' => fn (Builder $tickets) => $tickets->where('status', 'checked_in'),
+        ]);
+    }
+
+    /**
+     * @param  Builder<Event>  $query
+     * @return Builder<Event>
+     */
+    public function scopeWithSavedFlag(Builder $query, ?User $user): Builder
+    {
+        if ($user === null) {
+            return $query;
+        }
+
+        return $query->withExists([
+            'savedEvents as is_saved' => fn (Builder $saved) => $saved->where('user_id', $user->id),
         ]);
     }
 }

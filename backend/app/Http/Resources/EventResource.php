@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +33,11 @@ class EventResource extends JsonResource
         if ($request->is('api/v1/admin/*')) {
             $payload['reserved_count'] = (int) ($this->reserved_count ?? 0);
             $payload['checked_in_count'] = (int) ($this->checked_in_count ?? 0);
+        }
+
+        $user = $request->attributes->get('auth_user');
+        if ($user instanceof User && ! $request->is('api/v1/admin/*')) {
+            $payload['is_saved'] = (bool) (int) $this->is_saved;
         }
 
         return $payload;
