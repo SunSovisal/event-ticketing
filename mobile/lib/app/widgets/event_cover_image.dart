@@ -8,27 +8,37 @@ class EventCoverImage extends StatelessWidget {
     this.imageUrl,
     this.height = 140,
     this.borderRadius = 12,
+    this.expand = false,
   });
 
   final String? imageUrl;
   final double height;
   final double borderRadius;
 
+  /// When true, fills the parent (e.g. inside [AspectRatio]) instead of a fixed height.
+  final bool expand;
+
   @override
   Widget build(BuildContext context) {
+    final image = imageUrl == null || imageUrl!.isEmpty
+        ? const _ItcPlaceholder()
+        : Image.network(
+            imageUrl!,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, _, _) => const _ItcPlaceholder(),
+          );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: SizedBox(
-        height: height,
-        width: double.infinity,
-        child: imageUrl == null || imageUrl!.isEmpty
-            ? const _ItcPlaceholder()
-            : Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _ItcPlaceholder(),
-              ),
-      ),
+      child: expand
+          ? SizedBox.expand(child: image)
+          : SizedBox(
+              height: height,
+              width: double.infinity,
+              child: image,
+            ),
     );
   }
 }

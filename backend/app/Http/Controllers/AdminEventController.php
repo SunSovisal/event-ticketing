@@ -6,13 +6,16 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\AdminEventRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use App\Services\EventCoverService;
 use App\Services\EventLifecycleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminEventController extends Controller
 {
     public function __construct(
         private EventLifecycleService $lifecycle,
+        private EventCoverService $covers,
     ) {}
 
     public function index(): JsonResponse
@@ -69,6 +72,24 @@ class AdminEventController extends Controller
         }
 
         $event->update($attributes);
+
+        return $this->jsonResource(new EventResource($this->adminEvent($event->id)));
+    }
+
+    public function uploadCover(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+        ]);
+
+        $event = $this->covers->upload($id, $request->file('image'));
+
+        return $this->jsonResource(new EventResource($this->adminEvent($event->id)));
+    }
+
+    public function destroyCover(string $id): JsonResponse
+    {
+        $event = $this->covers->delete($id);
 
         return $this->jsonResource(new EventResource($this->adminEvent($event->id)));
     }

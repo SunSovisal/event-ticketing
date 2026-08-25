@@ -11,7 +11,6 @@ import 'package:itc_events/modules/events/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/saved_event_controller.dart';
-import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
 import 'package:itc_events/modules/tickets/ticket.dart';
@@ -175,135 +174,132 @@ class EventDetailPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Stack(
-              children: [
-                EventCoverImage(
-                  imageUrl: live.imageUrl,
-                  height: 220,
-                  borderRadius: 0,
-                ),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 8,
-                  left: 8,
-                  child: _CircleIconButton(
-                    icon: Icons.arrow_back,
-                    onPressed: () => Navigator.maybePop(context),
+      appBar: AppBar(
+        title: const Text('Event'),
+        actions: [
+          IconButton(
+            tooltip: live.isSaved ? 'Remove from saved' : 'Save event',
+            onPressed: isBusy
+                ? null
+                : () => toggleEventBookmark(context, live),
+            icon: isBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    live.isSaved ? Icons.bookmark : Icons.bookmark_border,
                   ),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: EventCoverImage(
+              imageUrl: live.imageUrl,
+              borderRadius: 16,
+              expand: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  live.title,
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 8,
-                  right: 8,
-                  child: EventBookmarkButton(
-                    isSaved: live.isSaved,
-                    isBusy: isBusy,
-                    onDark: true,
-                    onPressed: () => toggleEventBookmark(context, live),
-                  ),
+              ),
+              if (statusChip != null) ...[
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: statusChip,
                 ),
               ],
-            ),
+            ],
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        live.title,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    if (statusChip != null) ...[
-                      const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: statusChip,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  live.description,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 20),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.35,
-                  children: [
-                    InfoTile(
-                      icon: Icons.calendar_today_outlined,
-                      label: 'Date',
-                      value: EventDate.formatShort(live.startsAt),
-                    ),
-                    InfoTile(
-                      icon: Icons.location_on_outlined,
-                      label: 'Location',
-                      value: live.locationLabel,
-                    ),
-                    InfoTile(
-                      icon: Icons.people_outline,
-                      label: 'Availability',
-                      value: availability,
-                      valueColor: live.isCancelled || live.isSoldOut
-                          ? AppTheme.error
-                          : null,
-                    ),
-                    InfoTile(
-                      icon: Icons.payments_outlined,
-                      label: 'Price',
-                      value: live.isFree ? 'Free' : 'Paid',
-                    ),
-                  ],
-                ),
-                if (ownedTicket != null) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(
-                    message: ownedTicket.isCheckedIn
-                        ? 'You already checked in for this event.'
-                        : ownedTicket.isCancelled
-                        ? 'Your ticket for this event was cancelled.'
-                        : 'You already have a ticket for this event.',
-                    color: ownedTicket.isCheckedIn
-                        ? AppTheme.primary
-                        : ownedTicket.isCancelled
-                        ? AppTheme.error
-                        : AppTheme.success,
-                  ),
-                ] else if (live.isCancelled) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(
-                    message: 'This event has been cancelled.',
-                    color: AppTheme.error,
-                  ),
-                ] else if (live.hasEnded()) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(
-                    message: 'This event has ended.',
-                    color: AppTheme.textSecondary,
-                  ),
-                ] else if (live.isSoldOut) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(
-                    message: 'Status: All reserved',
-                    color: AppTheme.error,
-                  ),
-                ],
-              ]),
-            ),
+          const SizedBox(height: 10),
+          Text(
+            live.description,
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
+          const SizedBox(height: 20),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.35,
+            children: [
+              InfoTile(
+                icon: Icons.calendar_today_outlined,
+                label: 'Date',
+                value: EventDate.formatShort(live.startsAt),
+              ),
+              InfoTile(
+                icon: Icons.location_on_outlined,
+                label: 'Location',
+                value: live.locationLabel,
+              ),
+              InfoTile(
+                icon: Icons.people_outline,
+                label: 'Availability',
+                value: availability,
+                valueColor: live.isCancelled || live.isSoldOut
+                    ? AppTheme.error
+                    : null,
+              ),
+              InfoTile(
+                icon: Icons.payments_outlined,
+                label: 'Price',
+                value: live.isFree ? 'Free' : 'Paid',
+              ),
+            ],
+          ),
+          if (ownedTicket != null) ...[
+            const SizedBox(height: 16),
+            _StatusBanner(
+              message: ownedTicket.isCheckedIn
+                  ? 'You already checked in for this event.'
+                  : ownedTicket.isCancelled
+                  ? 'Your ticket for this event was cancelled.'
+                  : 'You already have a ticket for this event.',
+              color: ownedTicket.isCheckedIn
+                  ? AppTheme.primary
+                  : ownedTicket.isCancelled
+                  ? AppTheme.error
+                  : AppTheme.success,
+            ),
+          ] else if (live.isCancelled) ...[
+            const SizedBox(height: 16),
+            _StatusBanner(
+              message: 'This event has been cancelled.',
+              color: AppTheme.error,
+            ),
+          ] else if (live.hasEnded()) ...[
+            const SizedBox(height: 16),
+            _StatusBanner(
+              message: 'This event has ended.',
+              color: AppTheme.textSecondary,
+            ),
+          ] else if (live.isSoldOut) ...[
+            const SizedBox(height: 16),
+            _StatusBanner(
+              message: 'Status: All reserved',
+              color: AppTheme.error,
+            ),
+          ],
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -373,26 +369,6 @@ class _StatusBanner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.35),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white),
       ),
     );
   }

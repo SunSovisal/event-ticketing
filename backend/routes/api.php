@@ -41,6 +41,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/events', [AdminEventController::class, 'store']);
             Route::get('/events/{id}', [AdminEventController::class, 'show']);
             Route::patch('/events/{id}', [AdminEventController::class, 'update']);
+            Route::post('/events/{id}/cover', [AdminEventController::class, 'uploadCover']);
+            Route::delete('/events/{id}/cover', [AdminEventController::class, 'destroyCover']);
             Route::post('/events/{id}/publish', [AdminEventController::class, 'publish']);
             Route::post('/events/{id}/cancel', [AdminEventController::class, 'cancel']);
             Route::delete('/events/{id}', [AdminEventController::class, 'destroy']);
