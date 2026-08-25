@@ -94,6 +94,7 @@ The team develops on two machines with different primary simulators. Both develo
 - A web or desktop admin panel (Filament, custom Laravel admin, or similar).
 - Custom admin dashboards, charts, widgets, bulk actions, CSV export, global search, wizards, or rich-text editors.
 - Automatic merging of two Firebase accounts that were already created separately.
+- AI chatbot / Gemini assistant (see §16; post-MVP only).
 
 ## 3. Roles and authorization
 
@@ -1154,3 +1155,27 @@ The Week 3 milestone is complete when:
 ### 15.3 Final release boundary
 
 > The MVP is complete when the functional and technical criteria above pass. The system serves ITC events only, with guest, attendee, and admin access. One optional Cloudinary cover image per event is included. Campus profile, saved events, and check-in attempt logs are included as additive tables. No organizer, multi-location, gallery, or profile-photo behavior belongs in this release.
+
+## 16. Post-MVP ideas (not in the ten-week window)
+
+Ideas below are **not** MVP work. Do not implement them during the delivery period unless they replace existing scoped work under the §1.1 scope rule.
+
+### 16.1 Gemini AI chatbot (event / app questions only)
+
+**Feasible:** Yes. Google Gemini can power an in-app assistant that answers only ITC event-ticketing and app-usage questions.
+
+**Intended behavior**
+
+- Flutter chat UI (attendee-facing; optional guest access TBD).
+- Laravel proxy to the Gemini API (API key stays on the server, never in the Flutter app).
+- System prompt + retrieval context limited to: published events (title, date/time, location, capacity/remaining), ticket/reservation rules, and documented app flows (sign-in, save event, reserve, QR ticket, profile).
+- Refuse or deflect off-topic questions (general knowledge, homework, unrelated chat).
+- Prefer grounded answers from live event/API data over free-form invention; say when information is unknown.
+
+**Rough shape (post-MVP)**
+
+1. `POST /api/v1/chat` (auth as decided) → Laravel builds a short context pack from events + help copy → Gemini → reply.
+2. Guardrails: topic classifier or strict system instructions; rate limits; no admin actions or check-in via chat.
+3. Secrets: `GEMINI_API_KEY` in Laravel env only.
+
+**Out of this idea:** autonomous booking/cancel via chat, admin tooling, multi-language marketing bot, or open-ended general AI.
