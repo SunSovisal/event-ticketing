@@ -29,17 +29,26 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
+
+    // Register without fetching — signed-in loads come from fetchMe →
+    // _refreshHomeEvents; guests only need the public events list.
     if (!Get.isRegistered<EventController>()) {
-      Get.put(EventController(apiClient: Get.find<ApiClient>()));
+      Get.put(
+        EventController(apiClient: Get.find<ApiClient>(), fetchOnStart: false),
+      );
+    }
+    if (!Get.isRegistered<TicketController>()) {
+      Get.put(
+        TicketController(apiClient: Get.find<ApiClient>(), fetchOnStart: false),
+      );
+    }
+
+    final auth = Get.find<AuthController>();
+    if (auth.isSignedIn) {
+      auth.restoreSession();
     } else {
       Get.find<EventController>().fetchEvents();
     }
-    if (!Get.isRegistered<TicketController>()) {
-      Get.put(TicketController(apiClient: Get.find<ApiClient>()));
-    } else {
-      Get.find<TicketController>().fetchTickets();
-    }
-    Get.find<AuthController>().restoreSession();
   }
 
   @override
