@@ -6,6 +6,7 @@ use App\Http\Middleware\VerifyFirebaseToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -37,5 +38,22 @@ return Application::configure(basePath: dirname(__DIR__))
                     'request_id' => (string) str()->uuid(),
                 ],
             ], $e->httpStatus);
+        });
+
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'error' => [
+                    'code' => 'RATE_LIMITED',
+                    'message' => 'Too many requests. Please try again later.',
+                    'fields' => (object) [],
+                ],
+                'meta' => [
+                    'request_id' => (string) str()->uuid(),
+                ],
+            ], 429)->withHeaders($e->getHeaders());
         });
     })->create();
