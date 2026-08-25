@@ -2,126 +2,179 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/app/widgets/app_card.dart';
+import 'package:itc_events/app/widgets/empty_state_view.dart';
+import 'package:itc_events/app/widgets/loading_view.dart';
+import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
+import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/tickets/ticket_controller.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-class ViewTicketPage extends StatelessWidget {
-  const ViewTicketPage({
-    super.key,
-    required this.event,
-    required this.ticketId,
-  });
+class ViewTicketPage extends StatefulWidget {
+  const ViewTicketPage({super.key, required this.ticketId});
 
-  final Event event;
   final String ticketId;
+
+  @override
+  State<ViewTicketPage> createState() => _ViewTicketPageState();
+}
+
+class _ViewTicketPageState extends State<ViewTicketPage> {
+  Ticket? _ticket;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final controller = Get.find<TicketController>();
+    final cached = controller.byId(widget.ticketId);
+    if (cached != null && cached.ticketCode.isNotEmpty) {
+      setState(() {
+        _ticket = cached;
+        _loading = false;
+      });
+    }
+
+    final fresh = await controller.fetchTicket(widget.ticketId);
+    if (!mounted) return;
+
+    if (fresh != null) {
+      setState(() {
+        _ticket = fresh;
+        _loading = false;
+        _error = null;
+      });
+      return;
+    }
+
+    if (_ticket == null) {
+      setState(() {
+        _loading = false;
+        _error = 'Could not load this ticket.';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
-      appBar: AppBar(
-        title: const Text('Your Ticket', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
-            onPressed: () => Get.back(),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ticket ID: $ticketId',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _TicketRow(
-                      icon: Icons.calendar_today_outlined,
-                      label: 'Date',
-                      value: EventDate.formatShort(event.startsAt),
-                    ),
-                    const SizedBox(height: 16),
-                    _TicketRow(
-                      icon: Icons.location_on_outlined,
-                      label: 'Location',
-                      value: event.locationLabel,
-                    ),
-                    const Divider(height: 32),
-                    Container(
-                      height: 260,
-                      width: 260,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.qr_code_2, size: 200),
-                          Text(
-                            'Scan at Entrance',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Your ticket')),
+      body: _buildBody(context),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: OutlinedButton(
-            onPressed: () => Get.to(() => MainShell()),
+            onPressed: () => openMainShell(),
             child: const Text('Back to Events'),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading && _ticket == null) {
+      return const LoadingView(message: 'Loading ticket…');
+    }
+
+    if (_error != null && _ticket == null) {
+      return EmptyStateView(
+        icon: Icons.error_outline,
+        message: _error!,
+        actionLabel: 'Retry',
+        onAction: () {
+          setState(() {
+            _loading = true;
+            _error = null;
+          });
+          _load();
+        },
+      );
+    }
+
+    final ticket = _ticket!;
+    final event = ticket.event;
+    final status = ticket.isCancelled && ticket.status != 'cancelled'
+        ? 'cancelled'
+        : ticket.status;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        children: [
+          AppCard(
+            child: Column(
+              children: [
+                Text(
+                  'Show at entrance',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                if (ticket.ticketCode.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Text('Ticket code unavailable'),
+                  )
+                else
+                  QrImageView(
+                    data: ticket.ticketCode,
+                    version: QrVersions.auto,
+                    size: 220,
+                    backgroundColor: Colors.white,
+                  ),
+                const SizedBox(height: 16),
+                SelectableText(
+                  ticket.ticketCode,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontFamily: 'monospace',
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                StatusChip.ticketStatus(status),
+                if (ticket.checkedInAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Checked in ${EventDate.format(ticket.checkedInAt!)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                _TicketRow(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Date',
+                  value: EventDate.format(event.startsAt),
+                ),
+                const SizedBox(height: 12),
+                _TicketRow(
+                  icon: Icons.location_on_outlined,
+                  label: 'Location',
+                  value: event.locationLabel,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -141,18 +194,23 @@ class _TicketRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: AppTheme.textSecondary),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

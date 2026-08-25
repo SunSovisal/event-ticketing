@@ -20,6 +20,19 @@ class StatusChip extends StatelessWidget {
     }
   }
 
+  factory StatusChip.ticketStatus(String status) {
+    switch (status) {
+      case 'valid':
+        return StatusChip(label: 'Valid', color: AppTheme.success);
+      case 'checked_in':
+        return StatusChip(label: 'Checked in', color: AppTheme.primary);
+      case 'cancelled':
+        return StatusChip(label: 'Cancelled', color: AppTheme.error);
+      default:
+        return StatusChip(label: status, color: AppTheme.textSecondary);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(

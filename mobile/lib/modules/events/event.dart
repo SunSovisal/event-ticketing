@@ -51,12 +51,12 @@ class Event {
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
-      id: json['id'] as String,
-      title: json['title'] as String,
+      id: json['id'].toString(),
+      title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       startsAt: DateTime.parse(json['starts_at'] as String).toUtc(),
       endsAt: _parseOptionalDate(json['ends_at']),
-      locationLabel: json['location_label'] as String,
+      locationLabel: json['location_label'] as String? ?? '',
       capacity: _asInt(json['capacity']),
       spotsRemaining: _asInt(
         json['spots_remaining'],

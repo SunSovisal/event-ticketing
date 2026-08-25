@@ -1,36 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
+import 'package:itc_events/app/formatters/event_date.dart';
+import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_card.dart';
+import 'package:itc_events/app/widgets/empty_state_view.dart';
+import 'package:itc_events/app/widgets/loading_view.dart';
+import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/tickets/ticket_controller.dart';
 import 'package:itc_events/modules/tickets/view_ticket_page.dart';
 
-// Standalone dummy data generator for local testing
-List<Event> _getMockEvents() {
-  return [
-    Event(
-      id: '1',
-      title: 'Flutter Forward Conference 2026',
-      description: 'Annual Flutter developer gathering.',
-      startsAt: DateTime(2026, 10, 15, 9, 0),
-      locationLabel: 'Hall A, Main Campus',
-      capacity: 200,
-      spotsRemaining: 45,
-      status: 'published',
-    ),
-    Event(
-      id: '2',
-      title: 'Tech Expo & Hackathon',
-      description: 'Showcase your tech projects.',
-      startsAt: DateTime(2026, 11, 2, 10, 30),
-      locationLabel: 'Auditorium 2',
-      capacity: 150,
-      spotsRemaining: 0,
-      status: 'published',
-    ),
-  ];
-}
+enum _TicketSegment { upcoming, past, cancelled }
 
 class MyTicketsPage extends StatefulWidget {
   const MyTicketsPage({super.key});
@@ -40,96 +21,159 @@ class MyTicketsPage extends StatefulWidget {
 }
 
 class _MyTicketsPageState extends State<MyTicketsPage> {
-  final _apiClient = Get.find<ApiClient>();
-  final _auth = Get.find<AuthController>();
-  List<Ticket> _tickets = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchMyTickets();
-  }
-
- 
-  Future<void> _fetchMyTickets() async {
-  try {
-    // 1. Retrieve the authentication token
-    final token = await _auth.getIdToken();
-    if (token == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-
-    // 2. Make backend API request
-    final response = await _apiClient.getJson('/tickets', idToken: token);
-    
-    // 3. Extract tickets list safely
-    final List data = response['data'] ?? [];
-
-    // 4. Update state with parsed Event objects
-    if (mounted) {
-      setState(() {
-        _tickets = data
-    .where((item) => item['event'] != null)
-    .map<Ticket>(
-      (item) => Ticket.fromJson(
-        item as Map<String, dynamic>,
-      ),
-    )
-    .toList();
-        _isLoading = false;
-      });
-    }
-  } catch (e) {
-    // Handle error & turn off loader
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
-}
+  _TicketSegment _segment = _TicketSegment.upcoming;
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    final auth = Get.find<AuthController>();
+    final tickets = Get.find<TicketController>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
-          'My tickets',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-      ),
-      body: Column(
+      backgroundColor: AppTheme.scaffoldBackground,
+      appBar: AppBar(title: const Text('My tickets')),
+      body: Obx(() {
+        // me is reactive; isSignedIn covers the brief window before /me returns.
+        final signedIn = auth.me.value != null || auth.isSignedIn;
+        if (!signedIn) {
+          return const EmptyStateView(
+            icon: Icons.confirmation_number_outlined,
+            message: 'Sign in to see your tickets',
+          );
+        }
+
+        if (tickets.isLoading.value && tickets.tickets.isEmpty) {
+          return const LoadingView(message: 'Loading tickets…');
+        }
+
+        if (tickets.errorMessage.value != null && tickets.tickets.isEmpty) {
+          return EmptyStateView(
+            icon: Icons.error_outline,
+            message: tickets.errorMessage.value!,
+            actionLabel: 'Retry',
+            onAction: tickets.fetchTickets,
+          );
+        }
+
+        final list = switch (_segment) {
+          _TicketSegment.upcoming => tickets.upcoming,
+          _TicketSegment.past => tickets.past,
+          _TicketSegment.cancelled => tickets.cancelled,
+        };
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: SegmentedButton<_TicketSegment>(
+                segments: const [
+                  ButtonSegment(
+                    value: _TicketSegment.upcoming,
+                    label: Text('Upcoming'),
+                  ),
+                  ButtonSegment(
+                    value: _TicketSegment.past,
+                    label: Text('Past'),
+                  ),
+                  ButtonSegment(
+                    value: _TicketSegment.cancelled,
+                    label: Text('Cancelled'),
+                  ),
+                ],
+                selected: {_segment},
+                onSelectionChanged: (value) {
+                  setState(() => _segment = value.first);
+                },
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: tickets.fetchTickets,
+                child: list.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.45,
+                            child: EmptyStateView(
+                              icon: Icons.confirmation_number_outlined,
+                              message: switch (_segment) {
+                                _TicketSegment.upcoming =>
+                                  'No upcoming tickets',
+                                _TicketSegment.past => 'No past tickets',
+                                _TicketSegment.cancelled =>
+                                  'No cancelled tickets',
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        itemCount: list.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final ticket = list[index];
+                          return _TicketCard(
+                            ticket: ticket,
+                            onTap: () => Get.to(
+                              () => ViewTicketPage(ticketId: ticket.id),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _TicketCard extends StatelessWidget {
+  const _TicketCard({required this.ticket, required this.onTap});
+
+  final Ticket ticket;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final event = ticket.event;
+    final status = ticket.isCancelled && ticket.status != 'cancelled'
+        ? 'cancelled'
+        : ticket.status;
+
+    return AppCard(
+      onTap: onTap,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              '${_tickets.length} upcoming · tap for QR at entrance',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _tickets.isEmpty
-                ? const Center(child: Text('No upcoming tickets found.'))
-                : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _tickets.length,
-                  itemBuilder: (context, index) {
-                    return _TicketCard(ticket: _tickets[index]);
-                  },
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  event.title,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
+              ),
+              StatusChip.ticketStatus(status),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _MetaRow(
+            icon: Icons.calendar_today_outlined,
+            text: EventDate.format(event.startsAt),
+          ),
+          const SizedBox(height: 4),
+          _MetaRow(
+            icon: Icons.location_on_outlined,
+            text: event.locationLabel,
+          ),
+          const SizedBox(height: 4),
+          const _MetaRow(
+            icon: Icons.qr_code_2,
+            text: 'Tap for QR at entrance',
           ),
         ],
       ),
@@ -137,86 +181,25 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
   }
 }
 
-class _TicketCard extends StatelessWidget {
-  const _TicketCard({required this.ticket});
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.icon, required this.text});
 
-  final Ticket ticket;
-
-  Event get event => ticket.event;
-
-  // Simple date formatter (e.g., "15/10/2026 09:00")
-  String _formatDate(DateTime dt) {
-    final local = dt.toLocal();
-    final month = local.month.toString().padLeft(2, '0');
-    final day = local.day.toString().padLeft(2, '0');
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/${local.year} · $hour:$minute';
-  }
+  final IconData icon;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-  onTap: () {
-    Get.to(
-      () => ViewTicketPage(
-        event: event,
-        ticketId: ticket.id,
-      ),
-    );
-  },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        height: 120,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppTheme.textSecondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'UPCOMING',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    event.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '${_formatDate(event.startsAt)} · ${event.locationLabel}',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

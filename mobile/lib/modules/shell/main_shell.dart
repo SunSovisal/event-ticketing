@@ -3,10 +3,11 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/auth/profile_page.dart';
+import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';
+import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
 void openMainShell({int index = 0}) {
   Get.offAll(() => MainShell(initialIndex: index));
@@ -32,6 +33,11 @@ class _MainShellState extends State<MainShell> {
       Get.put(EventController(apiClient: Get.find<ApiClient>()));
     } else {
       Get.find<EventController>().fetchEvents();
+    }
+    if (!Get.isRegistered<TicketController>()) {
+      Get.put(TicketController(apiClient: Get.find<ApiClient>()));
+    } else {
+      Get.find<TicketController>().fetchTickets();
     }
     Get.find<AuthController>().restoreSession();
   }

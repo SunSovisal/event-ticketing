@@ -7,7 +7,8 @@ import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
-import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/tickets/ticket_controller.dart';
+
 
 class AuthController {
   AuthController({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -273,6 +274,9 @@ class AuthController {
   void _refreshHomeEvents() {
     if (Get.isRegistered<EventController>()) {
       Get.find<EventController>().fetchEvents();
+    }
+    if (Get.isRegistered<TicketController>()) {
+      Get.find<TicketController>().fetchTickets();
     }
   }
 
