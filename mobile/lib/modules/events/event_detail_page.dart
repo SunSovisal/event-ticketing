@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
+import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/event_cover_image.dart';
 import 'package:itc_events/app/widgets/info_tile.dart';
@@ -9,6 +10,7 @@ import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/widgets/sign_in_sheet.dart';
 import 'package:itc_events/modules/events/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/saved_event_controller.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
@@ -48,21 +50,66 @@ class EventDetailPage extends StatelessWidget {
 
   Future<void> _onGetTicket(BuildContext context) async {
     final auth = Get.find<AuthController>();
+    final apiClient = Get.find<ApiClient>();
 
     if (!auth.isSignedIn) {
       final signedIn = await showSignInSheet(context);
+
       if (!signedIn || !context.mounted) return;
     }
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Reservation will be wired when the tickets API is ready.',
-        ),
-      ),
-    );
+
+    try {
+      final token = await auth.getIdToken();
+
+      debugPrint('TOKEN EXISTS: ${token != null}');
+      debugPrint('EVENT ID: ${event.id}');
+
+      if (token == null) {
+        Get.snackbar('Error', 'Please sign in again.');
+        return;
+      }
+
+      final path = '/events/${event.id}/tickets';
+
+      debugPrint('POST PATH: $path');
+
+      final response = await apiClient.postJson(path, body: {}, idToken: token);
+
+      debugPrint('TICKET RESPONSE: $response');
+
+      final ticket = response['data'] as Map<String, dynamic>;
+
+      final ticketId = ticket['id'].toString();
+
+      debugPrint('TICKET ID: $ticketId');
+
+      if (!context.mounted) return;
+
+      Get.to(() => ConfirmTicketPage(event: event, ticketId: ticketId));
+    } catch (e) {
+      debugPrint('GET TICKET ERROR: $e');
+
+      Get.snackbar(
+        'Unable to get ticket',
+        e.toString(),
+        duration: const Duration(seconds: 5),
+      );
+    }
   }
+  // Future<void> _onGetTicket(BuildContext context) async {
+  //   final auth = Get.find<AuthController>();
+
+  //   if (!auth.isSignedIn) {
+  //     final signedIn = await showSignInSheet(context);
+  //     if (!signedIn || !context.mounted) return;
+  //   }
+
+  //   if (!context.mounted) return;
+
+  //   Get.to(() => ConfirmTicketPage(event: event));
+  // }
 
   @override
   Widget build(BuildContext context) {
