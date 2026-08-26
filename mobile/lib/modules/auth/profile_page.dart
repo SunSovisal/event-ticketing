@@ -94,7 +94,9 @@ class ProfilePage extends StatelessWidget {
                                   SizedBox(height: 4),
                                   Text(
                                     campusParts.join(' · '),
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 ],
                                 if (auth.isAdmin) ...[
@@ -223,8 +225,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   void initState() {
     super.initState();
     final me = widget.auth.me.value;
-    _nameController = TextEditingController(text: me?['name']?.toString() ?? '');
-    _emailController = TextEditingController(text: me?['email']?.toString() ?? '');
+    _nameController = TextEditingController(
+      text: me?['name']?.toString() ?? '',
+    );
+    _emailController = TextEditingController(
+      text: me?['email']?.toString() ?? '',
+    );
     _studentIdController = TextEditingController(
       text: me?['student_id']?.toString() ?? '',
     );
@@ -392,7 +398,7 @@ class _LinkedProvidersCard extends StatelessWidget {
     _ProviderMeta(
       id: 'google.com',
       label: 'Google',
-      icon: Icons.g_mobiledata_rounded,
+      imageAsset: 'assets/google_logo.jpeg',
     ),
     _ProviderMeta(
       id: 'phone',
@@ -462,12 +468,14 @@ class _ProviderMeta {
   const _ProviderMeta({
     required this.id,
     required this.label,
-    required this.icon,
+    this.icon,
+    this.imageAsset,
   });
 
   final String id;
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final String? imageAsset;
 }
 
 class _ProviderTile extends StatelessWidget {
@@ -486,7 +494,12 @@ class _ProviderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(meta.icon, color: isLinked ? AppTheme.primary : null),
+      leading: meta.imageAsset != null
+          ? Image.asset(meta.imageAsset!, width: 26, height: 26)
+          : Icon(
+              meta.icon ?? Icons.link,
+              color: isLinked ? AppTheme.primary : null,
+            ),
       title: Text(meta.label),
       trailing: isLinked
           ? Chip(

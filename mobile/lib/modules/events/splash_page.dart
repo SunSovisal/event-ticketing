@@ -23,17 +23,17 @@ class SplashPage extends StatelessWidget {
             child: Column(
               children: [
                 const Spacer(flex: 2),
-                Image.asset('assets/itc_logo.png', height: 96),
+                Image.asset('assets/app_logo_transparent.png', height: 126),
                 const SizedBox(height: 24),
-                Text(
-                  'GoITC',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                ),
+                // Text(
+                //   'GoITC',
+                //   textAlign: TextAlign.center,
+                //   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                //     color: Colors.white,
+                //     fontWeight: FontWeight.w700,
+                //     height: 1.2,
+                //   ),
+                // ),
                 const SizedBox(height: 8),
                 Text(
                   'Book tickets for ITC campus events.',
