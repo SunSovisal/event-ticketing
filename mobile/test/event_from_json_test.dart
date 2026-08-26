@@ -14,6 +14,7 @@ void main() {
       'spots_remaining': 18,
       'status': 'published',
       'image_url': null,
+      'category': 'Meetup',
     });
 
     expect(event.id, 'evt-1');
@@ -24,6 +25,7 @@ void main() {
     expect(event.imageUrl, isNull);
     expect(event.isPublished, isTrue);
     expect(event.isSaved, isFalse);
+    expect(event.category, 'Meetup');
   });
 
   test('Event.fromJson maps is_saved when present', () {

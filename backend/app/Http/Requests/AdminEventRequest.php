@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EventCategory;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AdminEventRequest extends FormRequest
 {
@@ -22,12 +24,13 @@ class AdminEventRequest extends FormRequest
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'location_label' => ['required', 'string', 'max:120'],
+            'category' => ['required', 'string', Rule::in(EventCategory::values())],
             'capacity' => ['required', 'integer', 'min:1', 'max:500'],
         ];
     }
 
     /**
-     * @return array{title: string, description: string, starts_at: mixed, ends_at: mixed, location_label: string, capacity: int}
+     * @return array{title: string, description: string, starts_at: mixed, ends_at: mixed, location_label: string, category: string, capacity: int}
      */
     public function eventAttributes(): array
     {
@@ -39,6 +42,7 @@ class AdminEventRequest extends FormRequest
             'starts_at' => $validated['starts_at'],
             'ends_at' => $validated['ends_at'] ?? null,
             'location_label' => $validated['location_label'],
+            'category' => $validated['category'],
             'capacity' => (int) $validated['capacity'],
         ];
     }
@@ -47,7 +51,7 @@ class AdminEventRequest extends FormRequest
     {
         $merge = [];
 
-        foreach (['title', 'description', 'location_label'] as $field) {
+        foreach (['title', 'description', 'location_label', 'category'] as $field) {
             if ($this->exists($field) && is_string($this->input($field))) {
                 $merge[$field] = trim($this->input($field));
             }

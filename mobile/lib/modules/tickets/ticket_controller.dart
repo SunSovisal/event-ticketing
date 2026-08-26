@@ -131,6 +131,7 @@ class TicketController extends GetxController {
           'starts_at': event.startsAt.toUtc().toIso8601String(),
           'ends_at': event.endsAt?.toUtc().toIso8601String(),
           'location_label': event.locationLabel,
+          'category': event.category,
           'status': event.status,
           'image_url': event.imageUrl,
           'capacity': event.capacity,

@@ -32,7 +32,8 @@ class PublicEventTest extends TestCase
             ->assertJsonPath('data.1.title', 'Upcoming workshop')
             ->assertJsonPath('data.1.spots_remaining', 50)
             ->assertJsonPath('data.1.image_url', null)
-            ->assertJsonPath('data.1.status', 'published');
+            ->assertJsonPath('data.1.status', 'published')
+            ->assertJsonPath('data.1.category', 'General');
 
         $ids = collect($response->json('data'))->pluck('id');
         $this->assertCount(2, $ids);

@@ -7,6 +7,7 @@ import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/admin/admin_event_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/event_category.dart';
 
 class AdminEventFormPage extends StatefulWidget {
   const AdminEventFormPage({super.key, this.event});
@@ -25,6 +26,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   late final TextEditingController _description;
   late final TextEditingController _location;
   late final TextEditingController _capacity;
+  late String _category;
 
   Event? _event;
   DateTime? _startsAtLocal;
@@ -43,6 +45,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     _capacity = TextEditingController(
       text: _event?.capacity.toString() ?? '50',
     );
+    _category = _event?.category ?? EventCategory.general;
     _startsAtLocal = _event?.startsAt.toLocal();
     _endsAtLocal = _event?.endsAt?.toLocal();
   }
@@ -77,6 +80,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
       'starts_at': _startsAtLocal!.toUtc().toIso8601String(),
       'ends_at': _endsAtLocal?.toUtc().toIso8601String(),
       'location_label': _location.text.trim(),
+      'category': _category,
       'capacity': int.parse(_capacity.text.trim()),
     };
   }
@@ -289,6 +293,25 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                         }
                         return null;
                       },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _category,
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: [
+                        for (final category in EventCategory.values)
+                          DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          ),
+                      ],
+                      onChanged: _readOnly
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() => _category = value);
+                              }
+                            },
                     ),
                     const SizedBox(height: 12),
                     TextFormField(

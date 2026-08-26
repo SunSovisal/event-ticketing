@@ -21,6 +21,7 @@ class Event extends Model
         'starts_at',
         'ends_at',
         'location_label',
+        'category',
         'capacity',
         'status',
         'image_url',

@@ -10,6 +10,7 @@ import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
+import 'package:itc_events/modules/events/widgets/event_category_scroller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,6 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _searchController = TextEditingController();
   String _query = '';
+  String? _category;
 
   @override
   void dispose() {
@@ -30,12 +32,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Event> _filteredEvents(List<Event> events) {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return events;
+    var result = events;
+    if (_category != null) {
+      result = result.where((event) => event.category == _category).toList();
+    }
 
-    return events.where((event) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return result;
+
+    return result.where((event) {
       return event.title.toLowerCase().contains(q) ||
-          event.locationLabel.toLowerCase().contains(q);
+          event.locationLabel.toLowerCase().contains(q) ||
+          event.category.toLowerCase().contains(q);
     }).toList();
   }
 
@@ -63,7 +71,8 @@ class _HomePageState extends State<HomePage> {
     return Obx(() {
       final greeting = _greeting(auth);
       final visible = _filteredEvents(events.events);
-      final featured = _query.trim().isEmpty && events.events.isNotEmpty
+      final featured =
+          _query.trim().isEmpty && _category == null && events.events.isNotEmpty
           ? events.events.first
           : null;
 
@@ -81,10 +90,24 @@ class _HomePageState extends State<HomePage> {
               TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _query = value),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search events, rooms…',
                   prefixIcon: Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _searchController.clear();
+                        _query = '';
+                      });
+                    },
+                    icon: Icon(Icons.clear),
+                  ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              EventCategoryScroller(
+                selected: _category,
+                onSelected: (value) => setState(() => _category = value),
               ),
               const SizedBox(height: 20),
               if (events.isLoading.value && events.events.isEmpty)
@@ -104,8 +127,7 @@ class _HomePageState extends State<HomePage> {
                 if (featured != null) ...[
                   _FeaturedCard(
                     event: featured,
-                    onTap: () =>
-                        Get.to(() => EventDetailPage(event: featured)),
+                    onTap: () => Get.to(() => EventDetailPage(event: featured)),
                     onBookmark: () => toggleEventBookmark(context, featured),
                     isBookmarkBusy: events.savingIds.contains(featured.id),
                   ),
@@ -119,9 +141,9 @@ class _HomePageState extends State<HomePage> {
                 if (visible.isEmpty)
                   EmptyStateView(
                     icon: Icons.event_busy,
-                    message: _query.trim().isEmpty
+                    message: _query.trim().isEmpty && _category == null
                         ? 'No upcoming events yet.'
-                        : 'No events match your search.',
+                        : 'No events match your filters.',
                   )
                 else
                   ...visible.map(
@@ -131,8 +153,7 @@ class _HomePageState extends State<HomePage> {
                         event: event,
                         onTap: () =>
                             Get.to(() => EventDetailPage(event: event)),
-                        onBookmark: () =>
-                            toggleEventBookmark(context, event),
+                        onBookmark: () => toggleEventBookmark(context, event),
                         isBookmarkBusy: events.savingIds.contains(event.id),
                       ),
                     ),
@@ -179,6 +200,13 @@ class _FeaturedCard extends StatelessWidget {
                 children: [
                   Text(
                     'Featured',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '·  ${event.category}',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: Colors.white70),

@@ -21,6 +21,7 @@ class EventFactory extends Factory
             'starts_at' => now()->addDays(7)->startOfHour(),
             'ends_at' => null,
             'location_label' => 'Building A - Room 204',
+            'category' => 'General',
             'capacity' => 50,
             'status' => 'draft',
             'image_url' => null,

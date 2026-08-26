@@ -1,3 +1,5 @@
+import 'package:itc_events/modules/events/event_category.dart';
+
 /// UI-facing event shape aligned with public/admin event JSON (§8 / §9.3).
 class Event {
   const Event({
@@ -14,6 +16,7 @@ class Event {
     this.reservedCount = 0,
     this.checkedInCount = 0,
     this.isSaved = false,
+    this.category = EventCategory.general,
   });
 
   final String id;
@@ -29,6 +32,7 @@ class Event {
   final int reservedCount;
   final int checkedInCount;
   final bool isSaved;
+  final String category;
 
   bool get isCancelled => status == 'cancelled';
   bool get isDraft => status == 'draft';
@@ -36,7 +40,7 @@ class Event {
   bool get isSoldOut => spotsRemaining <= 0;
   bool get isFree => true;
 
-  /// Matches Laravel: missing `ends_at` means the event ends 2 hours after start.
+  // missing `ends_at` means the event ends 2 hours after start.
   DateTime get effectiveEndsAt =>
       endsAt ?? startsAt.add(const Duration(hours: 2));
 
@@ -67,6 +71,7 @@ class Event {
       reservedCount: _asInt(json['reserved_count']),
       checkedInCount: _asInt(json['checked_in_count']),
       isSaved: json['is_saved'] == true,
+      category: json['category'] as String? ?? EventCategory.general,
     );
   }
 
@@ -84,6 +89,7 @@ class Event {
     int? reservedCount,
     int? checkedInCount,
     bool? isSaved,
+    String? category,
   }) {
     return Event(
       id: id ?? this.id,
@@ -99,6 +105,7 @@ class Event {
       reservedCount: reservedCount ?? this.reservedCount,
       checkedInCount: checkedInCount ?? this.checkedInCount,
       isSaved: isSaved ?? this.isSaved,
+      category: category ?? this.category,
     );
   }
 

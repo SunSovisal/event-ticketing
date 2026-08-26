@@ -229,6 +229,8 @@ class EventDetailPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          StatusChip(label: live.category, color: AppTheme.primary),
+          const SizedBox(height: 10),
           Text(
             live.description,
             style: Theme.of(context).textTheme.bodyLarge,

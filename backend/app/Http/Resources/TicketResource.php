@@ -29,6 +29,7 @@ class TicketResource extends JsonResource
                 'starts_at' => $this->event->starts_at?->utc()->toIso8601String(),
                 'ends_at' => $this->event->ends_at?->utc()->toIso8601String(),
                 'location_label' => $this->event->location_label,
+                'category' => $this->event->category,
                 'status' => $this->event->status,
                 'image_url' => $this->event->image_url,
             ]),

@@ -8,7 +8,7 @@ import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
-Event _sampleEvent({String? imageUrl}) {
+Event _sampleEvent({String? imageUrl, String category = 'Workshop'}) {
   return Event(
     id: 'evt-1',
     title: 'Intro to Flutter Workshop',
@@ -19,6 +19,7 @@ Event _sampleEvent({String? imageUrl}) {
     spotsRemaining: 50,
     status: 'published',
     imageUrl: imageUrl,
+    category: category,
   );
 }
 
@@ -70,6 +71,34 @@ void main() {
     expect(find.text('ITC'), findsOneWidget);
     expect(find.text('50 of 50 spots left'), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_border), findsWidgets);
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Workshop'), findsWidgets);
+  });
+
+  testWidgets('Home category chip filters the upcoming list', (tester) async {
+    final events = controller()
+      ..events.assignAll([
+        _sampleEvent(),
+        Event(
+          id: 'evt-2',
+          title: 'Open Source Meetup',
+          description: 'Lightning talks.',
+          startsAt: DateTime.utc(2026, 9, 20, 9),
+          locationLabel: 'Building B - Room 204',
+          capacity: 60,
+          spotsRemaining: 60,
+          status: 'published',
+          category: 'Meetup',
+        ),
+      ]);
+    await pumpHome(tester, events);
+
+    await tester.tap(find.text('Meetup').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open Source Meetup'), findsOneWidget);
+    expect(find.text('Intro to Flutter Workshop'), findsNothing);
+    expect(find.text('Featured'), findsNothing);
   });
 
   testWidgets('Event detail shows bookmark control', (tester) async {

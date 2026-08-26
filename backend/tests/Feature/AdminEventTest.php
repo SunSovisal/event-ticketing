@@ -24,6 +24,7 @@ class AdminEventTest extends TestCase
             'starts_at' => now()->addDays(5)->startOfHour()->utc()->toIso8601String(),
             'ends_at' => null,
             'location_label' => 'Building A - Hall',
+            'category' => 'Career',
             'capacity' => 80,
         ], $overrides);
     }
@@ -82,6 +83,7 @@ class AdminEventTest extends TestCase
             ->assertJsonPath('data.title', 'Campus career fair')
             ->assertJsonPath('data.status', 'draft')
             ->assertJsonPath('data.capacity', 80)
+            ->assertJsonPath('data.category', 'Career')
             ->assertJsonPath('data.reserved_count', 0)
             ->assertJsonPath('data.image_url', null);
 
@@ -89,6 +91,7 @@ class AdminEventTest extends TestCase
         $this->assertDatabaseHas('events', [
             'title' => 'Campus career fair',
             'status' => 'draft',
+            'category' => 'Career',
         ]);
     }
 
@@ -109,6 +112,17 @@ class AdminEventTest extends TestCase
         $this->actingAsFirebaseUser($admin)
             ->postJson('/api/v1/admin/events', $this->eventPayload([
                 'capacity' => 0,
+            ]))
+            ->assertUnprocessable();
+    }
+
+    public function test_create_rejects_invalid_category(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAsFirebaseUser($admin)
+            ->postJson('/api/v1/admin/events', $this->eventPayload([
+                'category' => 'NotACategory',
             ]))
             ->assertUnprocessable();
     }

@@ -24,6 +24,7 @@ class EventResource extends JsonResource
             'starts_at' => $this->starts_at?->utc()->toIso8601String(),
             'ends_at' => $this->ends_at?->utc()->toIso8601String(),
             'location_label' => $this->location_label,
+            'category' => $this->category,
             'capacity' => $this->capacity,
             'spots_remaining' => $this->spotsRemaining(),
             'status' => $this->status,

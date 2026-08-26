@@ -94,6 +94,8 @@ class EventListCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                StatusChip(label: event.category, color: AppTheme.primary),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
