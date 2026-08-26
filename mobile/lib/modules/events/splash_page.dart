@@ -23,7 +23,10 @@ class SplashPage extends StatelessWidget {
             child: Column(
               children: [
                 const Spacer(flex: 2),
-                Image.asset('assets/app_logo_transparent.png', height: 126),
+                Image.asset(
+                  'assets/app_logo_transparent_white.png',
+                  height: 126,
+                ),
                 const SizedBox(height: 24),
                 // Text(
                 //   'GoITC',

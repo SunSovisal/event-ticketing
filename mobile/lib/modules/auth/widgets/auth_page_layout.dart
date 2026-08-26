@@ -75,7 +75,7 @@ class _BrandHeader extends StatelessWidget {
           width: 200,
           height: 200,
           alignment: Alignment.center,
-          child: Image.asset('assets/itc_logo.png'),
+          child: Image.asset('assets/app_logo_transparent_primary.png'),
         ),
         SizedBox(height: 20),
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
