@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
 use App\Http\Requests\AdminEventRequest;
+use App\Http\Resources\AdminAttendeeResource;
+use App\Http\Resources\CheckInAttemptResource;
 use App\Http\Resources\EventResource;
+use App\Models\CheckInAttempt;
 use App\Models\Event;
+use App\Models\Ticket;
 use App\Services\EventCoverService;
 use App\Services\EventLifecycleService;
 use Illuminate\Http\JsonResponse;
@@ -123,9 +127,45 @@ class AdminEventController extends Controller
         ]);
     }
 
+    public function attendees(string $id): JsonResponse
+    {
+        $this->requireEvent($id);
+
+        $tickets = Ticket::query()
+            ->where('event_id', $id)
+            ->with('user.profile')
+            ->orderBy('created_at')
+            ->get();
+
+        return $this->jsonResource(AdminAttendeeResource::collection($tickets));
+    }
+
+    public function checkInAttempts(string $id): JsonResponse
+    {
+        $this->requireEvent($id);
+
+        $attempts = CheckInAttempt::query()
+            ->where('event_id', $id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return $this->jsonResource(CheckInAttemptResource::collection($attempts));
+    }
+
     private function adminEvent(string $id): Event
     {
         $event = Event::query()->withTicketCounts()->find($id);
+
+        if ($event === null) {
+            throw new ApiException('NOT_FOUND', 'Event not found.', 404);
+        }
+
+        return $event;
+    }
+
+    private function requireEvent(string $id): Event
+    {
+        $event = Event::query()->find($id);
 
         if ($event === null) {
             throw new ApiException('NOT_FOUND', 'Event not found.', 404);
