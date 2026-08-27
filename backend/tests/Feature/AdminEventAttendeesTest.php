@@ -134,7 +134,13 @@ class AdminEventAttendeesTest extends TestCase
             'starts_at' => now()->subHour(),
         ]);
         $otherEvent = Event::factory()->published()->create();
-        $ticket = Ticket::factory()->create(['event_id' => $event->id]);
+        $ticket = Ticket::factory()->create([
+            'event_id' => $event->id,
+            'user_id' => User::factory()->create([
+                'name' => 'Dara Sok',
+                'email' => 'dara@itc.edu.kh',
+            ]),
+        ]);
 
         $older = CheckInAttempt::query()->create([
             'id' => (string) Str::uuid(),
@@ -189,9 +195,11 @@ class AdminEventAttendeesTest extends TestCase
         $this->assertSame('already_checked_in', $data[0]['result']);
         $this->assertSame('manual', $data[0]['method']);
         $this->assertSame($ticket->ticket_code, $data[0]['scanned_code']);
+        $this->assertSame('Dara Sok', $data[0]['attendee_name']);
         $this->assertSame($ticket->id, $data[0]['ticket_id']);
 
         $this->assertSame($older->id, $data[1]['id']);
         $this->assertSame('success', $data[1]['result']);
+        $this->assertSame('Dara Sok', $data[1]['attendee_name']);
     }
 }

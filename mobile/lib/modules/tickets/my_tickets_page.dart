@@ -140,9 +140,7 @@ class _TicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final event = ticket.event;
-    final status = ticket.isCancelled && ticket.status != 'cancelled'
-        ? 'cancelled'
-        : ticket.status;
+    final status = ticket.displayStatus;
 
     return AppCard(
       onTap: onTap,

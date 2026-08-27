@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
+import 'package:itc_events/modules/admin/admin_attendee.dart';
+import 'package:itc_events/modules/admin/check_in_attempt.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -13,6 +15,11 @@ class AdminEventController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
   final RxnString errorMessage = RxnString();
+
+  final RxList<AdminAttendee> attendees = <AdminAttendee>[].obs;
+  final RxList<CheckInAttempt> checkInAttempts = <CheckInAttempt>[].obs;
+  final RxBool isLoadingDetail = false.obs;
+  final RxnString detailErrorMessage = RxnString();
 
   @override
   void onInit() {
@@ -106,6 +113,52 @@ class AdminEventController extends GetxController {
     } finally {
       isSaving.value = false;
     }
+  }
+
+  Future<void> fetchEventDetail(String eventId) async {
+    isLoadingDetail.value = true;
+    detailErrorMessage.value = null;
+
+    try {
+      final token = await _token();
+      final results = await Future.wait([
+        _apiClient.getJson('/admin/events/$eventId/attendees', idToken: token),
+        _apiClient.getJson(
+          '/admin/events/$eventId/check-in-attempts',
+          idToken: token,
+        ),
+      ]);
+
+      final attendeesData = results[0]['data'];
+      final attemptsData = results[1]['data'];
+      if (attendeesData is! List || attemptsData is! List) {
+        throw ApiException('Unexpected admin event detail response');
+      }
+
+      attendees.assignAll(
+        attendeesData
+            .whereType<Map<String, dynamic>>()
+            .map(AdminAttendee.fromJson),
+      );
+      checkInAttempts.assignAll(
+        attemptsData
+            .whereType<Map<String, dynamic>>()
+            .map(CheckInAttempt.fromJson),
+      );
+    } on ApiException catch (error) {
+      detailErrorMessage.value = error.message;
+    } catch (_) {
+      detailErrorMessage.value = 'Could not load attendees.';
+    } finally {
+      isLoadingDetail.value = false;
+    }
+  }
+
+  void clearEventDetail() {
+    attendees.clear();
+    checkInAttempts.clear();
+    detailErrorMessage.value = null;
+    isLoadingDetail.value = false;
   }
 
   Future<Event?> _mutate(

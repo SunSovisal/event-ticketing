@@ -24,13 +24,21 @@ class Ticket {
   bool get isCheckedIn => status == 'checked_in';
   bool get isCancelled => status == 'cancelled' || event.isCancelled;
 
-  /// Upcoming: still usable at the door.
+  /// upcoming, still usable at the door.
   bool get isUpcoming =>
       !isCancelled && isValid && !event.hasEnded();
 
-  /// Past: checked in or event already ended.
+  /// past, checked in or event already ended.
   bool get isPast =>
       !isCancelled && (isCheckedIn || event.hasEnded());
+
+  /// status chip, add 'ended' for ui 
+  String get displayStatus {
+    if (isCancelled) return 'cancelled';
+    if (isCheckedIn) return 'checked_in';
+    if (event.isCheckInClosed()) return 'ended';
+    return 'valid';
+  }
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
     final eventJson = json['event'];

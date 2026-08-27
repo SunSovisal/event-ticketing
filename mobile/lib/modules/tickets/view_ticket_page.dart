@@ -101,9 +101,7 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
 
     final ticket = _ticket!;
     final event = ticket.event;
-    final status = ticket.isCancelled && ticket.status != 'cancelled'
-        ? 'cancelled'
-        : ticket.status;
+    final status = ticket.displayStatus;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),

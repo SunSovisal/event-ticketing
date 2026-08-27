@@ -16,9 +16,14 @@ class CheckInAttemptResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = $this->ticket?->user;
+
         return [
             'id' => $this->id,
             'scanned_code' => $this->scanned_code,
+            'attendee_name' => $user?->name
+                ?: $user?->email
+                ?: $user?->phone_number,
             'method' => $this->method,
             'result' => $this->result,
             'ticket_id' => $this->ticket_id,

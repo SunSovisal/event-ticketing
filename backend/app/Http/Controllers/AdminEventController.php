@@ -146,6 +146,7 @@ class AdminEventController extends Controller
 
         $attempts = CheckInAttempt::query()
             ->where('event_id', $id)
+            ->with('ticket.user')
             ->orderByDesc('created_at')
             ->get();
 

@@ -40,14 +40,27 @@ class Event {
   bool get isSoldOut => spotsRemaining <= 0;
   bool get isFree => true;
 
-  // missing `ends_at` means the event ends 2 hours after start.
+  // no `ends_at` means the event ends 2 hours after start.
   DateTime get effectiveEndsAt =>
       endsAt ?? startsAt.add(const Duration(hours: 2));
+
+  /// check-in opens 2 hours before start.
+  DateTime get checkInOpensAt => startsAt.subtract(const Duration(hours: 2));
+
+  /// check-in closes 2 hours after effective end.
+  DateTime get checkInClosesAt =>
+      effectiveEndsAt.add(const Duration(hours: 2));
 
   bool hasEnded([DateTime? at]) {
     final now = (at ?? DateTime.now()).toUtc();
     return !now.isBefore(effectiveEndsAt);
   }
+
+  bool isCheckInClosed([DateTime? at]) {
+    final now = (at ?? DateTime.now()).toUtc();
+    return now.isAfter(checkInClosesAt);
+  }
+
   bool get canEdit => !isCancelled;
   bool get canPublish => isDraft;
   bool get canDelete => isDraft;

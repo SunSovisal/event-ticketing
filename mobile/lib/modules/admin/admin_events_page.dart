@@ -4,8 +4,8 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/admin/admin_event_controller.dart';
+import 'package:itc_events/modules/admin/admin_event_detail_page.dart';
 import 'package:itc_events/modules/admin/admin_event_form_page.dart';
-// import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
 class AdminEventsPage extends StatefulWidget {
@@ -76,7 +76,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
               return EventListCard(
                 event: event,
                 showAdminCounts: true,
-                onTap: () => Get.to(() => AdminEventFormPage(event: event)),
+                onTap: () => Get.to(() => AdminEventDetailPage(event: event)),
               );
             },
           ),
