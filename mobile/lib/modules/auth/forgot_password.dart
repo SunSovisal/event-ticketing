@@ -82,16 +82,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
             if (_auth.errorMessage.value.isNotEmpty) ...[
               const SizedBox(height: 16),
-              AuthErrorBanner(
-                message: _auth.errorMessage.value,
-              ),
+              AuthErrorBanner(message: _auth.errorMessage.value),
             ],
 
             const SizedBox(height: 24),
 
             FilledButton(
-              onPressed:
-                  _auth.isLoading.value ? null : _handleForgotPassword,
+              onPressed: _auth.isLoading.value ? null : _handleForgotPassword,
               child: _auth.isLoading.value
                   ? const SizedBox(
                       height: 22,

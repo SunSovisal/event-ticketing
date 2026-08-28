@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
+import 'package:itc_events/modules/auth/forgot_password.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/register_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
@@ -81,11 +82,20 @@ class _SignInPageState extends State<SignInPage> {
                 prefixIcon: Icon(Icons.lock_outline_rounded),
               ),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Get.to(() => ForgotPasswordPage()),
+                child: Text(
+                  'Forgot Password?',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
             if (_auth.errorMessage.value.isNotEmpty) ...[
-              SizedBox(height: 16),
               AuthErrorBanner(message: _auth.errorMessage.value),
             ],
-            SizedBox(height: 24),
+            SizedBox(height: 16),
             FilledButton(
               onPressed: _auth.isLoading.value ? null : _handleEmailSignIn,
               child: _auth.isLoading.value
