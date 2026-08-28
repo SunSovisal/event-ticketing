@@ -25,6 +25,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
   void initState() {
     super.initState();
     _auth = Get.find<AuthController>();
+    _auth.errorMessage.value = '';
   }
 
   @override
