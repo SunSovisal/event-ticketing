@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Contracts\CoverStorage;
+use App\Contracts\PushNotifier;
 use App\Services\CloudinaryCoverStorage;
-use Illuminate\Http\Request;
+use App\Services\FcmPushNotifier;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(CoverStorage::class, CloudinaryCoverStorage::class);
+        $this->app->singleton(PushNotifier::class, FcmPushNotifier::class);
     }
 
     /**

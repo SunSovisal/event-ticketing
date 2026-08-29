@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
+use App\Jobs\NotifyEventPublished;
 use App\Models\Event;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ class EventLifecycleService
 {
     public function publish(string $eventId): Event
     {
-        return DB::transaction(function () use ($eventId) {
+        $event = DB::transaction(function () use ($eventId) {
             $event = Event::query()->whereKey($eventId)->lockForUpdate()->first();
 
             if ($event === null) {
@@ -32,6 +33,10 @@ class EventLifecycleService
 
             return $event->refresh();
         });
+
+        NotifyEventPublished::dispatch($event->id);
+
+        return $event;
     }
 
     public function cancel(string $eventId): Event
