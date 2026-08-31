@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
           : null;
 
       return Scaffold(
-        backgroundColor: AppTheme.scaffoldBackground,
+        // backgroundColor: AppTheme.scaffoldBackground,
         appBar: AppBar(title: const Text('Home')),
         body: RefreshIndicator(
           onRefresh: events.fetchEvents,

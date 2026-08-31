@@ -29,7 +29,6 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     final tickets = Get.find<TicketController>();
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(title: const Text('My tickets')),
       body: Obx(() {
         // me is reactive; isSignedIn covers the brief window before /me returns.
@@ -164,15 +163,9 @@ class _TicketCard extends StatelessWidget {
             text: EventDate.format(event.startsAt),
           ),
           const SizedBox(height: 4),
-          _MetaRow(
-            icon: Icons.location_on_outlined,
-            text: event.locationLabel,
-          ),
+          _MetaRow(icon: Icons.location_on_outlined, text: event.locationLabel),
           const SizedBox(height: 4),
-          const _MetaRow(
-            icon: Icons.qr_code_2,
-            text: 'Tap for QR at entrance',
-          ),
+          const _MetaRow(icon: Icons.qr_code_2, text: 'Tap for QR at entrance'),
         ],
       ),
     );
@@ -192,10 +185,7 @@ class _MetaRow extends StatelessWidget {
         Icon(icon, size: 16, color: AppTheme.textSecondary),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );

@@ -137,7 +137,10 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final cancelled = await _controller.cancelEvent(_event!.id);
     if (cancelled == null || !mounted) return;
     setState(() => _event = cancelled);
-    AppSnackbar.warning('Tickets for this event were cancelled.', title: 'Cancelled');
+    AppSnackbar.warning(
+      'Tickets for this event were cancelled.',
+      title: 'Cancelled',
+    );
   }
 
   Future<void> _onDelete() async {
@@ -227,7 +230,6 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final title = event == null ? 'New event' : 'Edit event';
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(title: Text(title)),
       body: Obx(() {
         final saving = _controller.isSaving.value;
@@ -366,7 +368,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
             const SizedBox(height: 20),
             if (!_readOnly)
               FilledButton(
-                onPressed: saving ? null : _onSave ,
+                onPressed: saving ? null : _onSave,
                 child: saving
                     ? const SizedBox(
                         height: 22,
