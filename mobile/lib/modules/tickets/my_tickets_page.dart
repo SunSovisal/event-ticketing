@@ -30,7 +30,20 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
-      appBar: AppBar(title: const Text('My tickets')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.scaffoldBackground,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        title: Text(
+          'My Bookings',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       body: Obx(() {
         // me is reactive; isSignedIn covers the brief window before /me returns.
         final signedIn = auth.me.value != null || auth.isSignedIn;
@@ -38,6 +51,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
           return const EmptyStateView(
             icon: Icons.confirmation_number_outlined,
             message: 'Sign in to see your tickets',
+            subtitle: 'Your campus event tickets will show up here.',
           );
         }
 
@@ -49,7 +63,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
           return EmptyStateView(
             icon: Icons.error_outline,
             message: tickets.errorMessage.value!,
-            actionLabel: 'Retry',
+            actionLabel: 'Refresh',
             onAction: tickets.fetchTickets,
           );
         }
@@ -61,29 +75,11 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
         };
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: SegmentedButton<_TicketSegment>(
-                segments: const [
-                  ButtonSegment(
-                    value: _TicketSegment.upcoming,
-                    label: Text('Upcoming'),
-                  ),
-                  ButtonSegment(
-                    value: _TicketSegment.past,
-                    label: Text('Past'),
-                  ),
-                  ButtonSegment(
-                    value: _TicketSegment.cancelled,
-                    label: Text('Cancelled'),
-                  ),
-                ],
-                selected: {_segment},
-                onSelectionChanged: (value) {
-                  setState(() => _segment = value.first);
-                },
-              ),
+            _TicketStatusTabs(
+              selected: _segment,
+              onSelected: (value) => setState(() => _segment = value),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -93,16 +89,26 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           SizedBox(
-                            height: MediaQuery.sizeOf(context).height * 0.45,
+                            height: MediaQuery.sizeOf(context).height * 0.55,
                             child: EmptyStateView(
                               icon: Icons.confirmation_number_outlined,
                               message: switch (_segment) {
                                 _TicketSegment.upcoming =>
-                                  'No upcoming tickets',
-                                _TicketSegment.past => 'No past tickets',
+                                  'No upcoming tickets yet',
+                                _TicketSegment.past => 'No past tickets yet',
                                 _TicketSegment.cancelled =>
                                   'No cancelled tickets',
                               },
+                              subtitle: switch (_segment) {
+                                _TicketSegment.upcoming =>
+                                  'Browse events on Home to find something to join.',
+                                _TicketSegment.past =>
+                                  'Tickets you have used or that have ended will show up here.',
+                                _TicketSegment.cancelled =>
+                                  'Cancelled tickets will appear here.',
+                              },
+                              actionLabel: 'Refresh',
+                              onAction: tickets.fetchTickets,
                             ),
                           ),
                         ],
@@ -127,6 +133,87 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
           ],
         );
       }),
+    );
+  }
+}
+
+class _TicketStatusTabs extends StatelessWidget {
+  const _TicketStatusTabs({required this.selected, required this.onSelected});
+
+  final _TicketSegment selected;
+  final ValueChanged<_TicketSegment> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (final segment in _TicketSegment.values)
+            Expanded(
+              child: _StatusTab(
+                label: switch (segment) {
+                  _TicketSegment.upcoming => 'Upcoming',
+                  _TicketSegment.past => 'Past Bookings',
+                  _TicketSegment.cancelled => 'Cancelled',
+                },
+                selected: selected == segment,
+                onTap: () => onSelected(segment),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusTab extends StatelessWidget {
+  const _StatusTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            height: 3,
+            width: selected ? 36 : 0,
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -164,15 +251,9 @@ class _TicketCard extends StatelessWidget {
             text: EventDate.format(event.startsAt),
           ),
           const SizedBox(height: 4),
-          _MetaRow(
-            icon: Icons.location_on_outlined,
-            text: event.locationLabel,
-          ),
+          _MetaRow(icon: Icons.location_on_outlined, text: event.locationLabel),
           const SizedBox(height: 4),
-          const _MetaRow(
-            icon: Icons.qr_code_2,
-            text: 'Tap for QR at entrance',
-          ),
+          const _MetaRow(icon: Icons.qr_code_2, text: 'Tap for QR at entrance'),
         ],
       ),
     );
@@ -192,10 +273,7 @@ class _MetaRow extends StatelessWidget {
         Icon(icon, size: 16, color: AppTheme.textSecondary),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );

@@ -6,12 +6,14 @@ class EmptyStateView extends StatelessWidget {
     super.key,
     required this.icon,
     required this.message,
+    this.subtitle,
     this.actionLabel,
     this.onAction,
   });
 
   final IconData icon;
   final String message;
+  final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -23,16 +25,48 @@ class EmptyStateView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: AppTheme.textSecondary),
-            const SizedBox(height: 12),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 40, color: AppTheme.primary),
+            ),
+            const SizedBox(height: 20),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ],
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 16),
-              TextButton(onPressed: onAction, child: Text(actionLabel!)),
+              const SizedBox(height: 14),
+              TextButton(
+                onPressed: onAction,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: Text(actionLabel!),
+              ),
             ],
           ],
         ),

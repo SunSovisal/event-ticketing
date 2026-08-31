@@ -29,10 +29,7 @@ void main() {
   tearDown(Get.reset);
 
   EventController controller() {
-    return EventController(
-      apiClient: ApiClient(),
-      fetchOnStart: false,
-    );
+    return EventController(apiClient: ApiClient(), fetchOnStart: false);
   }
 
   Future<void> pumpHome(WidgetTester tester, EventController events) async {
@@ -50,7 +47,49 @@ void main() {
   testWidgets('Home shows empty state', (tester) async {
     await pumpHome(tester, controller());
 
+    expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
     expect(find.text('No upcoming events yet.'), findsOneWidget);
+  });
+
+  testWidgets('Home header collapses to brand logo only when scrolled', (
+    tester,
+  ) async {
+    final events = controller()
+      ..events.assignAll([
+        for (var i = 0; i < 8; i++)
+          Event(
+            id: 'evt-$i',
+            title: 'Campus Event $i',
+            description: 'Session.',
+            startsAt: DateTime.utc(2026, 9, 12 + i, 7),
+            locationLabel: 'Building A - Room 30$i',
+            capacity: 50,
+            spotsRemaining: 50,
+            status: 'published',
+            category: 'Workshop',
+          ),
+      ]);
+    await pumpHome(tester, events);
+
+    expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
+    expect(find.byKey(const Key('home_header_map')), findsOneWidget);
+    expect(
+      tester
+          .widget<Opacity>(find.byKey(const Key('home_header_map_opacity')))
+          .opacity,
+      1,
+    );
+
+    await tester.drag(find.text('Upcoming'), const Offset(0, -240));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
+    expect(
+      tester
+          .widget<Opacity>(find.byKey(const Key('home_header_map_opacity')))
+          .opacity,
+      0,
+    );
   });
 
   testWidgets('Home shows error state', (tester) async {
