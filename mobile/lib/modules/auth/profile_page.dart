@@ -5,6 +5,7 @@ import 'package:itc_events/modules/admin/admin_events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
+import 'package:itc_events/app/theme/them_controller_page.dart';
 import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/events/saved_events_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
@@ -29,6 +30,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
+    final themeCtrl = Get.find<ThemeController>();
 
     return Obx(() {
       final me = auth.me.value;
@@ -145,6 +147,22 @@ class ProfilePage extends StatelessWidget {
                       title: Text('Saved events'),
                       trailing: Icon(Icons.chevron_right),
                       onTap: () => Get.to(() => const SavedEventsPage()),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Card(
+                    child: Obx(
+                      () => ListTile(
+                        leading: Icon(
+                          themeCtrl.currentThemeIcon,
+                          color: AppTheme.primary,
+                        ),
+                        title: const Text('Appearance'),
+                        subtitle: Text(themeCtrl.currentThemeLabel),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () =>
+                            _showThemeSelectionDialog(context, themeCtrl),
+                      ),
                     ),
                   ),
                   if (auth.isAdmin) ...[
@@ -364,7 +382,11 @@ class _SignedOutProfile extends StatelessWidget {
       child: Column(
         children: [
           const Spacer(),
-          Icon(Icons.person_outline, size: 56, color: AppTheme.textSecondary),
+          Icon(
+            Icons.person_outline,
+            size: 56,
+            color: AppTheme.textSecondaryOf(context),
+          ),
           const SizedBox(height: 16),
           Text(
             'Sign in to reserve tickets and manage your profile.',
@@ -398,7 +420,7 @@ class _LinkedProvidersCard extends StatelessWidget {
     _ProviderMeta(
       id: 'google.com',
       label: 'Google',
-      imageAsset: 'assets/google_logo.jpeg',
+      imageAsset: 'assets/google_logo.png',
     ),
     _ProviderMeta(
       id: 'phone',
@@ -525,4 +547,48 @@ class _ProviderTile extends StatelessWidget {
             ),
     );
   }
+}
+
+Future<void> _showThemeSelectionDialog(
+  BuildContext context,
+  ThemeController themeCtrl,
+) async {
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Appearance'),
+      content: Obx(
+        () => RadioGroup<ThemeMode>(
+          groupValue: themeCtrl.themeMode.value,
+          onChanged: (mode) {
+            Navigator.pop(dialogContext);
+            if (mode != null) themeCtrl.setThemeMode(mode);
+          },
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<ThemeMode>(
+                title: Text('System auto'),
+                value: ThemeMode.system,
+              ),
+              RadioListTile<ThemeMode>(
+                title: Text('Light'),
+                value: ThemeMode.light,
+              ),
+              RadioListTile<ThemeMode>(
+                title: Text('Dark'),
+                value: ThemeMode.dark,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Cancel'),
+        ),
+      ],
+    ),
+  );
 }

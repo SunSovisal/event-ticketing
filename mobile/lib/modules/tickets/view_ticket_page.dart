@@ -64,7 +64,6 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(title: const Text('Your ticket')),
       body: _buildBody(context),
       bottomNavigationBar: SafeArea(
@@ -194,7 +193,7 @@ class _TicketRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppTheme.textSecondary),
+        Icon(icon, size: 20, color: AppTheme.textSecondaryOf(context)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

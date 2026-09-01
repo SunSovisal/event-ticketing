@@ -43,6 +43,7 @@ dependencies:
   google_sign_in: ^6.2.1
   flutter_launcher_icons: ^0.14.4
   qr_flutter: ^4.1.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -68,7 +69,7 @@ flutter:
     - assets/app_logo.png
     - assets/app_logo_transparent_white.png
     - assets/app_logo_transparent_primary.png
-    - assets/google_logo.jpeg
+    - assets/google_logo.png
     - assets/itc_logo.png
 
   # To add assets to your application, add an assets section, like this:

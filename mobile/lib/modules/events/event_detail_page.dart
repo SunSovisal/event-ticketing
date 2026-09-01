@@ -102,9 +102,7 @@ class EventDetailPage extends StatelessWidget {
       return;
     }
 
-    Get.to(
-      () => ConfirmTicketPage(event: live, ticketId: ticket.id),
-    );
+    Get.to(() => ConfirmTicketPage(event: live, ticketId: ticket.id));
   }
 
   @override
@@ -122,7 +120,8 @@ class EventDetailPage extends StatelessWidget {
     }
 
     return Obx(() {
-      final reserving = Get.isRegistered<TicketController>() &&
+      final reserving =
+          Get.isRegistered<TicketController>() &&
           Get.find<TicketController>().isReserving.value;
       return _buildScaffold(
         context,
@@ -149,7 +148,8 @@ class EventDetailPage extends StatelessWidget {
         ? 'Sold out'
         : '${live.spotsRemaining}/${live.capacity}';
     final hasTicket = ownedTicket != null;
-    final canReserve = !hasTicket &&
+    final canReserve =
+        !hasTicket &&
         live.isPublished &&
         !live.isSoldOut &&
         !live.hasEnded() &&
@@ -173,15 +173,13 @@ class EventDetailPage extends StatelessWidget {
         : null;
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
+      // backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: const Text('Event'),
         actions: [
           IconButton(
             tooltip: live.isSaved ? 'Remove from saved' : 'Save event',
-            onPressed: isBusy
-                ? null
-                : () => toggleEventBookmark(context, live),
+            onPressed: isBusy ? null : () => toggleEventBookmark(context, live),
             icon: isBusy
                 ? const SizedBox(
                     width: 18,
@@ -191,9 +189,7 @@ class EventDetailPage extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : Icon(
-                    live.isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  ),
+                : Icon(live.isSaved ? Icons.bookmark : Icons.bookmark_border),
           ),
         ],
       ),
@@ -215,8 +211,9 @@ class EventDetailPage extends StatelessWidget {
               Expanded(
                 child: Text(
                   live.title,
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               if (statusChip != null) ...[
@@ -231,10 +228,7 @@ class EventDetailPage extends StatelessWidget {
           const SizedBox(height: 10),
           StatusChip(label: live.category, color: AppTheme.primary),
           const SizedBox(height: 10),
-          Text(
-            live.description,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text(live.description, style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 20),
           GridView.count(
             crossAxisCount: 2,

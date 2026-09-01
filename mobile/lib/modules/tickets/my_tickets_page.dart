@@ -29,17 +29,17 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     final tickets = Get.find<TicketController>();
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: AppTheme.scaffoldOf(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.scaffoldBackground,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: AppTheme.scaffoldOf(context),
+        foregroundColor: AppTheme.textPrimaryOf(context),
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         title: Text(
           'My Bookings',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppTheme.textPrimary,
+            color: AppTheme.textPrimaryOf(context),
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -148,7 +148,7 @@ class _TicketStatusTabs extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+          bottom: BorderSide(color: AppTheme.borderOf(context)),
         ),
       ),
       child: Row(
@@ -197,7 +197,9 @@ class _StatusTab extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                color: selected
+                    ? AppTheme.primary
+                    : AppTheme.textSecondaryOf(context),
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -270,7 +272,7 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppTheme.textSecondary),
+        Icon(icon, size: 16, color: AppTheme.textSecondaryOf(context)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(text, style: Theme.of(context).textTheme.bodyMedium),

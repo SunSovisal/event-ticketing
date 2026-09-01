@@ -39,7 +39,7 @@ class EmptyStateView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.textPrimary,
+                color: AppTheme.textPrimaryOf(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -49,7 +49,7 @@ class EmptyStateView extends StatelessWidget {
                 subtitle!,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
+                  color: AppTheme.textSecondaryOf(context),
                   height: 1.35,
                 ),
               ),

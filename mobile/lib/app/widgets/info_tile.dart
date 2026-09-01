@@ -20,9 +20,9 @@ class InfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.surfaceOf(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppTheme.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,7 +34,7 @@ class InfoTile extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: valueColor ?? AppTheme.textPrimary,
+              color: valueColor ?? AppTheme.textPrimaryOf(context),
               fontWeight: FontWeight.w600,
             ),
           ),

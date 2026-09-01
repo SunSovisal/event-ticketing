@@ -144,7 +144,7 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolved = color ?? AppTheme.textSecondary;
+    final resolved = color ?? AppTheme.textSecondaryOf(context);
     return Row(
       children: [
         Icon(icon, size: 16, color: resolved),

@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
           : null;
 
       return Scaffold(
-        backgroundColor: AppTheme.scaffoldBackground,
+        backgroundColor: AppTheme.scaffoldOf(context),
         body: Column(
           children: [
             _HomeHeader(collapse: _headerCollapse),
@@ -192,6 +192,13 @@ class _HomeHeader extends StatelessWidget {
     final t = Curves.easeOutCubic.transform(collapse);
     final bodyHeight = _expandedBody + (_collapsedBody - _expandedBody) * t;
     final accentOpacity = (1 - t).clamp(0.0, 1.0);
+    final scaffold = AppTheme.scaffoldOf(context);
+    final highlight = AppTheme.isDark(context)
+        ? const Color(0xFF1E3A5F)
+        : const Color(0xFFDBEAFE);
+    final mid = AppTheme.isDark(context)
+        ? AppTheme.surfaceDark
+        : const Color(0xFFEFF6FF);
     // final brandLogoHeight = 34.0 - 6.0 * t;
 
     return AnimatedContainer(
@@ -204,17 +211,9 @@ class _HomeHeader extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.lerp(
-              const Color(0xFFDBEAFE),
-              AppTheme.scaffoldBackground,
-              t,
-            )!,
-            Color.lerp(
-              const Color(0xFFEFF6FF),
-              AppTheme.scaffoldBackground,
-              t,
-            )!,
-            AppTheme.scaffoldBackground,
+            Color.lerp(highlight, scaffold, t)!,
+            Color.lerp(mid, scaffold, t)!,
+            scaffold,
           ],
           stops: const [0, 0.55, 1],
         ),
@@ -275,7 +274,7 @@ class _MapActionButton extends StatelessWidget {
     return Tooltip(
       message: 'Map',
       child: Material(
-        color: Colors.white,
+        color: AppTheme.surfaceOf(context),
         shape: const CircleBorder(),
         elevation: 0,
         shadowColor: AppTheme.primary.withValues(alpha: 0.2),

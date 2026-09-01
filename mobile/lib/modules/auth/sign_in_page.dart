@@ -113,7 +113,7 @@ class _SignInPageState extends State<SignInPage> {
             SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: Divider(color: Colors.grey.shade300)),
+                Expanded(child: Divider()),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
@@ -121,7 +121,7 @@ class _SignInPageState extends State<SignInPage> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                Expanded(child: Divider(color: Colors.grey.shade300)),
+                Expanded(child: Divider()),
               ],
             ),
             SizedBox(height: 16),
@@ -135,7 +135,7 @@ class _SignInPageState extends State<SignInPage> {
                       }
                     },
               icon: Image.asset(
-                'assets/google_logo.jpeg',
+                'assets/google_logo.png',
                 height: 26,
                 width: 26,
               ),

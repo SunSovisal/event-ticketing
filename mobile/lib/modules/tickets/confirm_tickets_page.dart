@@ -20,7 +20,6 @@ class ConfirmTicketPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -62,7 +61,7 @@ class ConfirmTicketPage extends StatelessWidget {
                       text: event.title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.textPrimaryOf(context),
                       ),
                     ),
                     const TextSpan(
