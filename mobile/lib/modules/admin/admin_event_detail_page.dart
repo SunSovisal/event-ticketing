@@ -63,7 +63,6 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: const Text('Event detail'),
         actions: [
@@ -177,23 +176,23 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             EventDate.format(event.startsAt),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             event.locationLabel,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 12),
           Text(
             '${event.reservedCount} reserved · ${event.checkedInCount} checked in',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -229,8 +228,8 @@ class _AttendeeRow extends StatelessWidget {
                   Text(
                     campus,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
+                      color: AppTheme.textSecondary,
+                    ),
                   ),
                 ],
               ],
@@ -272,9 +271,9 @@ class _AttemptRow extends StatelessWidget {
                     Text(
                       attempt.scannedCode,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontFamily: 'monospace',
-                            color: AppTheme.textSecondary,
-                          ),
+                        fontFamily: 'monospace',
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -285,9 +284,9 @@ class _AttemptRow extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '$methodLabel · ${EventDate.format(attempt.createdAt)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
           ),
         ],
       ),

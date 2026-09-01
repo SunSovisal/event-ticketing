@@ -5,6 +5,7 @@ import 'package:itc_events/modules/admin/admin_events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
+import 'package:itc_events/modules/auth/them_controller_page.dart';
 import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/events/saved_events_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
@@ -29,6 +30,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
+    final themeCtrl = Get.find<ThemeController>();
 
     return Obx(() {
       final me = auth.me.value;
@@ -145,6 +147,22 @@ class ProfilePage extends StatelessWidget {
                       title: Text('Saved events'),
                       trailing: Icon(Icons.chevron_right),
                       onTap: () => Get.to(() => const SavedEventsPage()),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Card(
+                    child: Obx(
+                      () => ListTile(
+                        leading: Icon(
+                          themeCtrl.currentThemeIcon,
+                          color: AppTheme.primary,
+                        ),
+                        title: const Text('Appearance'),
+                        subtitle: Text(themeCtrl.currentThemeLabel),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () =>
+                            _showThemeSelectionDialog(context, themeCtrl),
+                      ),
                     ),
                   ),
                   if (auth.isAdmin) ...[
@@ -525,4 +543,56 @@ class _ProviderTile extends StatelessWidget {
             ),
     );
   }
+}
+
+Future<void> _showThemeSelectionDialog(
+  BuildContext context,
+  ThemeController themeCtrl,
+) async {
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Appearance'),
+      content: Obx(
+        () => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<ThemeMode>(
+              title: const Text('System auto'),
+              value: ThemeMode.system,
+              groupValue: themeCtrl.themeMode.value,
+              onChanged: (mode) {
+                if (mode != null) themeCtrl.setThemeMode(mode);
+                Navigator.pop(dialogContext);
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('Light'),
+              value: ThemeMode.light,
+              groupValue: themeCtrl.themeMode.value,
+              onChanged: (mode) {
+                if (mode != null) themeCtrl.setThemeMode(mode);
+                Navigator.pop(dialogContext);
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('Dark'),
+              value: ThemeMode.dark,
+              groupValue: themeCtrl.themeMode.value,
+              onChanged: (mode) {
+                if (mode != null) themeCtrl.setThemeMode(mode);
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Cancel'),
+        ),
+      ],
+    ),
+  );
 }

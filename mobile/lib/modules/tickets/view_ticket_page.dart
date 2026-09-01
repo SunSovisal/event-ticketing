@@ -64,7 +64,6 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(title: const Text('Your ticket')),
       body: _buildBody(context),
       bottomNavigationBar: SafeArea(
