@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/register_page.dart';
@@ -13,7 +12,7 @@ Future<bool> showSignInSheet(BuildContext context) async {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: AppTheme.surface,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -130,7 +129,7 @@ class _SignInSheetState extends State<SignInSheet> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
@@ -138,7 +137,7 @@ class _SignInSheetState extends State<SignInSheet> {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider()),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -150,7 +149,7 @@ class _SignInSheetState extends State<SignInSheet> {
                           await _completeSignIn();
                         },
                   icon: Image.asset(
-                    'assets/google_logo.jpeg',
+                    'assets/google_logo.png',
                     height: 26,
                     width: 26,
                   ),

@@ -11,7 +11,7 @@ class HealthPage extends GetView<HealthController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: AppTheme.scaffoldOf(context),
       appBar: AppBar(
         title: Text('GoITC'),
       ),
@@ -45,7 +45,7 @@ class HealthPage extends GetView<HealthController> {
                       AppConfig.apiBaseUrl,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryOf(context),
                       ),
                     ),
                     SizedBox(height: 24),

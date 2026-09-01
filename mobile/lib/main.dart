@@ -8,7 +8,7 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/services/push_notification_service.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_binding.dart';
-import 'package:itc_events/modules/auth/them_controller_page.dart';
+import 'package:itc_events/app/theme/them_controller_page.dart';
 import 'package:itc_events/modules/events/splash_page.dart';
 
 Future<void> main() async {
@@ -30,7 +30,7 @@ Future<void> main() async {
   final apiClient = ApiClient();
 
   Get.put<ApiClient>(apiClient, permanent: true);
-  Get.put(ThemeController());
+  Get.put(await ThemeController.load(), permanent: true);
 
   runApp(const MyApp());
 }

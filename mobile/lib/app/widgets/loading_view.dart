@@ -22,7 +22,9 @@ class LoadingView extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
-                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+                ).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondaryOf(context),
+                ),
               ),
             ],
           ],

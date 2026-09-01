@@ -61,7 +61,7 @@ class ConfirmTicketPage extends StatelessWidget {
                       text: event.title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.textPrimaryOf(context),
                       ),
                     ),
                     const TextSpan(

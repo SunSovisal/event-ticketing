@@ -28,6 +28,24 @@ abstract final class AppTheme {
     colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
   );
 
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color scaffoldOf(BuildContext context) =>
+      Theme.of(context).scaffoldBackgroundColor;
+
+  static Color surfaceOf(BuildContext context) =>
+      Theme.of(context).colorScheme.surface;
+
+  static Color textPrimaryOf(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface;
+
+  static Color textSecondaryOf(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
+
+  static Color borderOf(BuildContext context) =>
+      Theme.of(context).colorScheme.outline;
+
   static ThemeData get light {
     final colorScheme = ColorScheme(
       brightness: Brightness.light,
@@ -37,12 +55,15 @@ abstract final class AppTheme {
       onSecondary: Colors.white,
       surface: surface,
       onSurface: textPrimary,
+      onSurfaceVariant: textSecondary,
       error: error,
       onError: Colors.white,
+      outline: const Color(0xFFD1D5DB),
     );
 
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.light,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBackground,
       appBarTheme: const AppBarTheme(
@@ -60,11 +81,33 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         elevation: 1,
         color: surface,
+        surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         margin: EdgeInsets.zero,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        elevation: 0,
+        indicatorColor: primary.withValues(alpha: 0.12),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? primary : textSecondary,
+          );
+        }),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -157,12 +200,15 @@ abstract final class AppTheme {
       onSecondary: Colors.white,
       surface: surfaceDark,
       onSurface: textPrimaryDark,
+      onSurfaceVariant: textSecondaryDark,
       error: error,
       onError: Colors.white,
+      outline: const Color(0xFF4B5563),
     );
 
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBackgroundDark,
       appBarTheme: const AppBarTheme(
@@ -180,11 +226,33 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: surfaceDark,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         margin: EdgeInsets.zero,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: surfaceDark,
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: surfaceDark,
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surfaceDark,
+        elevation: 0,
+        indicatorColor: primary.withValues(alpha: 0.24),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? primary : textSecondaryDark,
+          );
+        }),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

@@ -113,7 +113,6 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
                 const AppCard(
                   child: Text(
                     'No reservations yet.',
-                    style: TextStyle(color: AppTheme.textSecondary),
                   ),
                 )
               else
@@ -133,7 +132,6 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
                 const AppCard(
                   child: Text(
                     'No scan attempts yet.',
-                    style: TextStyle(color: AppTheme.textSecondary),
                   ),
                 )
               else
@@ -178,14 +176,14 @@ class _SummaryCard extends StatelessWidget {
             EventDate.format(event.startsAt),
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+            ).textTheme.bodyMedium,
           ),
           const SizedBox(height: 4),
           Text(
             event.locationLabel,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+            ).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
           Text(
@@ -227,9 +225,7 @@ class _AttendeeRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     campus,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ],
@@ -272,7 +268,7 @@ class _AttemptRow extends StatelessWidget {
                       attempt.scannedCode,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'monospace',
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryOf(context),
                       ),
                     ),
                   ],
@@ -286,7 +282,7 @@ class _AttemptRow extends StatelessWidget {
             '$methodLabel · ${EventDate.format(attempt.createdAt)}',
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+            ).textTheme.bodySmall,
           ),
         ],
       ),
