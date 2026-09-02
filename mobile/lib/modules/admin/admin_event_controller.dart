@@ -136,14 +136,14 @@ class AdminEventController extends GetxController {
       }
 
       attendees.assignAll(
-        attendeesData
-            .whereType<Map<String, dynamic>>()
-            .map(AdminAttendee.fromJson),
+        attendeesData.whereType<Map<String, dynamic>>().map(
+          AdminAttendee.fromJson,
+        ),
       );
       checkInAttempts.assignAll(
-        attemptsData
-            .whereType<Map<String, dynamic>>()
-            .map(CheckInAttempt.fromJson),
+        attemptsData.whereType<Map<String, dynamic>>().map(
+          CheckInAttempt.fromJson,
+        ),
       );
     } on ApiException catch (error) {
       detailErrorMessage.value = error.message;
@@ -209,5 +209,36 @@ class AdminEventController extends GetxController {
       throw ApiException('Not signed in', statusCode: 401);
     }
     return token;
+  }
+
+  Future<CheckInAttempt?> submitCheckIn(String scannedCode) async {
+    isSaving.value = true;
+    errorMessage.value = null;
+
+    try {
+      final token = await _token();
+      final response = await _apiClient.postJson(
+        '/admin/check-in',
+        body: {'scanned_code': scannedCode, 'method': 'manual'},
+        idToken: token,
+      );
+
+      final data = response['data'];
+      if (data is! Map<String, dynamic>) {
+        throw ApiException('Unexpected check-in response');
+      }
+
+      final attempt = CheckInAttempt.fromJson(data);
+      checkInAttempts.insert(0, attempt); // Prepend to local check-in list
+      return attempt;
+    } on ApiException catch (error) {
+      errorMessage.value = error.message;
+      return null;
+    } catch (_) {
+      errorMessage.value = 'Check-in failed.';
+      return null;
+    } finally {
+      isSaving.value = false;
+    }
   }
 }
