@@ -4,9 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:itc_events/app/config/app_config.dart';
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.code, this.fields});
   final String message;
   final int? statusCode;
+  final String? code;
+  final Map<String, dynamic>? fields;
 
   @override
   String toString() => message;
@@ -109,12 +111,24 @@ class ApiClient {
     // match Laravel error shape
     final error = body?['error'];
     var message = 'Request failed ${response.statusCode}';
+    String? code;
+    Map<String, dynamic>? fields;
     if (error is Map) {
       message = error['message'] as String? ?? message;
+      code = error['code'] as String?;
+      final rawFields = error['fields'];
+      if (rawFields is Map<String, dynamic>) {
+        fields = rawFields;
+      }
     } else if (body?['message'] is String) {
       message = body!['message'] as String;
     }
-    throw ApiException(message, statusCode: response.statusCode);
+    throw ApiException(
+      message,
+      statusCode: response.statusCode,
+      code: code,
+      fields: fields,
+    );
   }
 
   // practice clean code

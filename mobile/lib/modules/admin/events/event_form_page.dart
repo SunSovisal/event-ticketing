@@ -5,7 +5,7 @@ import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
-import 'package:itc_events/modules/admin/admin_event_controller.dart';
+import 'package:itc_events/modules/admin/events/event_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_category.dart';
 

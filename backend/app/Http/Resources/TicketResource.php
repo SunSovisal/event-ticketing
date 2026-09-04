@@ -23,6 +23,12 @@ class TicketResource extends JsonResource
             'status' => $this->status,
             'checked_in_at' => $this->checked_in_at?->utc()->toIso8601String(),
             'created_at' => $this->created_at?->utc()->toIso8601String(),
+            'attendee_name' => $this->when(
+                $this->relationLoaded('user'),
+                fn () => $this->user?->name
+                    ?: $this->user?->email
+                    ?: $this->user?->phone_number,
+            ),
             'event' => $this->whenLoaded('event', fn () => [
                 'id' => $this->event->id,
                 'title' => $this->event->title,

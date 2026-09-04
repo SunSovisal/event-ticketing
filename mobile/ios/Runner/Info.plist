@@ -7,7 +7,9 @@
 	<dict>
 	<key>NSAllowsArbitraryLoads</key>
 	<true/>
-	</dict>	
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>GoITC uses the camera to scan ticket QR codes for event check-in.</string>
 	
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>

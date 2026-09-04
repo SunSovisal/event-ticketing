@@ -6,10 +6,10 @@ import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
-import 'package:itc_events/modules/admin/admin_attendee.dart';
-import 'package:itc_events/modules/admin/admin_event_controller.dart';
-import 'package:itc_events/modules/admin/admin_event_form_page.dart';
-import 'package:itc_events/modules/admin/check_in_attempt.dart';
+import 'package:itc_events/modules/admin/events/attendee.dart';
+import 'package:itc_events/modules/admin/events/check_in_attempt.dart';
+import 'package:itc_events/modules/admin/events/event_controller.dart';
+import 'package:itc_events/modules/admin/events/event_form_page.dart';
 import 'package:itc_events/modules/events/event.dart';
 
 class AdminEventDetailPage extends StatefulWidget {

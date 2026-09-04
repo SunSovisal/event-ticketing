@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
-import 'package:itc_events/modules/admin/admin_attendee.dart';
-import 'package:itc_events/modules/admin/check_in_attempt.dart';
+import 'package:itc_events/modules/admin/events/attendee.dart';
+import 'package:itc_events/modules/admin/events/check_in_attempt.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -136,14 +136,14 @@ class AdminEventController extends GetxController {
       }
 
       attendees.assignAll(
-        attendeesData
-            .whereType<Map<String, dynamic>>()
-            .map(AdminAttendee.fromJson),
+        attendeesData.whereType<Map<String, dynamic>>().map(
+          AdminAttendee.fromJson,
+        ),
       );
       checkInAttempts.assignAll(
-        attemptsData
-            .whereType<Map<String, dynamic>>()
-            .map(CheckInAttempt.fromJson),
+        attemptsData.whereType<Map<String, dynamic>>().map(
+          CheckInAttempt.fromJson,
+        ),
       );
     } on ApiException catch (error) {
       detailErrorMessage.value = error.message;

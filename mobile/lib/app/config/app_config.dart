@@ -7,6 +7,7 @@ class AppConfig {
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8000/api/v1',
     // defaultValue: 'http://10.0.2.2:8000/api/v1',
+   
   );
 
   /// Web OAuth client ID (Firebase Console → Authentication → Google → Web client ID).
