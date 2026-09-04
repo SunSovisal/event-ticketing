@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:itc_events/modules/admin/admin_attendee.dart';
-import 'package:itc_events/modules/admin/check_in_attempt.dart';
+import 'package:itc_events/modules/admin/events/attendee.dart';
+import 'package:itc_events/modules/admin/events/check_in_attempt.dart';
 
 void main() {
   test('AdminAttendee.fromJson maps campus fields and status', () {

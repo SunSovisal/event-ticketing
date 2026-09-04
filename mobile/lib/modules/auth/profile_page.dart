@@ -1,13 +1,9 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/modules/admin/admin_check_in_page.dart';
-import 'package:itc_events/modules/admin/admin_event_controller.dart';
-import 'package:itc_events/modules/admin/admin_events_page.dart';
-import 'package:itc_events/modules/admin/admin_scaner_page.dart';
+import 'package:itc_events/modules/admin/check_in/check_in_page.dart';
+import 'package:itc_events/modules/admin/check_in/scanner_page.dart';
+import 'package:itc_events/modules/admin/events/events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in_page.dart';
@@ -195,12 +191,9 @@ class ProfilePage extends StatelessWidget {
                               color: AppTheme.primary,
                             ),
                             title: Text('Admin scanner'),
-                            subtitle: Text('Coming later'),
+                            subtitle: Text('Scan a ticket QR at the door'),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () {
-                              log("Hello");
-                              Get.to(() => AdminScanerPage());
-                            },
+                            onTap: () => Get.to(() => const AdminScanerPage()),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -209,18 +202,9 @@ class ProfilePage extends StatelessWidget {
                               color: AppTheme.primary,
                             ),
                             title: Text('Manual check-in'),
-                            subtitle: Text('Coming later'),
+                            subtitle: Text('Enter a ticket code if the camera fails'),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () {
-                              if (!Get.isRegistered<AdminEventController>()) {
-                                Get.put(
-                                  AdminEventController(
-                                    apiClient: Get.find<ApiClient>(),
-                                  ),
-                                );
-                              }
-                              Get.to(() => AdminCheckInPage());
-                            },
+                            onTap: () => Get.to(() => const AdminCheckInPage()),
                           ),
                         ],
                       ),

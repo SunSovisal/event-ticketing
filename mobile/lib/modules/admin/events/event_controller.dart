@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
-import 'package:itc_events/modules/admin/admin_attendee.dart';
-import 'package:itc_events/modules/admin/check_in_attempt.dart';
+import 'package:itc_events/modules/admin/events/attendee.dart';
+import 'package:itc_events/modules/admin/events/check_in_attempt.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -209,36 +209,5 @@ class AdminEventController extends GetxController {
       throw ApiException('Not signed in', statusCode: 401);
     }
     return token;
-  }
-
-  Future<CheckInAttempt?> submitCheckIn(String scannedCode) async {
-    isSaving.value = true;
-    errorMessage.value = null;
-
-    try {
-      final token = await _token();
-      final response = await _apiClient.postJson(
-        '/admin/check-in',
-        body: {'scanned_code': scannedCode, 'method': 'manual'},
-        idToken: token,
-      );
-
-      final data = response['data'];
-      if (data is! Map<String, dynamic>) {
-        throw ApiException('Unexpected check-in response');
-      }
-
-      final attempt = CheckInAttempt.fromJson(data);
-      checkInAttempts.insert(0, attempt); // Prepend to local check-in list
-      return attempt;
-    } on ApiException catch (error) {
-      errorMessage.value = error.message;
-      return null;
-    } catch (_) {
-      errorMessage.value = 'Check-in failed.';
-      return null;
-    } finally {
-      isSaving.value = false;
-    }
   }
 }

@@ -60,7 +60,7 @@ class CheckInService
 
             return [
                 'result' => $result,
-                'ticket' => $ticket->fresh()->load('event'),
+                'ticket' => $ticket->fresh()->load(['event', 'user']),
             ];
         });
 
