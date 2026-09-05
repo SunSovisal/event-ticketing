@@ -9,7 +9,7 @@ import 'package:itc_events/app/services/push_notification_service.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_binding.dart';
 import 'package:itc_events/app/theme/them_controller_page.dart';
-import 'package:itc_events/modules/events/splash_page.dart';
+import 'package:itc_events/modules/shell/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

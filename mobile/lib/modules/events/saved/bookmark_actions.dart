@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/widgets/sign_in_sheet.dart';
+import 'package:itc_events/modules/auth/sign_in/widgets/sign_in_sheet.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
-import 'package:itc_events/modules/events/saved_event_controller.dart';
+import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 
 Future<void> toggleEventBookmark(BuildContext context, Event event) async {
   if (!Get.isRegistered<EventController>()) {

@@ -4,7 +4,7 @@ import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
-import 'package:itc_events/modules/events/bookmark_actions.dart';
+import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';

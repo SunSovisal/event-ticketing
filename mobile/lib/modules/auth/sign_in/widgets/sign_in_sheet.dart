@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
-import 'package:itc_events/modules/auth/register_page.dart';
+import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
+import 'package:itc_events/modules/auth/sign_in/register_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 
 /// Presents sign-in as a dismissible sheet so guests can return to event detail.

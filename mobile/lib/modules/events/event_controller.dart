@@ -3,7 +3,7 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
-import 'package:itc_events/modules/events/saved_event_controller.dart';
+import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 
 class EventController extends GetxController {
   EventController({required ApiClient apiClient, this.fetchOnStart = true})

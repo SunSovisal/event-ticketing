@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/profile_page.dart';
+import 'package:itc_events/modules/auth/profile/profile_page.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';

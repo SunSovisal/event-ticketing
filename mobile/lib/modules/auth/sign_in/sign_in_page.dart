@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/auth/forgot_password_page.dart';
-import 'package:itc_events/modules/auth/phone_sign_in_page.dart';
-import 'package:itc_events/modules/auth/register_page.dart';
+import 'package:itc_events/modules/auth/sign_in/forgot_password_page.dart';
+import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
+import 'package:itc_events/modules/auth/sign_in/register_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 

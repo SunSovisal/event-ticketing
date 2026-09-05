@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
-import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
+import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
 class CompleteProfilePage extends StatefulWidget {

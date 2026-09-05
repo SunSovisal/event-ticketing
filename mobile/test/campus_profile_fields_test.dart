@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:itc_events/modules/auth/widgets/campus_profile_fields.dart';
+import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
 
 void main() {
   testWidgets('CampusProfileFields shows optional campus inputs', (tester) async {

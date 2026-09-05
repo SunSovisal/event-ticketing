@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
-import 'package:itc_events/modules/events/bookmark_actions.dart';
+import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
-import 'package:itc_events/modules/events/saved_event_controller.dart';
+import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
 class SavedEventsPage extends StatefulWidget {

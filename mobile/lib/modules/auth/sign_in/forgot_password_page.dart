@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
-import 'package:itc_events/modules/auth/sign_in_page.dart';
+import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
