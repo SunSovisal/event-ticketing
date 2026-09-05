@@ -22,7 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void initState() {
     super.initState();
     _auth = Get.find<AuthController>();
-    _auth.errorMessage.value = '';
+    _auth.clearErrorMessage();
   }
 
   @override

@@ -20,7 +20,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void initState() {
     super.initState();
     _auth = Get.find<AuthController>();
-    _auth.errorMessage.value = '';
+    _auth.clearErrorMessage();
   }
 
   @override

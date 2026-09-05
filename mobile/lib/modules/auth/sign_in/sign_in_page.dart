@@ -23,7 +23,7 @@ class _SignInPageState extends State<SignInPage> {
   void initState() {
     super.initState();
     _auth = Get.find<AuthController>();
-    _auth.errorMessage.value = '';
+    _auth.clearErrorMessage();
   }
 
   @override

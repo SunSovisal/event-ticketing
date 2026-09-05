@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:itc_events/app/config/app_config.dart';
@@ -31,6 +32,15 @@ class AuthController {
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;
   bool get isAdmin => me.value?['is_admin'] == true;
+
+  /// Clears [errorMessage] after the current frame so Obx listeners are not
+  /// marked dirty mid-build (e.g. Register → Sign in via Get.off).
+  void clearErrorMessage() {
+    if (errorMessage.value.isEmpty) return;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      errorMessage.value = '';
+    });
+  }
 
   /// Provider IDs currently linked to the signed-in Firebase account
   List<String> get linkedProviderIds =>
