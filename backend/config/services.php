@@ -41,4 +41,12 @@ return [
         'api_secret' => env('CLOUDINARY_API_SECRET'),
     ],
 
+    'openrouter' => [
+        'key' => env('OPENROUTER_API_KEY'),
+        'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+        'model' => env('OPENROUTER_MODEL', 'google/gemini-2.5-flash'),
+        'max_tokens' => (int) env('OPENROUTER_MAX_TOKENS', 512),
+        'daily_limit' => (int) env('CHAT_DAILY_LIMIT', 30),
+    ],
+
 ];

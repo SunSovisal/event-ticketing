@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminCheckInController;
 use App\Http\Controllers\AdminEventController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\SavedEventController;
@@ -29,6 +30,9 @@ Route::prefix('v1')->group(function () {
         Route::middleware('firebase')->group(function () {
             Route::get('/me', [MeController::class, 'show']);
             Route::patch('/me', [MeController::class, 'update']);
+
+            Route::post('/chat', [ChatController::class, 'store'])
+                ->middleware('throttle:chat');
 
             Route::post('/events/{id}/tickets', [TicketController::class, 'store'])->middleware('throttle:api');
             Route::post('/events/{id}/save', [SavedEventController::class, 'store']);

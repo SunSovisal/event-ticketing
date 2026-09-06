@@ -11,8 +11,6 @@ import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
 import 'package:itc_events/modules/auth/profile/settings_page.dart';
 import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/events/saved/saved_events_page.dart';
-import 'package:itc_events/modules/health/health_binding.dart';
-import 'package:itc_events/modules/health/health_page.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -60,23 +58,10 @@ class ProfilePage extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: auth.isAdmin
-            ? FloatingActionButton(
-                onPressed: () {
-                  Get.to(() => HealthPage(), binding: HealthBinding());
-                },
-                child: Icon(Icons.network_check),
-              )
-            : null,
         body: me == null
             ? _SignedOutProfile()
             : ListView(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  24,
-                  24,
-                  auth.isAdmin ? 96 : 24,
-                ),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
                 children: [
                   Card(
                     child: Padding(

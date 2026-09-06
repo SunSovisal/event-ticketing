@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/chat/chat_controller.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
@@ -278,6 +279,9 @@ class AuthController {
     await _auth.signOut();
     await _googleSignIn.signOut();
     me.value = null;
+    if (Get.isRegistered<ChatController>()) {
+      Get.find<ChatController>().clearChat();
+    }
     _refreshHomeEvents();
   }
 

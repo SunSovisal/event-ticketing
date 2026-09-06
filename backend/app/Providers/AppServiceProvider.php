@@ -36,5 +36,14 @@ class AppServiceProvider extends ServiceProvider
                 optional($request->user())->id ?: $request->ip()
             );
         });
+
+        RateLimiter::for('chat', function (Request $request) {
+            $user = $request->attributes->get('auth_user');
+            $key = is_object($user) && isset($user->id)
+                ? 'user:'.$user->id
+                : 'ip:'.$request->ip();
+
+            return Limit::perMinute(10)->by($key);
+        });
     }
 }
