@@ -46,8 +46,8 @@ class _RegisterPageState extends State<RegisterPage> {
       _auth.errorMessage.value = 'please_enter_email'.tr;
       return;
     }
-    if (password.length < 6) {
-      _auth.errorMessage.value = 'password_min_6'.tr;
+    if (password.length < 8) {
+      _auth.errorMessage.value = 'password_min_8'.tr;
       return;
     }
 
@@ -107,7 +107,7 @@ class _RegisterPageState extends State<RegisterPage> {
               decoration: InputDecoration(
                 labelText: 'password'.tr,
                 prefixIcon: Icon(Icons.lock_outline_rounded),
-                helperText: 'password_helper_min_6'.tr,
+                helperText: 'password_helper_min_8'.tr,
               ),
             ),
             if (_auth.errorMessage.value.isNotEmpty) ...[
