@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/events/event_category.dart';
 
@@ -15,18 +16,18 @@ class EventCategoryScroller extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['All', ...EventCategory.values];
+    final values = <String?>[null, ...EventCategory.values];
 
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: labels.length,
+        itemCount: values.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final label = labels[index];
-          final value = index == 0 ? null : label;
+          final value = values[index];
           final isSelected = selected == value;
+          final label = value == null ? 'all'.tr : value;
 
           return Material(
             color: isSelected ? AppTheme.primary : AppTheme.surfaceOf(context),

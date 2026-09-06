@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/tickets/ticket.dart';
 
@@ -42,7 +43,7 @@ class CheckInOutcome {
       result: 'success',
       ticketCode: ticket.ticketCode,
       method: method,
-      message: 'Checked in successfully.',
+      message: 'checked_in_successfully'.tr,
       eventTitle: ticket.event.title,
       attendeeName: attendeeName,
       checkedInAt: ticket.checkedInAt,

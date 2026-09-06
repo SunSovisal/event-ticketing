@@ -68,7 +68,7 @@ class TicketController extends GetxController {
     } on ApiException catch (error) {
       errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'Could not load tickets.';
+      errorMessage.value = 'could_not_load_tickets'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -94,7 +94,7 @@ class TicketController extends GetxController {
       AppSnackbar.error(error.message);
       return null;
     } catch (_) {
-      AppSnackbar.error('Could not load ticket.');
+      AppSnackbar.error('could_not_load_ticket'.tr);
       return null;
     }
   }
@@ -107,7 +107,7 @@ class TicketController extends GetxController {
     try {
       final token = await _idToken();
       if (token == null) {
-        AppSnackbar.error('Sign in to reserve a ticket.');
+        AppSnackbar.error('sign_in_to_reserve_ticket'.tr);
         return null;
       }
 
@@ -143,10 +143,10 @@ class TicketController extends GetxController {
       _upsert(ticket);
       return ticket;
     } on ApiException catch (error) {
-      AppSnackbar.error(error.message, title: 'Unable to get ticket');
+      AppSnackbar.error(error.message, title: 'unable_to_get_ticket'.tr);
       return null;
     } catch (_) {
-      AppSnackbar.error('Could not reserve a ticket.', title: 'Unable to get ticket');
+      AppSnackbar.error('could_not_reserve_ticket'.tr, title: 'unable_to_get_ticket'.tr);
       return null;
     } finally {
       isReserving.value = false;

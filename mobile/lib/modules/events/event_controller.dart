@@ -49,7 +49,7 @@ class EventController extends GetxController {
     } on ApiException catch (error) {
       errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'Could not load events.';
+      errorMessage.value = 'could_not_load_events'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -58,7 +58,7 @@ class EventController extends GetxController {
   Future<void> toggleSave(Event event) async {
     final token = await _idToken();
     if (token == null) {
-      AppSnackbar.error('Sign in to save events.');
+      AppSnackbar.error('sign_in_to_save_events'.tr);
       return;
     }
 
@@ -84,7 +84,7 @@ class EventController extends GetxController {
       AppSnackbar.error(error.message);
     } catch (_) {
       _setSaved(event, !next);
-      AppSnackbar.error('Could not update saved events.');
+      AppSnackbar.error('could_not_update_saved'.tr);
     } finally {
       savingIds.remove(event.id);
     }

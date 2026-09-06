@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 
 class EventBookmarkButton extends StatelessWidget {
@@ -25,7 +26,7 @@ class EventBookmarkButton extends StatelessWidget {
     final spinnerSize = compact ? 14.0 : 18.0;
 
     final button = IconButton(
-      tooltip: isSaved ? 'Remove from saved' : 'Save event',
+      tooltip: isSaved ? 'remove_from_saved'.tr : 'save_event'.tr,
       onPressed: isBusy ? null : onPressed,
       iconSize: iconSize,
       padding: compact ? const EdgeInsets.all(6) : null,

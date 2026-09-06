@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
@@ -41,18 +42,18 @@ class CheckInResultCard extends StatelessWidget {
           ),
           const Divider(height: 24),
           if (attendee != null && attendee.isNotEmpty) ...[
-            _DetailRow(label: 'Attendee', value: attendee),
+            _DetailRow(label: 'attendee'.tr, value: attendee),
             const SizedBox(height: 8),
           ],
           if (outcome.eventTitle != null && outcome.eventTitle!.isNotEmpty) ...[
-            _DetailRow(label: 'Event', value: outcome.eventTitle!),
+            _DetailRow(label: 'event'.tr, value: outcome.eventTitle!),
             const SizedBox(height: 8),
           ],
-          _DetailRow(label: 'Ticket', value: outcome.ticketCode),
+          _DetailRow(label: 'ticket'.tr, value: outcome.ticketCode),
           const SizedBox(height: 8),
           _DetailRow(
-            label: 'Method',
-            value: outcome.method == 'manual' ? 'Manual' : 'QR',
+            label: 'method'.tr,
+            value: outcome.method == 'manual' ? 'manual'.tr : 'qr'.tr,
           ),
         ],
       ),

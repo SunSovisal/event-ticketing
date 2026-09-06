@@ -33,12 +33,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      AppSnackbar.error('Please enter your email address');
+      AppSnackbar.error('please_enter_email_address'.tr);
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      AppSnackbar.error('Please enter a valid email address');
+      AppSnackbar.error('please_enter_valid_email_address'.tr);
       return;
     }
 
@@ -48,20 +48,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageLayout(
-      title: 'Forgot password?',
-      subtitle:
-          'Enter your email address and we will send you a link to reset your password.',
+      title: 'forgot_password_title'.tr,
+      subtitle: 'forgot_password_subtitle'.tr,
       showBack: true,
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Remember your password?',
+            'remember_password_q'.tr,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           TextButton(
             onPressed: () => Get.off(() => const SignInPage()),
-            child: const Text('Sign in'),
+            child: Text('sign_in'.tr),
           ),
         ],
       ),
@@ -74,10 +73,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _handleForgotPassword(),
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: 'email'.tr,
+                hintText: 'enter_your_email'.tr,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
 
@@ -99,7 +98,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Send reset email'),
+                  : Text('send_reset_email'.tr),
             ),
 
             const SizedBox(height: 12),
@@ -108,7 +107,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               onPressed: _auth.isLoading.value
                   ? null
                   : () => Get.off(() => const SignInPage()),
-              child: const Text('Back to sign in'),
+              child: Text('back_to_sign_in'.tr),
             ),
           ],
         );

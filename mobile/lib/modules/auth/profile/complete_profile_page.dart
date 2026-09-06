@@ -45,17 +45,17 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     final email = _emailController.text.trim();
 
     if (name.isEmpty) {
-      _auth.errorMessage.value = 'Enter your name';
+      _auth.errorMessage.value = 'enter_your_name'.tr;
       return;
     }
 
     if (name.length > 120) {
-      _auth.errorMessage.value = 'Name cannot exceed 120 characters';
+      _auth.errorMessage.value = 'name_max_120'.tr;
       return;
     }
 
     if (email.isEmpty || !GetUtils.isEmail(email)) {
-      _auth.errorMessage.value = 'Enter a valid email';
+      _auth.errorMessage.value = 'enter_valid_email'.tr;
       return;
     }
 
@@ -79,8 +79,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     return PopScope(
       canPop: false,
       child: AuthPageLayout(
-        title: 'Complete your profile',
-        subtitle: 'Enter the name that will appear on your tickets. Campus details are optional.',
+        title: 'complete_profile_title'.tr,
+        subtitle: 'complete_profile_subtitle'.tr,
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -88,9 +88,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 controller: _nameController,
                 autofocus: true,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Full name',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: 'full_name'.tr,
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
               ),
               const SizedBox(height: 16),
@@ -98,9 +98,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: 'email'.tr,
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
               ),
               const SizedBox(height: 16),
@@ -132,7 +132,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Continue'),
+                          : Text('continue'.tr),
                     ),
                   ],
                 ),

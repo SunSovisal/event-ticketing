@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/admin/check_in/check_in_page.dart';
 import 'package:itc_events/modules/admin/check_in/scanner_page.dart';
 import 'package:itc_events/modules/admin/events/events_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
-import 'package:itc_events/app/theme/them_controller_page.dart';
+import 'package:itc_events/modules/auth/profile/settings_page.dart';
 import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/events/saved/saved_events_page.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
@@ -32,7 +33,6 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
-    final themeCtrl = Get.find<ThemeController>();
 
     return Obx(() {
       final me = auth.me.value;
@@ -42,11 +42,24 @@ class ProfilePage extends StatelessWidget {
       final campusParts = <String>[
         if (studentId != null && studentId.isNotEmpty) studentId,
         if (department != null && department.isNotEmpty) department,
-        if (year != null) 'Year $year',
+        if (year != null) 'year_n'.trParams({'year': '$year'}),
       ];
 
       return Scaffold(
-        appBar: AppBar(title: Text('Profile')),
+        backgroundColor: AppTheme.scaffoldOf(context),
+        appBar: AppPageBar(
+          title: 'nav_profile'.tr,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: IconButton(
+                tooltip: 'settings'.tr,
+                onPressed: () => Get.to(() => const SettingsPage()),
+                icon: const Icon(Icons.settings_outlined),
+              ),
+            ),
+          ],
+        ),
         floatingActionButton: auth.isAdmin
             ? FloatingActionButton(
                 onPressed: () {
@@ -56,9 +69,14 @@ class ProfilePage extends StatelessWidget {
               )
             : null,
         body: me == null
-            ? const _SignedOutProfile()
+            ? _SignedOutProfile()
             : ListView(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  auth.isAdmin ? 96 : 24,
+                ),
                 children: [
                   Card(
                     child: Padding(
@@ -86,7 +104,7 @@ class ProfilePage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  me['name']?.toString() ?? 'No name',
+                                  me['name']?.toString() ?? 'no_name'.tr,
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
                                 SizedBox(height: 4),
@@ -117,7 +135,7 @@ class ProfilePage extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      'Admin',
+                                      'admin'.tr,
                                       style: TextStyle(
                                         color: AppTheme.primary,
                                         fontSize: 12,
@@ -130,7 +148,7 @@ class ProfilePage extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Edit profile',
+                            tooltip: 'edit_profile'.tr,
                             onPressed: () =>
                                 _showEditProfileDialog(context, auth),
                             icon: const Icon(Icons.edit_outlined),
@@ -146,25 +164,9 @@ class ProfilePage extends StatelessWidget {
                         Icons.bookmark_outline,
                         color: AppTheme.primary,
                       ),
-                      title: Text('Saved events'),
+                      title: Text('saved_events'.tr),
                       trailing: Icon(Icons.chevron_right),
                       onTap: () => Get.to(() => const SavedEventsPage()),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Card(
-                    child: Obx(
-                      () => ListTile(
-                        leading: Icon(
-                          themeCtrl.currentThemeIcon,
-                          color: AppTheme.primary,
-                        ),
-                        title: const Text('Appearance'),
-                        subtitle: Text(themeCtrl.currentThemeLabel),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () =>
-                            _showThemeSelectionDialog(context, themeCtrl),
-                      ),
                     ),
                   ),
                   if (auth.isAdmin) ...[
@@ -177,10 +179,8 @@ class ProfilePage extends StatelessWidget {
                               Icons.event_rounded,
                               color: AppTheme.primary,
                             ),
-                            title: Text('Manage events'),
-                            subtitle: Text(
-                              'Create, publish, and cancel events',
-                            ),
+                            title: Text('manage_events'.tr),
+                            subtitle: Text('manage_events_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
                             onTap: () => Get.to(() => const AdminEventsPage()),
                           ),
@@ -190,8 +190,8 @@ class ProfilePage extends StatelessWidget {
                               Icons.qr_code_scanner_rounded,
                               color: AppTheme.primary,
                             ),
-                            title: Text('Admin scanner'),
-                            subtitle: Text('Scan a ticket QR at the door'),
+                            title: Text('admin_scanner'.tr),
+                            subtitle: Text('admin_scanner_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
                             onTap: () => Get.to(() => const AdminScanerPage()),
                           ),
@@ -201,8 +201,8 @@ class ProfilePage extends StatelessWidget {
                               Icons.how_to_reg_rounded,
                               color: AppTheme.primary,
                             ),
-                            title: Text('Manual check-in'),
-                            subtitle: Text('Enter a ticket code if the camera fails'),
+                            title: Text('manual_check_in'.tr),
+                            subtitle: Text('manual_check_in_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
                             onTap: () => Get.to(() => const AdminCheckInPage()),
                           ),
@@ -218,7 +218,7 @@ class ProfilePage extends StatelessWidget {
                       await auth.signOut();
                       openMainShell();
                     },
-                    child: Text('Sign out'),
+                    child: Text('sign_out'.tr),
                   ),
                 ],
               ),
@@ -273,12 +273,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     final email = _emailController.text.trim();
 
     if (name.isEmpty || email.isEmpty) {
-      widget.auth.errorMessage.value = 'Name and email are required';
+      widget.auth.errorMessage.value = 'name_email_required'.tr;
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      widget.auth.errorMessage.value = 'Enter a valid email';
+      widget.auth.errorMessage.value = 'enter_valid_email'.tr;
       return;
     }
 
@@ -298,7 +298,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit profile'),
+      title: Text('edit_profile'.tr),
       content: SizedBox(
         width: 360,
         child: SingleChildScrollView(
@@ -309,14 +309,14 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 controller: _nameController,
                 autofocus: true,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: 'name'.tr),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: 'email'.tr),
               ),
               const SizedBox(height: 16),
               CampusProfileFields(
@@ -347,7 +347,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text('cancel'.tr),
         ),
         Obx(
           () => FilledButton(
@@ -358,7 +358,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text('save'.tr),
           ),
         ),
       ],
@@ -393,14 +393,14 @@ class _SignedOutProfile extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Sign in to reserve tickets and manage your profile.',
+            'signed_out_message'.tr,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: () => Get.to(() => const SignInPage()),
-            child: const Text('Sign in'),
+            child: Text('sign_in'.tr),
           ),
           const Spacer(),
         ],
@@ -418,17 +418,17 @@ class _LinkedProvidersCard extends StatelessWidget {
   static const _providers = [
     _ProviderMeta(
       id: 'password',
-      label: 'Email / Password',
+      labelKey: 'provider_email_password',
       icon: Icons.email_outlined,
     ),
     _ProviderMeta(
       id: 'google.com',
-      label: 'Google',
+      labelKey: 'provider_google',
       imageAsset: 'assets/google_logo.png',
     ),
     _ProviderMeta(
       id: 'phone',
-      label: 'Phone (SMS)',
+      labelKey: 'provider_phone',
       icon: Icons.phone_outlined,
     ),
   ];
@@ -445,7 +445,7 @@ class _LinkedProvidersCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Text(
-                'Linked sign-in methods',
+                'linked_sign_in_methods'.tr,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
@@ -493,13 +493,13 @@ class _LinkedProvidersCard extends StatelessWidget {
 class _ProviderMeta {
   const _ProviderMeta({
     required this.id,
-    required this.label,
+    required this.labelKey,
     this.icon,
     this.imageAsset,
   });
 
   final String id;
-  final String label;
+  final String labelKey;
   final IconData? icon;
   final String? imageAsset;
 }
@@ -526,7 +526,7 @@ class _ProviderTile extends StatelessWidget {
               meta.icon ?? Icons.link,
               color: isLinked ? AppTheme.primary : null,
             ),
-      title: Text(meta.label),
+      title: Text(meta.labelKey.tr),
       trailing: isLinked
           ? Chip(
               avatar: Icon(
@@ -535,7 +535,7 @@ class _ProviderTile extends StatelessWidget {
                 color: AppTheme.primary,
               ),
               label: Text(
-                'Linked',
+                'linked'.tr,
                 style: TextStyle(fontSize: 12, color: AppTheme.primary),
               ),
               backgroundColor: AppTheme.primary.withValues(alpha: 0.08),
@@ -547,52 +547,8 @@ class _ProviderTile extends StatelessWidget {
           ? null // linking email/password isn't available
           : TextButton(
               onPressed: isLoading ? null : onLink,
-              child: const Text('Link'),
+              child: Text('link'.tr),
             ),
     );
   }
-}
-
-Future<void> _showThemeSelectionDialog(
-  BuildContext context,
-  ThemeController themeCtrl,
-) async {
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Appearance'),
-      content: Obx(
-        () => RadioGroup<ThemeMode>(
-          groupValue: themeCtrl.themeMode.value,
-          onChanged: (mode) {
-            Navigator.pop(dialogContext);
-            if (mode != null) themeCtrl.setThemeMode(mode);
-          },
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<ThemeMode>(
-                title: Text('System auto'),
-                value: ThemeMode.system,
-              ),
-              RadioListTile<ThemeMode>(
-                title: Text('Light'),
-                value: ThemeMode.light,
-              ),
-              RadioListTile<ThemeMode>(
-                title: Text('Dark'),
-                value: ThemeMode.dark,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Cancel'),
-        ),
-      ],
-    ),
-  );
 }

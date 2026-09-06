@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 const kCampusDepartments = <String>[
   'GIC',
@@ -39,9 +40,9 @@ class CampusProfileFields extends StatelessWidget {
         TextField(
           controller: studentIdController,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(
-            labelText: 'Student ID (optional)',
-            prefixIcon: Icon(Icons.badge_outlined),
+          decoration: InputDecoration(
+            labelText: 'student_id_optional'.tr,
+            prefixIcon: const Icon(Icons.badge_outlined),
           ),
         ),
         const SizedBox(height: 16),
@@ -50,14 +51,14 @@ class CampusProfileFields extends StatelessWidget {
               department != null && kCampusDepartments.contains(department)
               ? department
               : '',
-          decoration: const InputDecoration(
-            labelText: 'Department (optional)',
-            prefixIcon: Icon(Icons.apartment_outlined),
+          decoration: InputDecoration(
+            labelText: 'department_optional'.tr,
+            prefixIcon: const Icon(Icons.apartment_outlined),
           ),
           items: [
-            const DropdownMenuItem<String>(
+            DropdownMenuItem<String>(
               value: '',
-              child: Text('Not set'),
+              child: Text('not_set'.tr),
             ),
             ...kCampusDepartments.map(
               (code) => DropdownMenuItem<String>(
@@ -72,19 +73,19 @@ class CampusProfileFields extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<int>(
           initialValue: year != null && kCampusYears.contains(year) ? year : 0,
-          decoration: const InputDecoration(
-            labelText: 'Year (optional)',
-            prefixIcon: Icon(Icons.school_outlined),
+          decoration: InputDecoration(
+            labelText: 'year_optional'.tr,
+            prefixIcon: const Icon(Icons.school_outlined),
           ),
           items: [
-            const DropdownMenuItem<int>(
+            DropdownMenuItem<int>(
               value: 0,
-              child: Text('Not set'),
+              child: Text('not_set'.tr),
             ),
             ...kCampusYears.map(
               (value) => DropdownMenuItem<int>(
                 value: value,
-                child: Text('Year $value'),
+                child: Text('year_n'.trParams({'year': '$value'})),
               ),
             ),
           ],

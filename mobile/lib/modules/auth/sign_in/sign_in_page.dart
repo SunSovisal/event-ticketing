@@ -46,16 +46,16 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageLayout(
-      title: 'Welcome back',
-      subtitle: 'Sign in to browse events and manage your tickets.',
+      title: 'welcome_back'.tr,
+      subtitle: 'sign_in_subtitle'.tr,
       showBack: true,
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('New here?', style: Theme.of(context).textTheme.bodyMedium),
+          Text('new_here'.tr, style: Theme.of(context).textTheme.bodyMedium),
           TextButton(
             onPressed: () => Get.off(() => RegisterPage()),
-            child: Text('Create account'),
+            child: Text('create_account'.tr),
           ),
         ],
       ),
@@ -68,7 +68,7 @@ class _SignInPageState extends State<SignInPage> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: 'email'.tr,
                 prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
@@ -79,7 +79,7 @@ class _SignInPageState extends State<SignInPage> {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _handleEmailSignIn(),
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: 'password'.tr,
                 prefixIcon: Icon(Icons.lock_outline_rounded),
               ),
             ),
@@ -88,7 +88,7 @@ class _SignInPageState extends State<SignInPage> {
               child: TextButton(
                 onPressed: () => Get.to(() => ForgotPasswordPage()),
                 child: Text(
-                  'Forgot Password?',
+                  'forgot_password'.tr,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -108,7 +108,7 @@ class _SignInPageState extends State<SignInPage> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('Sign in'),
+                  : Text('sign_in'.tr),
             ),
             SizedBox(height: 16),
             Row(
@@ -139,7 +139,7 @@ class _SignInPageState extends State<SignInPage> {
                 height: 26,
                 width: 26,
               ),
-              label: Text('Continue with Google'),
+              label: Text('continue_with_google'.tr),
             ),
             SizedBox(height: 12),
             OutlinedButton.icon(
@@ -150,7 +150,7 @@ class _SignInPageState extends State<SignInPage> {
                       Get.to(() => PhoneSignInPage());
                     },
               icon: Icon(Icons.phone),
-              label: Text('Continue with phone'),
+              label: Text('continue_with_phone'.tr),
             ),
           ],
         );

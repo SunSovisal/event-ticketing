@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:itc_events/modules/events/event.dart';
 
 /// Read-only attendee row from `GET /admin/events/{id}/attendees` (§9.3).
@@ -21,13 +22,13 @@ class AdminAttendee {
   final DateTime? checkedInAt;
 
   String get displayName =>
-      (name != null && name!.trim().isNotEmpty) ? name!.trim() : 'Unknown';
+      (name != null && name!.trim().isNotEmpty) ? name!.trim() : 'unknown'.tr;
 
   String? get campusLine {
     final parts = <String>[
       if (studentId != null && studentId!.isNotEmpty) studentId!,
       if (department != null && department!.isNotEmpty) department!,
-      if (year != null) 'Year $year',
+      if (year != null) 'year_n'.trParams({'year': '$year'}),
     ];
     if (parts.isEmpty) return null;
     return parts.join(' · ');

@@ -45,11 +45,11 @@ class ThemeController extends GetxController {
   String get currentThemeLabel {
     switch (themeMode.value) {
       case ThemeMode.light:
-        return 'Light';
+        return 'theme_light'.tr;
       case ThemeMode.dark:
-        return 'Dark';
+        return 'theme_dark'.tr;
       case ThemeMode.system:
-        return 'System auto';
+        return 'theme_system'.tr;
     }
   }
 

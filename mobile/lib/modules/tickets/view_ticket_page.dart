@@ -56,7 +56,7 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
     if (_ticket == null) {
       setState(() {
         _loading = false;
-        _error = 'Could not load this ticket.';
+        _error = 'could_not_load_this_ticket'.tr;
       });
     }
   }
@@ -64,14 +64,14 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Your ticket')),
+      appBar: AppBar(title: Text('your_ticket'.tr)),
       body: _buildBody(context),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: OutlinedButton(
             onPressed: () => openMainShell(),
-            child: const Text('Back to Events'),
+            child: Text('back_to_events'.tr),
           ),
         ),
       ),
@@ -80,14 +80,14 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
 
   Widget _buildBody(BuildContext context) {
     if (_loading && _ticket == null) {
-      return const LoadingView(message: 'Loading ticket…');
+      return LoadingView(message: 'loading_ticket'.tr);
     }
 
     if (_error != null && _ticket == null) {
       return EmptyStateView(
         icon: Icons.error_outline,
         message: _error!,
-        actionLabel: 'Retry',
+        actionLabel: 'retry'.tr,
         onAction: () {
           setState(() {
             _loading = true;
@@ -110,14 +110,14 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
             child: Column(
               children: [
                 Text(
-                  'Show at entrance',
+                  'show_at_entrance'.tr,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
                 if (ticket.ticketCode.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Text('Ticket code unavailable'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48),
+                    child: Text('ticket_code_unavailable'.tr),
                   )
                 else
                   QrImageView(
@@ -140,7 +140,7 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
                 if (ticket.checkedInAt != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Checked in ${EventDate.format(ticket.checkedInAt!)}',
+                    'checked_in_at'.trParams({'date': EventDate.format(ticket.checkedInAt!)}),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -159,13 +159,13 @@ class _ViewTicketPageState extends State<ViewTicketPage> {
                 const SizedBox(height: 12),
                 _TicketRow(
                   icon: Icons.calendar_today_outlined,
-                  label: 'Date',
+                  label: 'date'.tr,
                   value: EventDate.format(event.startsAt),
                 ),
                 const SizedBox(height: 12),
                 _TicketRow(
                   icon: Icons.location_on_outlined,
-                  label: 'Location',
+                  label: 'location'.tr,
                   value: event.locationLabel,
                 ),
               ],

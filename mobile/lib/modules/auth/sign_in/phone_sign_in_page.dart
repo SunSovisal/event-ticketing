@@ -39,7 +39,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
     final phone = _phoneController.text.trim();
 
     if (!phone.startsWith('+') || phone.length < 8) {
-      _auth.errorMessage.value = 'Enter a complete phone number including +855';
+      _auth.errorMessage.value = 'enter_complete_phone'.tr;
       return;
     }
 
@@ -54,7 +54,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
     final code = _codeController.text.trim();
 
     if (code.length != 6) {
-      _auth.errorMessage.value = 'Enter the six-digit code';
+      _auth.errorMessage.value = 'enter_six_digit_code'.tr;
       return;
     }
 
@@ -82,16 +82,16 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageLayout(
-      title: widget.linkMode ? 'Link phone number' : 'Phone sign in',
+      title: widget.linkMode ? 'link_phone_number'.tr : 'phone_sign_in'.tr,
       subtitle: widget.linkMode
-          ? 'Enter your phone number to link it to your account.'
-          : 'Enter your phone number to receive a verification code.',
+          ? 'phone_link_subtitle'.tr
+          : 'phone_sign_in_subtitle'.tr,
       footer: TextButton(
         onPressed: () {
           _auth.resetPhoneVerification();
           Get.back();
         },
-        child: Text(widget.linkMode ? 'Cancel' : 'Back to sign in'),
+        child: Text(widget.linkMode ? 'cancel'.tr : 'back_to_sign_in'.tr),
       ),
       child: Obx(() {
         return Column(
@@ -103,7 +103,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
               keyboardType: TextInputType.phone,
               autofillHints: [AutofillHints.telephoneNumber],
               decoration: InputDecoration(
-                labelText: 'Phone number',
+                labelText: 'phone_number'.tr,
                 prefixIcon: Icon(Icons.phone_outlined),
                 hintText: '+85512345678',
               ),
@@ -117,7 +117,7 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
                 autofillHints: [AutofillHints.oneTimeCode],
                 maxLength: 6,
                 decoration: InputDecoration(
-                  labelText: 'Verification code',
+                  labelText: 'verification_code'.tr,
                   prefixIcon: Icon(Icons.password_outlined),
                 ),
               ),
@@ -144,14 +144,14 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
                     )
                   : Text(
                       _auth.phoneCodeSent.value
-                          ? 'Verify and sign in'
-                          : 'Send code',
+                          ? 'verify_and_sign_in'.tr
+                          : 'send_code'.tr,
                     ),
             ),
             if (_auth.phoneCodeSent.value)
               TextButton(
                 onPressed: _auth.isLoading.value ? null : _sendCode,
-                child: Text('Resend code'),
+                child: Text('resend_code'.tr),
               ),
           ],
         );

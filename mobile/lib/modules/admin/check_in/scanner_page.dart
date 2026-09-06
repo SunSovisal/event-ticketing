@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/admin/check_in/check_in_controller.dart';
 import 'package:itc_events/modules/admin/check_in/widgets/check_in_result_card.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -65,8 +66,9 @@ class _AdminScanerPageState extends State<AdminScanerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan QR Code'),
+      backgroundColor: AppTheme.scaffoldOf(context),
+      appBar: AppPageBar(
+        title: 'scan_qr_code'.tr,
         actions: [
           IconButton(
             onPressed: () => _scanner.toggleTorch(),
@@ -91,12 +93,12 @@ class _AdminScanerPageState extends State<AdminScanerPage> {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 80,
             left: 0,
             right: 0,
             child: Text(
-              'Place the QR code inside the box',
+              'place_qr_in_box'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
@@ -146,7 +148,7 @@ class _AdminScanerPageState extends State<AdminScanerPage> {
                           height: 48,
                           child: FilledButton(
                             onPressed: _scanAgain,
-                            child: const Text('Scan next'),
+                            child: Text('scan_next'.tr),
                           ),
                         ),
                       ],

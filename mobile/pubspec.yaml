@@ -72,6 +72,13 @@ flutter:
     - assets/app_logo_transparent_primary.png
     - assets/google_logo.png
     - assets/itc_logo.png
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Variable.ttf
+    - family: Siemreap
+      fonts:
+        - asset: fonts/Siemreap.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

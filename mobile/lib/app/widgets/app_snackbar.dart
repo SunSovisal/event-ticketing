@@ -3,27 +3,27 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 
 abstract final class AppSnackbar {
-  static void success(String message, {String title = 'Success'}) {
+  static void success(String message, {String? title}) {
     _show(
-      title: title,
+      title: title ?? 'snackbar_success'.tr,
       message: message,
       background: AppTheme.success,
       icon: Icons.check_circle_outline,
     );
   }
 
-  static void error(String message, {String title = 'Error'}) {
+  static void error(String message, {String? title}) {
     _show(
-      title: title,
+      title: title ?? 'snackbar_error'.tr,
       message: message,
       background: AppTheme.error,
       icon: Icons.error_outline,
     );
   }
 
-  static void warning(String message, {String title = 'Notice'}) {
+  static void warning(String message, {String? title}) {
     _show(
-      title: title,
+      title: title ?? 'snackbar_notice'.tr,
       message: message,
       background: AppTheme.warning,
       icon: Icons.info_outline,

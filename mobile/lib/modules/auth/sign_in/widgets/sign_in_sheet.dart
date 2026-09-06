@@ -75,12 +75,12 @@ class _SignInSheetState extends State<SignInSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sign in to reserve',
+            'sign_in_to_reserve'.tr,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 6),
           Text(
-            'Use your ITC account to hold a free ticket.',
+            'sign_in_sheet_subtitle'.tr,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -92,9 +92,9 @@ class _SignInSheetState extends State<SignInSheet> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: 'email'.tr,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -103,9 +103,9 @@ class _SignInSheetState extends State<SignInSheet> {
                   obscureText: true,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _handleEmailSignIn(),
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline_rounded),
+                  decoration: InputDecoration(
+                    labelText: 'password'.tr,
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
                   ),
                 ),
                 if (_auth.errorMessage.value.isNotEmpty) ...[
@@ -124,7 +124,7 @@ class _SignInSheetState extends State<SignInSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Sign in & reserve'),
+                      : Text('sign_in_and_reserve'.tr),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -133,7 +133,7 @@ class _SignInSheetState extends State<SignInSheet> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
-                        'or',
+                        'or'.tr,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -153,7 +153,7 @@ class _SignInSheetState extends State<SignInSheet> {
                     height: 26,
                     width: 26,
                   ),
-                  label: const Text('Google'),
+                  label: Text('provider_google'.tr),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -165,19 +165,19 @@ class _SignInSheetState extends State<SignInSheet> {
                           Get.to(() => const PhoneSignInPage());
                         },
                   icon: const Icon(Icons.phone),
-                  label: const Text('Phone / SMS'),
+                  label: Text('phone_sms'.tr),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Continue browsing'),
+                  child: Text('continue_browsing'.tr),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                     Get.to(() => const RegisterPage());
                   },
-                  child: const Text('Create account'),
+                  child: Text('create_account'.tr),
                 ),
               ],
             );

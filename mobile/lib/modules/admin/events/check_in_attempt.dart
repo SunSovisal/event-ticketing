@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 /// Row from `GET /admin/events/{id}/check-in-attempts`.
 class CheckInAttempt {
   const CheckInAttempt({
@@ -21,7 +22,7 @@ class CheckInAttempt {
   String get displayName =>
       (attendeeName != null && attendeeName!.trim().isNotEmpty)
           ? attendeeName!.trim()
-          : 'Unknown';
+          : 'unknown'.tr;
 
   factory CheckInAttempt.fromJson(Map<String, dynamic> json) {
     return CheckInAttempt(
