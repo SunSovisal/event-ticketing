@@ -21,7 +21,7 @@ class AdminCheckInController extends GetxController {
   Future<CheckInOutcome?> submit(String ticketCode, {required String method}) async {
     final code = ticketCode.trim();
     if (code.isEmpty) {
-      errorMessage.value = 'Please enter a ticket code';
+      errorMessage.value = 'please_enter_ticket_code'.tr;
       lastResult.value = null;
       return null;
     }
@@ -68,7 +68,7 @@ class AdminCheckInController extends GetxController {
       errorMessage.value = error.message;
       return null;
     } catch (_) {
-      errorMessage.value = 'Check-in failed.';
+      errorMessage.value = 'check_in_failed'.tr;
       return null;
     } finally {
       isSubmitting.value = false;

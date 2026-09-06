@@ -21,6 +21,14 @@ class AdminEventController extends GetxController {
   final RxBool isLoadingDetail = false.obs;
   final RxnString detailErrorMessage = RxnString();
 
+  List<Event> get drafts => events.where((event) => event.isDraft).toList();
+
+  List<Event> get published =>
+      events.where((event) => event.isPublished).toList();
+
+  List<Event> get cancelled =>
+      events.where((event) => event.isCancelled).toList();
+
   @override
   void onInit() {
     super.onInit();
@@ -52,7 +60,7 @@ class AdminEventController extends GetxController {
     } on ApiException catch (error) {
       errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'Could not load events.';
+      errorMessage.value = 'could_not_load_events'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -108,7 +116,7 @@ class AdminEventController extends GetxController {
       errorMessage.value = error.message;
       return false;
     } catch (_) {
-      errorMessage.value = 'Could not delete event.';
+      errorMessage.value = 'could_not_delete_event'.tr;
       return false;
     } finally {
       isSaving.value = false;
@@ -148,7 +156,7 @@ class AdminEventController extends GetxController {
     } on ApiException catch (error) {
       detailErrorMessage.value = error.message;
     } catch (_) {
-      detailErrorMessage.value = 'Could not load attendees.';
+      detailErrorMessage.value = 'could_not_load_attendees'.tr;
     } finally {
       isLoadingDetail.value = false;
     }
@@ -181,7 +189,7 @@ class AdminEventController extends GetxController {
       errorMessage.value = error.message;
       return null;
     } catch (_) {
-      errorMessage.value = 'Could not save event.';
+      errorMessage.value = 'could_not_save_event'.tr;
       return null;
     } finally {
       isSaving.value = false;

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
@@ -63,15 +64,13 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Event detail'),
+      backgroundColor: AppTheme.scaffoldOf(context),
+      appBar: AppPageBar(
+        title: 'event_detail'.tr,
         actions: [
           TextButton(
             onPressed: _openEdit,
-            child: Text(
-              _event.canEdit ? 'Edit' : 'View',
-              style: const TextStyle(color: Colors.white),
-            ),
+            child: Text(_event.canEdit ? 'edit'.tr : 'view'.tr),
           ),
         ],
       ),
@@ -80,7 +79,7 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
             _controller.attendees.isEmpty &&
             _controller.checkInAttempts.isEmpty &&
             _controller.detailErrorMessage.value == null) {
-          return const LoadingView(message: 'Loading attendees…');
+          return LoadingView(message: 'loading_attendees'.tr);
         }
 
         if (_controller.detailErrorMessage.value != null &&
@@ -89,7 +88,7 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
           return EmptyStateView(
             icon: Icons.error_outline,
             message: _controller.detailErrorMessage.value!,
-            actionLabel: 'Retry',
+            actionLabel: 'retry'.tr,
             onAction: _refresh,
           );
         }
@@ -105,14 +104,14 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
               _SummaryCard(event: _event),
               const SizedBox(height: 20),
               Text(
-                'Attendees (${attendees.length})',
+                'attendees_count'.trParams({'count': '${attendees.length}'}),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               if (attendees.isEmpty)
-                const AppCard(
+                AppCard(
                   child: Text(
-                    'No reservations yet.',
+                    'no_reservations_yet'.tr,
                   ),
                 )
               else
@@ -124,14 +123,14 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
                 ),
               const SizedBox(height: 16),
               Text(
-                'Check-in attempts (${attempts.length})',
+                'check_in_attempts_count'.trParams({'count': '${attempts.length}'}),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               if (attempts.isEmpty)
-                const AppCard(
+                AppCard(
                   child: Text(
-                    'No scan attempts yet.',
+                    'no_scan_attempts_yet'.tr,
                   ),
                 )
               else
@@ -187,7 +186,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '${event.reservedCount} reserved · ${event.checkedInCount} checked in',
+            'reserved_checked_in'.trParams({'reserved': '${event.reservedCount}', 'checkedIn': '${event.checkedInCount}'}),
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -245,7 +244,7 @@ class _AttemptRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final methodLabel = attempt.method == 'manual' ? 'Manual' : 'QR';
+    final methodLabel = attempt.method == 'manual' ? 'manual'.tr : 'qr'.tr;
 
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

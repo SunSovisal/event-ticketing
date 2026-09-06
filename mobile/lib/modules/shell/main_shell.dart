@@ -59,24 +59,24 @@ class _MainShellState extends State<MainShell> {
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         indicatorColor: AppTheme.primary.withValues(alpha: 0.12),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: AppTheme.primary),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home, color: AppTheme.primary),
+            label: 'nav_home'.tr,
           ),
           NavigationDestination(
-            icon: Icon(Icons.confirmation_number_outlined),
-            selectedIcon: Icon(
+            icon: const Icon(Icons.confirmation_number_outlined),
+            selectedIcon: const Icon(
               Icons.confirmation_number,
               color: AppTheme.primary,
             ),
-            label: 'Tickets',
+            label: 'nav_tickets'.tr,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppTheme.primary),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person, color: AppTheme.primary),
+            label: 'nav_profile'.tr,
           ),
         ],
       ),

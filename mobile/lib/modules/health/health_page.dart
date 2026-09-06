@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/health/health_controller.dart';
 
 /// shows whether GET /api/v1/health succeeded.
@@ -12,9 +13,7 @@ class HealthPage extends GetView<HealthController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldOf(context),
-      appBar: AppBar(
-        title: Text('GoITC'),
-      ),
+      appBar: const AppPageBar(title: 'GoITC'),
       body: Center(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -54,7 +53,7 @@ class HealthPage extends GetView<HealthController> {
                     else
                       FilledButton(
                         onPressed: controller.checkHealth,
-                        child: Text('Check again'),
+                        child: Text('check_again'.tr),
                       ),
                   ],
                 );

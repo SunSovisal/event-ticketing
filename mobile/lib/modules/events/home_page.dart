@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                         controller: _searchController,
                         onChanged: (value) => setState(() => _query = value),
                         decoration: InputDecoration(
-                          hintText: 'Search events, rooms…',
+                          hintText: 'search_events_hint'.tr,
                           prefixIcon: Icon(Icons.search),
                           suffixIcon: IconButton(
                             onPressed: () {
@@ -110,16 +110,16 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 20),
                       if (events.isLoading.value && events.events.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 48),
-                          child: LoadingView(message: 'Loading events…'),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 48),
+                          child: LoadingView(message: 'loading_events'.tr),
                         )
                       else if (events.errorMessage.value != null &&
                           events.events.isEmpty)
                         EmptyStateView(
                           icon: Icons.error_outline,
                           message: events.errorMessage.value!,
-                          actionLabel: 'Retry',
+                          actionLabel: 'retry'.tr,
                           onAction: events.fetchEvents,
                         )
                       else ...[
@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 20),
                         ],
                         Text(
-                          'Upcoming',
+                          'upcoming'.tr,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 12),
@@ -145,8 +145,8 @@ class _HomePageState extends State<HomePage> {
                           EmptyStateView(
                             icon: Icons.event_busy,
                             message: _query.trim().isEmpty && _category == null
-                                ? 'No upcoming events yet.'
-                                : 'No events match your filters.',
+                                ? 'no_upcoming_events'.tr
+                                : 'no_events_match_filters'.tr,
                           )
                         else
                           ...visible.map(
@@ -338,7 +338,7 @@ class _FeaturedCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Featured',
+                    'featured'.tr,
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: Colors.white70),
@@ -381,7 +381,7 @@ class _FeaturedCard extends StatelessWidget {
                   side: const BorderSide(color: Colors.white54),
                   backgroundColor: Colors.white.withValues(alpha: 0.08),
                 ),
-                child: const Text('View details'),
+                child: Text('view_details'.tr),
               ),
             ],
           ),

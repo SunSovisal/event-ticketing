@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/admin/check_in/check_in_controller.dart';
 import 'package:itc_events/modules/admin/check_in/widgets/check_in_result_card.dart';
 
@@ -49,9 +50,8 @@ class _AdminCheckInPageState extends State<AdminCheckInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manual Check-In'),
-      ),
+      backgroundColor: AppTheme.scaffoldOf(context),
+      appBar: AppPageBar(title: 'manual_check_in_title'.tr),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -66,12 +66,12 @@ class _AdminCheckInPageState extends State<AdminCheckInPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Validate Ticket Code',
+                        'validate_ticket_code'.tr,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Enter the ticket QR code.',
+                        'enter_ticket_qr_code'.tr,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
@@ -80,7 +80,7 @@ class _AdminCheckInPageState extends State<AdminCheckInPage> {
                         textInputAction: TextInputAction.done,
                         autofocus: true,
                         decoration: InputDecoration(
-                          labelText: 'Ticket Code',
+                          labelText: 'ticket_code'.tr,
                           prefixIcon: const Icon(
                             Icons.confirmation_number_outlined,
                           ),
@@ -94,7 +94,7 @@ class _AdminCheckInPageState extends State<AdminCheckInPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a ticket code';
+                            return 'please_enter_ticket_code'.tr;
                           }
                           return null;
                         },
@@ -133,7 +133,7 @@ class _AdminCheckInPageState extends State<AdminCheckInPage> {
                                   )
                                 : const Icon(Icons.check_circle_outline),
                             label: Text(
-                              isSaving ? 'Processing...' : 'Submit Check-In',
+                              isSaving ? 'processing'.tr : 'submit_check_in'.tr,
                             ),
                           ),
                         );

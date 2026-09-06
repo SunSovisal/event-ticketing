@@ -9,7 +9,7 @@ class HealthController extends GetxController {
   final ApiClient _apiClient;
 
   final Rx<HealthStatus> status = HealthStatus.idle.obs;
-  final RxString message = 'tap check to connect to laravel'.obs;
+  final RxString message = 'health_tap_check'.tr.obs;
 
   @override
   void onInit() {
@@ -20,7 +20,7 @@ class HealthController extends GetxController {
   // call laravel health endpoint and maps reponse to HealthStatus
   Future<void> checkHealth() async {
     status.value = HealthStatus.loading;
-    message.value = 'Connecting to ${AppConfig.apiBaseUrl}...';
+    message.value = 'health_connecting'.trParams({'url': AppConfig.apiBaseUrl});
 
     try {
       final response = await _apiClient.getJson('/health');
@@ -28,19 +28,19 @@ class HealthController extends GetxController {
 
       if (data is Map && data['status'] == 'ok') {
         status.value = HealthStatus.connected;
-        message.value = 'Backend connected.';
+        message.value = 'health_connected'.tr;
         return;
       }
 
       status.value = HealthStatus.error;
-      message.value = 'Unexpected health response.';
+      message.value = 'health_unexpected'.tr;
     } on ApiException catch (error) {
       status.value = HealthStatus.error;
       message.value = error.message;
     } catch (_) {
       // Network down, wrong URL, or Laravel not running.
       status.value = HealthStatus.error;
-      message.value = 'Could not reach backend. Is Laravel running?';
+      message.value = 'health_unreachable'.tr;
     }
   }
 }

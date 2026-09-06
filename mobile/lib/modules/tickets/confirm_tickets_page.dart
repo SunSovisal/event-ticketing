@@ -48,7 +48,7 @@ class ConfirmTicketPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                "You're in!",
+                'youre_in'.tr,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 12),
@@ -56,7 +56,7 @@ class ConfirmTicketPage extends StatelessWidget {
                 TextSpan(
                   style: Theme.of(context).textTheme.bodyMedium,
                   children: [
-                    const TextSpan(text: 'Your ticket for '),
+                    TextSpan(text: 'ticket_ready_prefix'.tr),
                     TextSpan(
                       text: event.title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -64,8 +64,8 @@ class ConfirmTicketPage extends StatelessWidget {
                         color: AppTheme.textPrimaryOf(context),
                       ),
                     ),
-                    const TextSpan(
-                      text: ' is ready. Show the QR at the entrance.',
+                    TextSpan(
+                      text: 'ticket_ready_suffix'.tr,
                     ),
                   ],
                 ),
@@ -100,12 +100,12 @@ class ConfirmTicketPage extends StatelessWidget {
                     () => ViewTicketPage(ticketId: ticketId),
                   );
                 },
-                child: const Text('View my ticket'),
+                child: Text('view_my_ticket'.tr),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: () => openMainShell(index: 1),
-                child: const Text('Go to My tickets'),
+                child: Text('go_to_my_tickets'.tr),
               ),
             ],
           ),

@@ -47,7 +47,7 @@ class SavedEventController extends GetxController {
     } on ApiException catch (error) {
       errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'Could not load saved events.';
+      errorMessage.value = 'could_not_load_saved_events'.tr;
     } finally {
       isLoading.value = false;
     }

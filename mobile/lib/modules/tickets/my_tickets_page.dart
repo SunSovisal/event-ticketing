@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
@@ -30,40 +31,27 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldOf(context),
-      appBar: AppBar(
-        backgroundColor: AppTheme.scaffoldOf(context),
-        foregroundColor: AppTheme.textPrimaryOf(context),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        title: Text(
-          'My Bookings',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppTheme.textPrimaryOf(context),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+      appBar: AppPageBar(title: 'my_bookings'.tr),
       body: Obx(() {
         // me is reactive; isSignedIn covers the brief window before /me returns.
         final signedIn = auth.me.value != null || auth.isSignedIn;
         if (!signedIn) {
-          return const EmptyStateView(
+          return EmptyStateView(
             icon: Icons.confirmation_number_outlined,
-            message: 'Sign in to see your tickets',
-            subtitle: 'Your campus event tickets will show up here.',
+            message: 'sign_in_to_see_tickets'.tr,
+            subtitle: 'tickets_empty_signed_out_subtitle'.tr,
           );
         }
 
         if (tickets.isLoading.value && tickets.tickets.isEmpty) {
-          return const LoadingView(message: 'Loading tickets…');
+          return LoadingView(message: 'loading_tickets'.tr);
         }
 
         if (tickets.errorMessage.value != null && tickets.tickets.isEmpty) {
           return EmptyStateView(
             icon: Icons.error_outline,
             message: tickets.errorMessage.value!,
-            actionLabel: 'Refresh',
+            actionLabel: 'refresh'.tr,
             onAction: tickets.fetchTickets,
           );
         }
@@ -94,20 +82,20 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                               icon: Icons.confirmation_number_outlined,
                               message: switch (_segment) {
                                 _TicketSegment.upcoming =>
-                                  'No upcoming tickets yet',
-                                _TicketSegment.past => 'No past tickets yet',
+                                  'no_upcoming_tickets'.tr,
+                                _TicketSegment.past => 'no_past_tickets'.tr,
                                 _TicketSegment.cancelled =>
-                                  'No cancelled tickets',
+                                  'no_cancelled_tickets'.tr,
                               },
                               subtitle: switch (_segment) {
                                 _TicketSegment.upcoming =>
-                                  'Browse events on Home to find something to join.',
+                                  'no_upcoming_tickets_subtitle'.tr,
                                 _TicketSegment.past =>
-                                  'Tickets you have used or that have ended will show up here.',
+                                  'no_past_tickets_subtitle'.tr,
                                 _TicketSegment.cancelled =>
-                                  'Cancelled tickets will appear here.',
+                                  'no_cancelled_tickets_subtitle'.tr,
                               },
-                              actionLabel: 'Refresh',
+                              actionLabel: 'refresh'.tr,
                               onAction: tickets.fetchTickets,
                             ),
                           ),
@@ -157,9 +145,9 @@ class _TicketStatusTabs extends StatelessWidget {
             Expanded(
               child: _StatusTab(
                 label: switch (segment) {
-                  _TicketSegment.upcoming => 'Upcoming',
-                  _TicketSegment.past => 'Past Bookings',
-                  _TicketSegment.cancelled => 'Cancelled',
+                  _TicketSegment.upcoming => 'segment_upcoming'.tr,
+                  _TicketSegment.past => 'segment_past'.tr,
+                  _TicketSegment.cancelled => 'segment_cancelled'.tr,
                 },
                 selected: selected == segment,
                 onTap: () => onSelected(segment),
@@ -255,7 +243,7 @@ class _TicketCard extends StatelessWidget {
           const SizedBox(height: 4),
           _MetaRow(icon: Icons.location_on_outlined, text: event.locationLabel),
           const SizedBox(height: 4),
-          const _MetaRow(icon: Icons.qr_code_2, text: 'Tap for QR at entrance'),
+          _MetaRow(icon: Icons.qr_code_2, text: 'tap_for_qr'.tr),
         ],
       ),
     );

@@ -63,7 +63,7 @@ class AuthController {
       await credential.user?.getIdToken(true);
       await fetchMe();
     } catch (error) {
-      errorMessage.value = _messageFor(error, fallback: 'Registration failed');
+      errorMessage.value = _messageFor(error, fallback: 'registration_failed'.tr);
     } finally {
       isLoading.value = false;
     }
@@ -79,7 +79,7 @@ class AuthController {
       );
       await fetchMe();
     } catch (error) {
-      errorMessage.value = _messageFor(error, fallback: 'Sign-in failed');
+      errorMessage.value = _messageFor(error, fallback: 'sign_in_failed'.tr);
     } finally {
       isLoading.value = false;
     }
@@ -101,7 +101,7 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Google sign-in failed',
+        fallback: 'google_sign_in_failed'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -125,7 +125,7 @@ class AuthController {
           } catch (error) {
             errorMessage.value = _messageFor(
               error,
-              fallback: 'Automatic phone verification failed',
+              fallback: 'auto_phone_verify_failed'.tr,
             );
           } finally {
             isLoading.value = false;
@@ -137,7 +137,7 @@ class AuthController {
 
           errorMessage.value = _messageFor(
             error,
-            fallback: 'Could not send verification code',
+            fallback: 'could_not_send_code'.tr,
           );
           isLoading.value = false;
         },
@@ -155,7 +155,7 @@ class AuthController {
       if (error is FirebaseAuthException) {
         errorMessage.value = _messageFor(
           error,
-          fallback: 'Could not start phone verification',
+          fallback: 'could_not_start_phone_verify'.tr,
         );
         isLoading.value = false;
       }
@@ -164,7 +164,7 @@ class AuthController {
 
   Future<void> confirmPhoneCode(String smsCode) async {
     if (phoneVerificationId.value.isEmpty) {
-      errorMessage.value = 'Request a verification code first';
+      errorMessage.value = 'request_code_first'.tr;
       return;
     }
 
@@ -185,7 +185,7 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Invalid verification code',
+        fallback: 'invalid_verification_code'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -259,7 +259,7 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Could not update profile',
+        fallback: 'could_not_update_profile'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -310,11 +310,11 @@ class AuthController {
       ); // force fresh token with updated claims
       await fetchMe(); // sync new claims to the database now
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _messageFor(e, fallback: 'Could not link Google');
+      errorMessage.value = _messageFor(e, fallback: 'could_not_link_google'.tr);
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Could not link Google',
+        fallback: 'could_not_link_google'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -344,7 +344,7 @@ class AuthController {
           } catch (error) {
             errorMessage.value = _messageFor(
               error,
-              fallback: 'Automatic phone linking failed',
+              fallback: 'auto_phone_link_failed'.tr,
             );
           } finally {
             isLoading.value = false;
@@ -353,7 +353,7 @@ class AuthController {
         verificationFailed: (error) {
           errorMessage.value = _messageFor(
             error,
-            fallback: 'Could not send verification code',
+            fallback: 'could_not_send_code'.tr,
           );
           isLoading.value = false;
         },
@@ -370,7 +370,7 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Could not start phone linking',
+        fallback: 'could_not_start_phone_link'.tr,
       );
       isLoading.value = false;
     }
@@ -379,7 +379,7 @@ class AuthController {
   /// Confirms the SMS code and completes phone-provider linking.
   Future<void> confirmPhoneLinkCode(String smsCode) async {
     if (phoneVerificationId.value.isEmpty) {
-      errorMessage.value = 'Request a verification code first';
+      errorMessage.value = 'request_code_first'.tr;
       return;
     }
 
@@ -404,7 +404,7 @@ class AuthController {
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
-        fallback: 'Invalid verification code',
+        fallback: 'invalid_verification_code'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -435,12 +435,12 @@ class AuthController {
       await _auth.sendPasswordResetEmail(email: email.trim());
 
       AppSnackbar.success(
-        'Password reset email has been sent to ${email.trim()}',
+        'password_reset_sent'.trParams({'email': email.trim()}),
       );
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _messageFor(
         e,
-        fallback: 'Could not send password reset email',
+        fallback: 'could_not_send_reset'.tr,
       );
 
       AppSnackbar.error(errorMessage.value);

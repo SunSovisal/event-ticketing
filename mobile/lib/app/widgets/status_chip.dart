@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 
 class StatusChip extends StatelessWidget {
@@ -10,11 +11,11 @@ class StatusChip extends StatelessWidget {
   factory StatusChip.eventStatus(String status) {
     switch (status) {
       case 'published':
-        return StatusChip(label: 'Published', color: AppTheme.success);
+        return StatusChip(label: 'status_published'.tr, color: AppTheme.success);
       case 'draft':
-        return StatusChip(label: 'Draft', color: AppTheme.primary);
+        return StatusChip(label: 'status_draft'.tr, color: AppTheme.primary);
       case 'cancelled':
-        return StatusChip(label: 'Cancelled', color: AppTheme.error);
+        return StatusChip(label: 'status_cancelled'.tr, color: AppTheme.error);
       default:
         return StatusChip(label: status, color: AppTheme.textSecondary);
     }
@@ -23,13 +24,19 @@ class StatusChip extends StatelessWidget {
   factory StatusChip.ticketStatus(String status) {
     switch (status) {
       case 'valid':
-        return StatusChip(label: 'Valid', color: AppTheme.success);
+        return StatusChip(label: 'status_valid'.tr, color: AppTheme.success);
       case 'checked_in':
-        return StatusChip(label: 'Checked in', color: AppTheme.primary);
+        return StatusChip(
+          label: 'status_checked_in'.tr,
+          color: AppTheme.primary,
+        );
       case 'cancelled':
-        return StatusChip(label: 'Cancelled', color: AppTheme.error);
+        return StatusChip(label: 'status_cancelled'.tr, color: AppTheme.error);
       case 'ended':
-        return StatusChip(label: 'Ended', color: AppTheme.textSecondary);
+        return StatusChip(
+          label: 'status_ended'.tr,
+          color: AppTheme.textSecondary,
+        );
       default:
         return StatusChip(label: status, color: AppTheme.textSecondary);
     }
@@ -38,19 +45,25 @@ class StatusChip extends StatelessWidget {
   factory StatusChip.attemptResult(String result) {
     switch (result) {
       case 'success':
-        return StatusChip(label: 'Success', color: AppTheme.success);
+        return StatusChip(label: 'status_success'.tr, color: AppTheme.success);
       case 'already_checked_in':
-        return StatusChip(label: 'Duplicate', color: AppTheme.warning);
+        return StatusChip(
+          label: 'status_duplicate'.tr,
+          color: AppTheme.warning,
+        );
       case 'not_found':
-        return StatusChip(label: 'Not found', color: AppTheme.error);
+        return StatusChip(label: 'status_not_found'.tr, color: AppTheme.error);
       case 'cancelled':
-        return StatusChip(label: 'Cancelled', color: AppTheme.error);
+        return StatusChip(label: 'status_cancelled'.tr, color: AppTheme.error);
       case 'event_cancelled':
-        return StatusChip(label: 'Event cancelled', color: AppTheme.error);
+        return StatusChip(
+          label: 'status_event_cancelled'.tr,
+          color: AppTheme.error,
+        );
       case 'too_early':
-        return StatusChip(label: 'Too early', color: AppTheme.warning);
+        return StatusChip(label: 'status_too_early'.tr, color: AppTheme.warning);
       case 'too_late':
-        return StatusChip(label: 'Too late', color: AppTheme.warning);
+        return StatusChip(label: 'status_too_late'.tr, color: AppTheme.warning);
       default:
         return StatusChip(label: result, color: AppTheme.textSecondary);
     }
@@ -69,7 +82,12 @@ class StatusChip extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
+          fontWeight:
+              Theme.of(context).textTheme.bodySmall?.fontFamily ==
+                  AppTheme.khmerFontFamily
+              ? FontWeight.w400
+              : FontWeight.w600,
         ),
       ),
     );

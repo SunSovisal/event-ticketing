@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
@@ -31,25 +32,34 @@ class EventListCard extends StatelessWidget {
       return StatusChip.eventStatus('cancelled');
     }
     if (event.hasEnded()) {
-      return const StatusChip(label: 'Ended', color: AppTheme.textSecondary);
+      return StatusChip(
+        label: 'status_ended'.tr,
+        color: AppTheme.textSecondary,
+      );
     }
     return null;
   }
 
   String get _spotsLabel {
     if (showAdminCounts) {
-      return '${event.reservedCount} reserved · ${event.checkedInCount} checked in';
+      return 'reserved_checked_in'.trParams({
+        'reserved': '${event.reservedCount}',
+        'checkedIn': '${event.checkedInCount}',
+      });
     }
     if (event.isCancelled) {
-      return 'Event cancelled';
+      return 'event_cancelled'.tr;
     }
     if (event.hasEnded()) {
-      return 'Event ended';
+      return 'event_ended'.tr;
     }
     if (event.isSoldOut) {
-      return 'Sold out';
+      return 'sold_out'.tr;
     }
-    return '${event.spotsRemaining} of ${event.capacity} spots left';
+    return 'spots_left'.trParams({
+      'remaining': '${event.spotsRemaining}',
+      'capacity': '${event.capacity}',
+    });
   }
 
   Color? get _spotsColor {

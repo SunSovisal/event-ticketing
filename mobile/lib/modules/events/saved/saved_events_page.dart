@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
+import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
@@ -38,13 +40,14 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved events')),
+      backgroundColor: AppTheme.scaffoldOf(context),
+      appBar: AppPageBar(title: 'saved_events'.tr),
       body: Obx(() {
         final savingIds = Get.isRegistered<EventController>()
             ? Get.find<EventController>().savingIds
             : <String>{};
         if (_controller.isLoading.value && _controller.events.isEmpty) {
-          return const LoadingView(message: 'Loading saved events…');
+          return LoadingView(message: 'loading_saved_events'.tr);
         }
 
         if (_controller.errorMessage.value != null &&
@@ -52,16 +55,16 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
           return EmptyStateView(
             icon: Icons.error_outline,
             message: _controller.errorMessage.value!,
-            actionLabel: 'Retry',
+            actionLabel: 'retry'.tr,
             onAction: _controller.fetchSaved,
           );
         }
 
         final events = _controller.events;
         if (events.isEmpty) {
-          return const EmptyStateView(
+          return EmptyStateView(
             icon: Icons.bookmark_border,
-            message: 'No saved events yet',
+            message: 'no_saved_events'.tr,
           );
         }
 

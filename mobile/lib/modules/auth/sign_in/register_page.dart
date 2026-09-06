@@ -39,15 +39,15 @@ class _RegisterPageState extends State<RegisterPage> {
     final password = _passwordController.text;
 
     if (name.isEmpty) {
-      _auth.errorMessage.value = 'Please enter your name.';
+      _auth.errorMessage.value = 'please_enter_name'.tr;
       return;
     }
     if (email.isEmpty) {
-      _auth.errorMessage.value = 'Please enter your email.';
+      _auth.errorMessage.value = 'please_enter_email'.tr;
       return;
     }
     if (password.length < 6) {
-      _auth.errorMessage.value = 'Password must be at least 6 characters.';
+      _auth.errorMessage.value = 'password_min_6'.tr;
       return;
     }
 
@@ -60,18 +60,18 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageLayout(
-      title: 'Create account',
-      subtitle: 'Join GoITC to discover and book tickets.',
+      title: 'create_account'.tr,
+      subtitle: 'register_subtitle'.tr,
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Already have an account?',
+            'already_have_account_q'.tr,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           TextButton(
             onPressed: () => Get.off(() => SignInPage()),
-            child: Text('Sign in'),
+            child: Text('sign_in'.tr),
           ),
         ],
       ),
@@ -84,7 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: 'Full name',
+                labelText: 'full_name'.tr,
                 prefixIcon: Icon(Icons.person_outline_rounded),
               ),
             ),
@@ -94,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: 'email'.tr,
                 prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
@@ -105,9 +105,9 @@ class _RegisterPageState extends State<RegisterPage> {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _handleRegister(),
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: 'password'.tr,
                 prefixIcon: Icon(Icons.lock_outline_rounded),
-                helperText: 'At least 6 characters',
+                helperText: 'password_helper_min_6'.tr,
               ),
             ),
             if (_auth.errorMessage.value.isNotEmpty) ...[
@@ -126,7 +126,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('Create account'),
+                  : Text('create_account'.tr),
             ),
           ],
         );

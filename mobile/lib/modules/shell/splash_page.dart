@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
@@ -27,19 +28,9 @@ class SplashPage extends StatelessWidget {
                   'assets/app_logo_transparent_white.png',
                   height: 126,
                 ),
-                const SizedBox(height: 24),
-                // Text(
-                //   'GoITC',
-                //   textAlign: TextAlign.center,
-                //   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                //     color: Colors.white,
-                //     fontWeight: FontWeight.w700,
-                //     height: 1.2,
-                //   ),
-                // ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 32),
                 Text(
-                  'Book tickets for ITC campus events.',
+                  'splash_tagline'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.9),
@@ -51,10 +42,10 @@ class SplashPage extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   alignment: WrapAlignment.center,
-                  children: const [
-                    _TagChip(label: 'No payment'),
-                    _TagChip(label: 'Instant QR'),
-                    _TagChip(label: 'ITC only'),
+                  children: [
+                    _TagChip(label: 'tag_no_payment'.tr),
+                    _TagChip(label: 'tag_instant_qr'.tr),
+                    _TagChip(label: 'tag_itc_only'.tr),
                   ],
                 ),
                 const Spacer(flex: 3),
@@ -65,13 +56,13 @@ class SplashPage extends StatelessWidget {
                     foregroundColor: AppTheme.primary,
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  child: const Text('Browse events'),
+                  child: Text('browse_events'.tr),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => _browseEvents(context),
                   style: TextButton.styleFrom(foregroundColor: Colors.white70),
-                  child: const Text('I already have an account'),
+                  child: Text('already_have_account'.tr),
                 ),
                 const SizedBox(height: 8),
               ],

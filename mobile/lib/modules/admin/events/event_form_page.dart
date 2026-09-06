@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
+import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/admin/events/event_controller.dart';
@@ -65,12 +66,12 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return null;
 
     if (_startsAtLocal == null) {
-      _controller.errorMessage.value = 'Start date and time are required.';
+      _controller.errorMessage.value = 'start_required'.tr;
       return null;
     }
 
     if (_endsAtLocal != null && !_endsAtLocal!.isAfter(_startsAtLocal!)) {
-      _controller.errorMessage.value = 'End time must be after the start time.';
+      _controller.errorMessage.value = 'end_after_start'.tr;
       return null;
     }
 
@@ -103,33 +104,33 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final ok = await _save();
     if (!ok || !mounted) return;
 
-    final message = _event?.isDraft == true ? 'Draft saved.' : 'Event updated.';
+    final message = _event?.isDraft == true ? 'draft_saved'.tr : 'event_updated'.tr;
     Navigator.pop(context);
-    AppSnackbar.success(message, title: 'Saved');
+    AppSnackbar.success(message, title: 'saved_title'.tr);
   }
 
   Future<void> _onPublish() async {
     if (!await _save()) return;
 
     final confirmed = await _confirm(
-      title: 'Publish event?',
-      message: 'It will appear on Home for attendees.',
-      action: 'Publish',
+      title: 'publish_event_q'.tr,
+      message: 'publish_event_body'.tr,
+      action: 'publish'.tr,
     );
     if (!confirmed) return;
 
     final published = await _controller.publishEvent(_event!.id);
     if (published == null || !mounted) return;
     setState(() => _event = published);
-    AppSnackbar.success('It now appears on Home.', title: 'Published');
+    AppSnackbar.success('now_on_home'.tr, title: 'published_title'.tr);
   }
 
   Future<void> _onCancelEvent() async {
     final confirmed = await _confirm(
-      title: 'Cancel event?',
+      title: 'cancel_event_q'.tr,
       message:
-          'Tickets for this event will be cancelled. This cannot be undone.',
-      action: 'Cancel event',
+          'cancel_event_body'.tr,
+      action: 'cancel_event'.tr,
       destructive: true,
     );
     if (!confirmed) return;
@@ -138,16 +139,16 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     if (cancelled == null || !mounted) return;
     setState(() => _event = cancelled);
     AppSnackbar.warning(
-      'Tickets for this event were cancelled.',
-      title: 'Cancelled',
+      'tickets_cancelled_msg'.tr,
+      title: 'cancelled_title'.tr,
     );
   }
 
   Future<void> _onDelete() async {
     final confirmed = await _confirm(
-      title: 'Delete draft?',
-      message: 'This draft will be removed. This cannot be undone.',
-      action: 'Delete',
+      title: 'delete_draft_q'.tr,
+      message: 'delete_draft_body'.tr,
+      action: 'delete'.tr,
       destructive: true,
     );
     if (!confirmed) return;
@@ -155,7 +156,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final ok = await _controller.deleteDraft(_event!.id);
     if (!ok || !mounted) return;
     Navigator.pop(context);
-    AppSnackbar.success('The draft was removed.', title: 'Deleted');
+    AppSnackbar.success('draft_removed'.tr, title: 'deleted_title'.tr);
   }
 
   Future<bool> _confirm({
@@ -172,7 +173,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Back'),
+            child: Text('back'.tr),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -219,7 +220,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   }
 
   String _formatLocal(DateTime? value) {
-    if (value == null) return 'Not set';
+    if (value == null) return 'not_set'.tr;
     String two(int n) => n.toString().padLeft(2, '0');
     return '${value.day}/${value.month}/${value.year}  ${two(value.hour)}:${two(value.minute)}';
   }
@@ -227,10 +228,11 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   @override
   Widget build(BuildContext context) {
     final event = _event;
-    final title = event == null ? 'New event' : 'Edit event';
+    final title = event == null ? 'new_event'.tr : 'edit_event'.tr;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      backgroundColor: AppTheme.scaffoldOf(context),
+      appBar: AppPageBar(title: title),
       body: Obx(() {
         final saving = _controller.isSaving.value;
 
@@ -259,10 +261,10 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                       controller: _title,
                       enabled: !_readOnly,
                       maxLength: 120,
-                      decoration: const InputDecoration(labelText: 'Title'),
+                      decoration: InputDecoration(labelText: 'title_label'.tr),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Title is required';
+                          return 'title_required'.tr;
                         }
                         return null;
                       },
@@ -273,12 +275,12 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                       enabled: !_readOnly,
                       minLines: 3,
                       maxLines: 6,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
+                      decoration: InputDecoration(
+                        labelText: 'description'.tr,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Description is required';
+                          return 'description_required'.tr;
                         }
                         return null;
                       },
@@ -288,10 +290,10 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                       controller: _location,
                       enabled: !_readOnly,
                       maxLength: 120,
-                      decoration: const InputDecoration(labelText: 'Location'),
+                      decoration: InputDecoration(labelText: 'location'.tr),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Location is required';
+                          return 'location_required'.tr;
                         }
                         return null;
                       },
@@ -299,7 +301,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _category,
-                      decoration: const InputDecoration(labelText: 'Category'),
+                      decoration: InputDecoration(labelText: 'category'.tr),
                       items: [
                         for (final category in EventCategory.values)
                           DropdownMenuItem(
@@ -321,13 +323,13 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                       enabled: !_readOnly,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
-                        labelText: 'Capacity (1–500)',
+                      decoration: InputDecoration(
+                        labelText: 'capacity_label'.tr,
                       ),
                       validator: (value) {
                         final n = int.tryParse(value ?? '');
                         if (n == null || n < 1 || n > 500) {
-                          return 'Enter a number from 1 to 500';
+                          return 'capacity_range'.tr;
                         }
                         return null;
                       },
@@ -335,19 +337,19 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                     const SizedBox(height: 12),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Starts at'),
+                      title: Text('starts_at'.tr),
                       subtitle: Text(_formatLocal(_startsAtLocal)),
                       trailing: const Icon(Icons.calendar_today_outlined),
                       onTap: _readOnly ? null : _pickStart,
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Ends at (optional)'),
+                      title: Text('ends_at_optional'.tr),
                       subtitle: Text(_formatLocal(_endsAtLocal)),
                       trailing: _endsAtLocal == null || _readOnly
                           ? const Icon(Icons.schedule_outlined)
                           : IconButton(
-                              tooltip: 'Clear end time',
+                              tooltip: 'clear_end_time'.tr,
                               onPressed: () =>
                                   setState(() => _endsAtLocal = null),
                               icon: const Icon(Icons.clear),
@@ -378,29 +380,29 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(event == null ? 'Save draft' : 'Save changes'),
+                    : Text(event == null ? 'save_draft'.tr : 'save_changes'.tr),
               ),
             if (event?.canPublish == true) ...[
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: saving ? null : _onPublish,
-                child: const Text('Publish'),
+                child: Text('publish'.tr),
               ),
             ],
             if (event?.canCancelEvent == true) ...[
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: saving ? null : _onCancelEvent,
-                child: const Text('Cancel event'),
+                child: Text('cancel_event'.tr),
               ),
             ],
             if (event?.canDelete == true) ...[
               const SizedBox(height: 12),
               TextButton(
                 onPressed: saving ? null : _onDelete,
-                child: const Text(
-                  'Delete draft',
-                  style: TextStyle(color: AppTheme.error),
+                child: Text(
+                  'delete_draft'.tr,
+                  style: const TextStyle(color: AppTheme.error),
                 ),
               ),
             ],
