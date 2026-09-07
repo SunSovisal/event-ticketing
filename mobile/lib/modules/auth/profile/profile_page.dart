@@ -11,7 +11,6 @@ import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
 import 'package:itc_events/modules/auth/profile/settings_page.dart';
 import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
 import 'package:itc_events/modules/events/saved/saved_events_page.dart';
-import 'package:itc_events/modules/shell/main_shell.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -199,10 +198,7 @@ class ProfilePage extends StatelessWidget {
                   _LinkedProvidersCard(auth: auth),
                   SizedBox(height: 24),
                   OutlinedButton(
-                    onPressed: () async {
-                      await auth.signOut();
-                      openMainShell();
-                    },
+                    onPressed: () => auth.signOut(),
                     child: Text('sign_out'.tr),
                   ),
                 ],

@@ -9,8 +9,8 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
-
 
 class AuthController {
   AuthController({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -64,7 +64,10 @@ class AuthController {
       await credential.user?.getIdToken(true);
       await fetchMe();
     } catch (error) {
-      errorMessage.value = _messageFor(error, fallback: 'registration_failed'.tr);
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'registration_failed'.tr,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -282,7 +285,7 @@ class AuthController {
     if (Get.isRegistered<ChatController>()) {
       Get.find<ChatController>().clearChat();
     }
-    _refreshHomeEvents();
+    openMainShell();
   }
 
   void _refreshHomeEvents() {
@@ -442,10 +445,7 @@ class AuthController {
         'password_reset_sent'.trParams({'email': email.trim()}),
       );
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _messageFor(
-        e,
-        fallback: 'could_not_send_reset'.tr,
-      );
+      errorMessage.value = _messageFor(e, fallback: 'could_not_send_reset'.tr);
 
       AppSnackbar.error(errorMessage.value);
     } catch (error) {

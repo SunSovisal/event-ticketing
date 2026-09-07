@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class ChatService
 {
-    public const REFUSAL_MESSAGE = 'I can only help with ITC campus events and app FAQs — for example upcoming events, locations, spots left, how to sign in, save an event, reserve a ticket, or find your QR ticket. Please ask about those.';
+    public const REFUSAL_MESSAGE = 'I can only help with ITC campus events and app FAQs: upcoming events, locations, spots left, how to sign in, save an event, reserve a ticket, or find your QR ticket. Please ask about those.';
 
     public const REFUSAL_MESSAGE_KM = 'ជំនួយ — មានកម្មវិធីអ្វីខ្លះ? — របៀបកក់សំបុត្រ? — សំបុត្រ QR នៅឯណា? — របៀបរក្សាទុកកម្មវិធី?';
 

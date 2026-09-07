@@ -47,7 +47,7 @@ class _MainShellState extends State<MainShell> {
     }
 
     final auth = Get.find<AuthController>();
-    if (auth.isSignedIn) {
+    if (auth.isSignedIn && auth.me.value == null) {
       auth.restoreSession();
     } else {
       Get.find<EventController>().fetchEvents();
