@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
@@ -32,6 +35,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   Event? _event;
   DateTime? _startsAtLocal;
   DateTime? _endsAtLocal;
+  File? _coverImage;
 
   @override
   void initState() {
@@ -96,7 +100,24 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
 
     if (saved == null) return false;
 
-    setState(() => _event = saved);
+    var updatedEvent = saved;
+
+    if (_coverImage != null) {
+      final uploaded = await _controller.uploadCover(saved.id, _coverImage!);
+
+      if (uploaded == null) {
+        return false;
+      }
+
+      updatedEvent = uploaded;
+    }
+
+    if (!mounted) return false;
+
+    setState(() {
+      _event = updatedEvent;
+      _coverImage = null;
+    });
     return true;
   }
 
@@ -104,7 +125,9 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final ok = await _save();
     if (!ok || !mounted) return;
 
-    final message = _event?.isDraft == true ? 'draft_saved'.tr : 'event_updated'.tr;
+    final message = _event?.isDraft == true
+        ? 'draft_saved'.tr
+        : 'event_updated'.tr;
     Navigator.pop(context);
     AppSnackbar.success(message, title: 'saved_title'.tr);
   }
@@ -128,8 +151,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   Future<void> _onCancelEvent() async {
     final confirmed = await _confirm(
       title: 'cancel_event_q'.tr,
-      message:
-          'cancel_event_body'.tr,
+      message: 'cancel_event_body'.tr,
       action: 'cancel_event'.tr,
       destructive: true,
     );
@@ -219,6 +241,19 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
+  Future<void> _pickCoverImage() async {
+    if (_readOnly) return;
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _coverImage = File(picked.path);
+    });
+  }
+
   String _formatLocal(DateTime? value) {
     if (value == null) return 'not_set'.tr;
     String two(int n) => n.toString().padLeft(2, '0');
@@ -257,6 +292,41 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
               child: AppCard(
                 child: Column(
                   children: [
+                    // Event Cover Image
+                    GestureDetector(
+                      onTap: _readOnly ? null : _pickCoverImage,
+                      child: Container(
+                        width: double.infinity,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _coverImage != null
+                            ? Image.file(
+                                _coverImage!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                              )
+                            : _event?.imageUrl != null
+                            ? Image.network(
+                                _event!.imageUrl!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildCoverPlaceholder();
+                                },
+                              )
+                            : _buildCoverPlaceholder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _title,
                       enabled: !_readOnly,
@@ -275,9 +345,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                       enabled: !_readOnly,
                       minLines: 3,
                       maxLines: 6,
-                      decoration: InputDecoration(
-                        labelText: 'description'.tr,
-                      ),
+                      decoration: InputDecoration(labelText: 'description'.tr),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'description_required'.tr;
@@ -409,6 +477,20 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildCoverPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.add_photo_alternate_outlined, size: 48),
+        const SizedBox(height: 8),
+        Text(
+          'Upload cover image',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
+import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
 class SplashPage extends StatelessWidget {
@@ -60,7 +61,7 @@ class SplashPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () => _browseEvents(context),
+                  onPressed: () => Get.to(()=>SignInPage()),
                   style: TextButton.styleFrom(foregroundColor: Colors.white70),
                   child: Text('already_have_account'.tr),
                 ),

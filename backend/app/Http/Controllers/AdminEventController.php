@@ -174,4 +174,6 @@ class AdminEventController extends Controller
 
         return $event;
     }
+
+    
 }
