@@ -131,6 +131,25 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> uploadFile(
+    String path, {
+    required String fieldName,
+    required String filePath,
+    String? idToken,
+  }) async {
+    final request = http.MultipartRequest('POST', _uri(path));
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (idToken != null) 'Authorization': 'Bearer $idToken',
+    });
+    request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+    final streamedResponse = await request.send().timeout(
+      AppConfig.requestTimeout,
+    );
+    final response = await http.Response.fromStream(streamedResponse);
+    return _decodeJsonResponse(response);
+  }
+
   // practice clean code
   void dispose() {
     _client.close();

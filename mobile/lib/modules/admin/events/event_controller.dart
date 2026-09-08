@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/admin/events/attendee.dart';
@@ -217,5 +219,32 @@ class AdminEventController extends GetxController {
       throw ApiException('Not signed in', statusCode: 401);
     }
     return token;
+  }
+
+  Future<Event?> uploadCover(String eventId, File image) async {
+    try {
+      isSaving.value = true;
+      errorMessage.value = null;
+
+      final response = await _apiClient.uploadFile(
+        '/admin/events/$eventId/cover',
+        fieldName: 'image',
+        filePath: image.path,
+        idToken: await _token(),
+      );
+
+      final data = response['data'];
+
+      if (data is! Map<String, dynamic>) {
+        throw ApiException('Invalid event response.');
+      }
+
+      return Event.fromJson(data);
+    } catch (e) {
+      errorMessage.value = e.toString();
+      return null;
+    } finally {
+      isSaving.value = false;
+    }
   }
 }

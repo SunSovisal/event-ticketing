@@ -65,7 +65,7 @@ class SplashPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: _openSignIn,
+                  onPressed: () => Get.to(()=>SignInPage()),
                   style: TextButton.styleFrom(foregroundColor: Colors.white70),
                   child: Text('already_have_account'.tr),
                 ),
