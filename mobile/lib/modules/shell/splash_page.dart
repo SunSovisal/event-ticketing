@@ -13,6 +13,10 @@ class SplashPage extends StatelessWidget {
     );
   }
 
+  void _openSignIn() {
+    Get.to(() => const SignInPage());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

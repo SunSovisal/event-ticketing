@@ -1160,22 +1160,24 @@ The Week 3 milestone is complete when:
 
 Ideas below are **not** MVP work. Do not implement them during the delivery period unless they replace existing scoped work under the §1.1 scope rule.
 
-### 16.1 Gemini AI chatbot (event / app questions only)
+### 16.1 AI chatbot via OpenRouter (FAQ + event questions only)
 
-**Feasible:** Yes. Google Gemini can power an in-app assistant that answers only ITC event-ticketing and app-usage questions.
+**Feasible:** Yes. OpenRouter (default model: Gemini, e.g. `google/gemini-2.0-flash`) powers an in-app assistant that answers only ITC event questions and app FAQs.
 
 **Intended behavior**
 
-- Flutter chat UI (attendee-facing; optional guest access TBD).
-- Laravel proxy to the Gemini API (API key stays on the server, never in the Flutter app).
-- System prompt + retrieval context limited to: published events (title, date/time, location, capacity/remaining), ticket/reservation rules, and documented app flows (sign-in, save event, reserve, QR ticket, profile).
-- Refuse or deflect off-topic questions (general knowledge, homework, unrelated chat).
+- Flutter chat UI (signed-in attendees; Profile → Event assistant).
+- Laravel proxy to OpenRouter (`POST /api/v1/chat`). API key stays on the server, never in the Flutter app.
+- System prompt + retrieval context limited to: published upcoming events (title, date/time, location, capacity/remaining) and FAQ copy (sign-in, save, reserve, QR ticket, profile, admin vs attendee).
+- Refuse or deflect off-topic questions (general knowledge, homework, unrelated chat) via local pre-filter + strict system prompt.
 - Prefer grounded answers from live event/API data over free-form invention; say when information is unknown.
+- Usage limits: `throttle:chat` (10/min per user) and daily quota (`CHAT_DAILY_LIMIT`, default 30).
 
-**Rough shape (post-MVP)**
+**Secrets (Laravel `.env` only)**
 
-1. `POST /api/v1/chat` (auth as decided) → Laravel builds a short context pack from events + help copy → Gemini → reply.
-2. Guardrails: topic classifier or strict system instructions; rate limits; no admin actions or check-in via chat.
-3. Secrets: `GEMINI_API_KEY` in Laravel env only.
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL` (default `google/gemini-2.5-flash`)
+- `OPENROUTER_MAX_TOKENS` (default `512`)
+- `CHAT_DAILY_LIMIT` (default `30`)
 
 **Out of this idea:** autonomous booking/cancel via chat, admin tooling, multi-language marketing bot, or open-ended general AI.
