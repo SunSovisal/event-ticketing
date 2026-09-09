@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/admin/events/attendee.dart';
@@ -240,6 +241,34 @@ class AdminEventController extends GetxController {
       }
 
       return Event.fromJson(data);
+    } catch (e) {
+      errorMessage.value = e.toString();
+      return null;
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  Future<Event?> deleteCover(String eventId) async {
+    try {
+      isSaving.value = true;
+      errorMessage.value = null;
+
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        errorMessage.value = 'User is not logged in';
+        return null;
+      }
+
+      final idToken = await user.getIdToken();
+
+      final response = await _apiClient.deleteJson(
+        '/admin/events/$eventId/cover',
+        idToken: idToken,
+      );
+
+      return Event.fromJson(response['data']);
     } catch (e) {
       errorMessage.value = e.toString();
       return null;
