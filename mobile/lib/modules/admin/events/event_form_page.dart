@@ -43,8 +43,11 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   void initState() {
     super.initState();
     _controller = Get.find<AdminEventController>();
-    _controller.errorMessage.value = null;
     _event = widget.event;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.errorMessage.value = null;
+    });
 
     _title = TextEditingController(text: _event?.title ?? '');
     _description = TextEditingController(text: _event?.description ?? '');
@@ -258,11 +261,37 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
+      maxWidth: 1920,
+      maxHeight: 1920,
     );
     if (picked == null) return;
     setState(() {
       _coverImage = File(picked.path);
     });
+  }
+
+  Future<void> _deleteCover() async {
+    if (_event == null || _event!.imageUrl == null) return;
+
+    final confirmed = await _confirm(
+      title: 'Delete cover image?',
+      message: 'Are you sure you want to delete this cover image?',
+      action: 'Delete',
+      destructive: true,
+    );
+
+    if (!confirmed) return;
+
+    final deleted = await _controller.deleteCover(_event!.id);
+
+    if (deleted == null || !mounted) return;
+
+    setState(() {
+      _event = deleted;
+      _coverImage = null;
+    });
+
+    AppSnackbar.success('Cover image deleted', title: 'Deleted');
   }
 
   String _formatLocal(DateTime? value) {
@@ -304,37 +333,64 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                 child: Column(
                   children: [
                     // Event Cover Image
-                    GestureDetector(
-                      onTap: _readOnly ? null : _pickCoverImage,
-                      child: Container(
-                        width: double.infinity,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Theme.of(context).dividerColor,
+                    Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: _readOnly ? null : _pickCoverImage,
+                          child: Container(
+                            width: double.infinity,
+                            height: 180,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _coverImage != null
+                                ? Image.file(
+                                    _coverImage!,
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                  )
+                                : _event?.imageUrl != null
+                                ? Image.network(
+                                    _event!.imageUrl!,
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildCoverPlaceholder();
+                                    },
+                                  )
+                                : _buildCoverPlaceholder(),
                           ),
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: _coverImage != null
-                            ? Image.file(
-                                _coverImage!,
-                                width: double.infinity,
-                                height: 180,
-                                fit: BoxFit.cover,
-                              )
-                            : _event?.imageUrl != null
-                            ? Image.network(
-                                _event!.imageUrl!,
-                                width: double.infinity,
-                                height: 180,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _buildCoverPlaceholder();
-                                },
-                              )
-                            : _buildCoverPlaceholder(),
-                      ),
+
+                        // Delete cover button
+                        if (!_readOnly &&
+                            _event?.imageUrl != null &&
+                            _coverImage == null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Material(
+                              color: Colors.black54,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                tooltip: 'Delete cover image',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.white,
+                                ),
+                                onPressed: _controller.isSaving.value
+                                    ? null
+                                    : _deleteCover,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
 
                     const SizedBox(height: 16),

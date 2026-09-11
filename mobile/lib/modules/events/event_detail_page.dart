@@ -125,18 +125,20 @@ class EventDetailPage extends StatelessWidget {
       );
     }
 
-    return Obx(() {
-      final reserving =
-          Get.isRegistered<TicketController>() &&
-          Get.find<TicketController>().isReserving.value;
-      return _buildScaffold(
-        context,
-        _liveEvent(),
-        isBusy: _isBusy(),
-        isReserving: reserving,
-        ownedTicket: _ownedTicket(),
-      );
-    });
+    return _ObxAfterFrame(
+      builder: () {
+        final reserving =
+            Get.isRegistered<TicketController>() &&
+            Get.find<TicketController>().isReserving.value;
+        return _buildScaffold(
+          context,
+          _liveEvent(),
+          isBusy: _isBusy(),
+          isReserving: reserving,
+          ownedTicket: _ownedTicket(),
+        );
+      },
+    );
   }
 
   Widget _buildScaffold(
@@ -343,6 +345,37 @@ class EventDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Subscribes to GetX after the first frame so Home's Obx is not marked dirty
+/// while this route's [Builder] is still mounting.
+class _ObxAfterFrame extends StatefulWidget {
+  const _ObxAfterFrame({required this.builder});
+
+  final Widget Function() builder;
+
+  @override
+  State<_ObxAfterFrame> createState() => _ObxAfterFrameState();
+}
+
+class _ObxAfterFrameState extends State<_ObxAfterFrame> {
+  var _bind = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _bind = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_bind) {
+      return widget.builder();
+    }
+    return Obx(widget.builder);
   }
 }
 

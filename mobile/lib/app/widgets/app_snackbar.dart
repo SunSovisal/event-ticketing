@@ -39,7 +39,7 @@ abstract final class AppSnackbar {
     Get.snackbar(
       title,
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: background,
       colorText: Colors.white,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),

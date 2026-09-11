@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
@@ -16,6 +17,7 @@ class EventController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxSet<String> savingIds = <String>{}.obs;
+  int _eventsLoadId = 0;
 
   @override
   void onInit() {
@@ -30,8 +32,11 @@ class EventController extends GetxController {
   }
 
   Future<void> fetchEvents() async {
-    isLoading.value = true;
-    errorMessage.value = null;
+    final loadId = ++_eventsLoadId;
+    _setRx(loadId, () {
+      isLoading.value = true;
+      errorMessage.value = null;
+    });
 
     try {
       final response = await _apiClient.getJson(
@@ -43,15 +48,17 @@ class EventController extends GetxController {
         throw ApiException('Unexpected /events response');
       }
 
-      events.assignAll(
-        data.whereType<Map<String, dynamic>>().map(Event.fromJson),
-      );
+      final parsed = data
+          .whereType<Map<String, dynamic>>()
+          .map(Event.fromJson)
+          .toList();
+      _setRx(loadId, () => events.assignAll(parsed));
     } on ApiException catch (error) {
-      errorMessage.value = error.message;
+      _setRx(loadId, () => errorMessage.value = error.message);
     } catch (_) {
-      errorMessage.value = 'could_not_load_events'.tr;
+      _setRx(loadId, () => errorMessage.value = 'could_not_load_events'.tr);
     } finally {
-      isLoading.value = false;
+      _setRx(loadId, () => isLoading.value = false);
     }
   }
 
@@ -74,10 +81,7 @@ class EventController extends GetxController {
           idToken: token,
         );
       } else {
-        await _apiClient.deleteJson(
-          '/events/${event.id}/save',
-          idToken: token,
-        );
+        await _apiClient.deleteJson('/events/${event.id}/save', idToken: token);
       }
     } on ApiException catch (error) {
       _setSaved(event, !next);
@@ -107,5 +111,23 @@ class EventController extends GetxController {
       return null;
     }
     return Get.find<AuthController>().getIdToken();
+  }
+
+  /// Apply Rx writes after the current frame when a build is in progress so
+  /// Home's Obx is not marked dirty while a pushed route (e.g. event detail)
+  /// is still mounting.
+  void _setRx(int loadId, void Function() write) {
+    void apply() {
+      if (loadId != _eventsLoadId) return;
+      write();
+    }
+
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      apply();
+      return;
+    }
+    SchedulerBinding.instance.addPostFrameCallback((_) => apply());
   }
 }

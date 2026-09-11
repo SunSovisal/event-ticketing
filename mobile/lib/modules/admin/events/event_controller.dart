@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/admin/events/attendee.dart';
@@ -22,6 +23,8 @@ class AdminEventController extends GetxController {
   final RxList<CheckInAttempt> checkInAttempts = <CheckInAttempt>[].obs;
   final RxBool isLoadingDetail = false.obs;
   final RxnString detailErrorMessage = RxnString();
+  int _eventsLoadId = 0;
+  int _detailLoadId = 0;
 
   List<Event> get drafts => events.where((event) => event.isDraft).toList();
 
@@ -38,8 +41,11 @@ class AdminEventController extends GetxController {
   }
 
   Future<void> fetchEvents() async {
-    isLoading.value = true;
-    errorMessage.value = null;
+    final loadId = ++_eventsLoadId;
+    _setRx(loadId, () {
+      isLoading.value = true;
+      errorMessage.value = null;
+    });
 
     try {
       final token = await Get.find<AuthController>().getIdToken();
@@ -56,15 +62,17 @@ class AdminEventController extends GetxController {
         throw ApiException('Unexpected /admin/events response');
       }
 
-      events.assignAll(
-        data.whereType<Map<String, dynamic>>().map(Event.fromJson),
-      );
+      final parsed = data
+          .whereType<Map<String, dynamic>>()
+          .map(Event.fromJson)
+          .toList();
+      _setRx(loadId, () => events.assignAll(parsed));
     } on ApiException catch (error) {
-      errorMessage.value = error.message;
+      _setRx(loadId, () => errorMessage.value = error.message);
     } catch (_) {
-      errorMessage.value = 'could_not_load_events'.tr;
+      _setRx(loadId, () => errorMessage.value = 'could_not_load_events'.tr);
     } finally {
-      isLoading.value = false;
+      _setRx(loadId, () => isLoading.value = false);
     }
   }
 
@@ -126,8 +134,13 @@ class AdminEventController extends GetxController {
   }
 
   Future<void> fetchEventDetail(String eventId) async {
-    isLoadingDetail.value = true;
-    detailErrorMessage.value = null;
+    final loadId = ++_detailLoadId;
+    _setRx(loadId, () {
+      isLoadingDetail.value = true;
+      detailErrorMessage.value = null;
+      attendees.clear();
+      checkInAttempts.clear();
+    }, detail: true);
 
     try {
       final token = await _token();
@@ -145,30 +158,43 @@ class AdminEventController extends GetxController {
         throw ApiException('Unexpected admin event detail response');
       }
 
-      attendees.assignAll(
-        attendeesData.whereType<Map<String, dynamic>>().map(
-          AdminAttendee.fromJson,
-        ),
-      );
-      checkInAttempts.assignAll(
-        attemptsData.whereType<Map<String, dynamic>>().map(
-          CheckInAttempt.fromJson,
-        ),
-      );
+      final parsedAttendees = attendeesData
+          .whereType<Map<String, dynamic>>()
+          .map(AdminAttendee.fromJson)
+          .toList();
+      final parsedAttempts = attemptsData
+          .whereType<Map<String, dynamic>>()
+          .map(CheckInAttempt.fromJson)
+          .toList();
+      _setRx(loadId, () {
+        attendees.assignAll(parsedAttendees);
+        checkInAttempts.assignAll(parsedAttempts);
+      }, detail: true);
     } on ApiException catch (error) {
-      detailErrorMessage.value = error.message;
+      _setRx(
+        loadId,
+        () => detailErrorMessage.value = error.message,
+        detail: true,
+      );
     } catch (_) {
-      detailErrorMessage.value = 'could_not_load_attendees'.tr;
+      _setRx(
+        loadId,
+        () => detailErrorMessage.value = 'could_not_load_attendees'.tr,
+        detail: true,
+      );
     } finally {
-      isLoadingDetail.value = false;
+      _setRx(loadId, () => isLoadingDetail.value = false, detail: true);
     }
   }
 
   void clearEventDetail() {
-    attendees.clear();
-    checkInAttempts.clear();
-    detailErrorMessage.value = null;
-    isLoadingDetail.value = false;
+    _detailLoadId++;
+    _setRx(_detailLoadId, () {
+      attendees.clear();
+      checkInAttempts.clear();
+      detailErrorMessage.value = null;
+      isLoadingDetail.value = false;
+    }, detail: true);
   }
 
   Future<Event?> _mutate(
@@ -221,30 +247,42 @@ class AdminEventController extends GetxController {
     return token;
   }
 
-  Future<Event?> uploadCover(String eventId, File image) async {
-    try {
-      isSaving.value = true;
-      errorMessage.value = null;
-
-      final response = await _apiClient.uploadFile(
+  Future<Event?> uploadCover(String eventId, File image) {
+    return _mutate((token) {
+      return _apiClient.uploadFile(
         '/admin/events/$eventId/cover',
         fieldName: 'image',
         filePath: image.path,
-        idToken: await _token(),
+        idToken: token,
       );
+    });
+  }
 
-      final data = response['data'];
+  Future<Event?> deleteCover(String eventId) {
+    return _mutate((token) {
+      return _apiClient.deleteJson(
+        '/admin/events/$eventId/cover',
+        idToken: token,
+      );
+    });
+  }
 
-      if (data is! Map<String, dynamic>) {
-        throw ApiException('Invalid event response.');
+  void _setRx(int loadId, void Function() write, {bool detail = false}) {
+    void apply() {
+      if (detail) {
+        if (loadId != _detailLoadId) return;
+      } else if (loadId != _eventsLoadId) {
+        return;
       }
-
-      return Event.fromJson(data);
-    } catch (e) {
-      errorMessage.value = e.toString();
-      return null;
-    } finally {
-      isSaving.value = false;
+      write();
     }
+
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      apply();
+      return;
+    }
+    SchedulerBinding.instance.addPostFrameCallback((_) => apply());
   }
 }
