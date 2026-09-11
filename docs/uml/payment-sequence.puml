@@ -1,0 +1,148 @@
+@startuml ITC_Paid_Checkout_Sequence
+!theme plain
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 220
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+skinparam sequence {
+  ArrowColor #111827
+  LifeLineBorderColor #6B7280
+  ActorBorderColor #111827
+  ActorBackgroundColor #FFFFFF
+  ParticipantBorderColor #111827
+  ParticipantBackgroundColor #F9FAFB
+}
+
+title ITC Event Ticketing — Paid checkout (KHQR / ABA PAY)
+
+actor Attendee
+participant "Flutter App" as App
+participant "Laravel API\nPaymentController" as API
+database "PostgreSQL" as DB
+participant "Bakong / KHQR" as Bakong
+participant "ABA PayWay" as PayWay
+
+== Create pending payment ==
+
+Attendee -> App: Choose KHQR or ABA PAY
+App -> API: POST /api/v1/events/{id}/payments\nBearer token, { method }
+activate App
+activate API
+API -> API: VerifyFirebaseToken\nUser::syncFromFirebase
+API -> API: StorePaymentRequest\nmethod ∈ {khqr, aba_pay}
+
+API -> DB: BEGIN; SELECT event FOR UPDATE
+activate DB
+DB --> API: Event
+
+alt event missing, not published, cancelled, ended, or free
+  API --> App: 4xx (NOT_FOUND / EVENT_* / EVENT_IS_FREE)
+else attendee already has a ticket
+  API --> App: existing payment or 409 TICKET_EXISTS
+else pending QR still valid for the same method
+  DB --> API: existing pending payment
+else need a new QR
+  API -> DB: count valid/checked_in tickets\n+ other pending QR holds
+  alt no spots remaining
+    API --> App: 409 EVENT_FULL
+  else KHQR
+    API -> Bakong: generate(account, amount, expiry)
+    activate Bakong
+    Bakong --> API: qr_code, qr_md5
+    deactivate Bakong
+  else ABA PAY
+    API -> PayWay: createKhqr(amount, currency, ttl)
+    activate PayWay
+    PayWay --> API: qr, md5, tran_id, aba_deeplink
+    deactivate PayWay
+  end
+  API -> DB: INSERT/UPDATE payments\nstatus = pending
+end
+
+DB --> API: COMMIT
+deactivate DB
+API --> App: 201 PaymentResource\n(qr_code, qr_expires_at)
+deactivate API
+App --> Attendee: Show KHQR / ABA PAY QR + countdown
+
+== Attendee pays (outside Laravel) ==
+
+Attendee -> Attendee: Scan QR in Bakong / ABA / bank app
+note right of Attendee
+  Money settles at Bakong or ABA.
+  Laravel is not called on this hop.
+end note
+
+== Confirm payment and issue ticket ==
+
+Attendee -> App: I paid (or poll)
+App -> API: POST /api/v1/payments/{id}/sync
+activate API
+API -> API: Verify token; payment.user_id must match
+
+alt payment not found / not owner
+  API --> App: 404 / 403
+else already paid
+  API --> App: 200 paid payment + ticket
+else KHQR
+  API -> Bakong: findPaidTransaction(qr_md5)
+  activate Bakong
+  alt no settlement yet
+    Bakong --> API: none
+    deactivate Bakong
+    alt QR expired
+      API -> DB: status = expired
+      API --> App: 422 QR_EXPIRED
+    else still waiting
+      API --> App: 200 still pending
+    end
+  else paid at Bakong
+    Bakong --> API: hash, amount, accounts
+    deactivate Bakong
+    API -> API: amount, currency, merchant must match
+    API -> DB: lock payment + event
+    activate DB
+    API -> DB: INSERT tickets status=valid
+    API -> DB: UPDATE payments paid + ticket_id
+    DB --> API: COMMIT
+    deactivate DB
+    API --> App: 200 { status: paid, ticket }
+  end
+else ABA PAY
+  API -> PayWay: findApprovedTransaction(tran_id)
+  activate PayWay
+  alt not APPROVED yet
+    PayWay --> API: none
+    deactivate PayWay
+    alt QR expired
+      API -> DB: status = expired
+      API --> App: 422 QR_EXPIRED
+    else still waiting
+      API --> App: 200 still pending
+    end
+  else APPROVED
+    PayWay --> API: amount, currency
+    deactivate PayWay
+    API -> DB: lock payment + event
+    activate DB
+    API -> DB: INSERT tickets status=valid
+    API -> DB: UPDATE payments paid + ticket_id
+    DB --> API: COMMIT
+    deactivate DB
+    API --> App: 200 { status: paid, ticket }
+  end
+end
+
+deactivate API
+App --> Attendee: Payment success + ticket QR
+deactivate App
+
+legend right
+  Ticket row is created **only after** gateway settlement.
+  Pending QR holds a capacity spot until qr_expires_at.
+  UNIQUE(event_id, user_id) on payments and tickets.
+end legend
+
+@enduml

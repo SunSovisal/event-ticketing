@@ -38,6 +38,8 @@ class TicketResource extends JsonResource
                 'category' => $this->event->category,
                 'status' => $this->event->status,
                 'image_url' => $this->event->image_url,
+                'price_amount' => (float) $this->event->price_amount,
+                'price_currency' => $this->event->price_currency,
             ]),
         ];
     }

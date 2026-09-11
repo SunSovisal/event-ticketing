@@ -12,7 +12,6 @@
 	<string>GoITC uses the camera to scan ticket QR codes for event check-in.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>GoITC needs access to your photos so you can upload event cover images.</string>
-
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

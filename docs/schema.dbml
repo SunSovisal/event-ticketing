@@ -1,0 +1,257 @@
+// ITC Event Ticketing — current PostgreSQL schema
+// Paste into https://dbdiagram.io
+// Source of truth: backend/database/migrations + Eloquent models
+
+Project itc_event_ticketing {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Laravel REST API + Flutter client.
+    Identity comes from Firebase UID; application data lives in PostgreSQL.
+    Guest users have no row. Campus fields live in user_profiles, not users.
+  '''
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+Enum event_status {
+  draft
+  published
+  cancelled
+}
+
+Enum event_category {
+  Workshop
+  Meetup
+  Academic
+  Sports
+  Club
+  Career
+  Social
+  General
+}
+
+Enum ticket_status {
+  valid
+  checked_in
+  cancelled
+}
+
+Enum payment_status {
+  pending
+  paid
+  expired
+}
+
+Enum payment_method {
+  khqr
+  aba_pay
+}
+
+Enum check_in_method {
+  qr
+  manual
+}
+
+Enum check_in_result {
+  success
+  not_found
+  already_checked_in
+  cancelled
+  too_early
+  too_late
+  event_cancelled
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+Table users {
+  id            uuid          [pk, note: 'Application user id']
+  firebase_uid  varchar       [unique, not null, note: 'Firebase Auth UID']
+  email         varchar       [unique, null]
+  phone_number  varchar       [unique, null]
+  name          varchar       [null, note: 'Display name; printed on tickets']
+  is_admin      boolean       [not null, default: false]
+  is_active     boolean       [not null, default: true]
+  created_at    timestamptz   [not null]
+  updated_at    timestamptz   [not null]
+
+  Note: '''
+    Created on first authenticated API call (User::syncFromFirebase).
+    is_admin is stored here, not in Firebase claims.
+  '''
+}
+
+Table user_profiles {
+  id           uuid         [pk]
+  user_id      uuid         [unique, not null, note: '1:1 campus profile']
+  student_id   varchar(32)  [unique, null]
+  department   varchar(80)  [null]
+  year         smallint     [null, note: '1–8 when present']
+  created_at   timestamptz  [not null]
+  updated_at   timestamptz  [not null]
+
+  Note: 'Lazy-created on first PATCH /me campus write. Login identity stays on users.'
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+Table events {
+  id               uuid           [pk]
+  title            varchar(120)   [not null]
+  description      text           [not null]
+  starts_at        timestamptz    [not null]
+  ends_at          timestamptz    [null, note: 'If null, effective end = starts_at + 2h']
+  location_label   varchar(120)   [not null, note: 'ITC building/room only']
+  category         varchar(40)    [not null, default: 'General']
+  capacity         smallint       [not null, note: '1–500']
+  status           event_status   [not null]
+  image_url        varchar        [null, note: 'Public Cloudinary HTTPS URL']
+  image_public_id  varchar        [null, note: 'Server-only; never returned in JSON']
+  price_amount     decimal(12,2)  [not null, default: 0, note: '0 = free event']
+  price_currency   varchar(3)     [not null, default: 'USD']
+  created_at       timestamptz    [not null]
+  updated_at       timestamptz    [not null]
+
+  indexes {
+    (status, starts_at) [name: 'events_status_starts_at_index']
+  }
+}
+
+Table saved_events {
+  id          uuid         [pk]
+  user_id     uuid         [not null]
+  event_id    uuid         [not null]
+  created_at  timestamptz  [not null]
+
+  indexes {
+    (user_id, event_id) [unique]
+    (user_id, created_at)
+  }
+
+  Note: 'Bookmark only. Does not reserve a seat or count toward capacity.'
+}
+
+// ---------------------------------------------------------------------------
+// Ticketing
+// ---------------------------------------------------------------------------
+
+Table tickets {
+  id             uuid         [pk]
+  event_id       uuid         [not null]
+  user_id        uuid         [not null]
+  ticket_code    varchar      [unique, not null, note: 'Opaque QR payload, e.g. TKT_…']
+  status         ticket_status [not null]
+  checked_in_at  timestamptz  [null]
+  checked_in_by  uuid         [null, note: 'Admin who scanned']
+  created_at     timestamptz  [not null]
+  updated_at     timestamptz  [not null]
+
+  indexes {
+    (event_id, user_id) [unique, note: 'One ticket per attendee per event']
+    (user_id, created_at)
+    (event_id, status)
+  }
+}
+
+Table check_in_attempts {
+  id            uuid              [pk]
+  scanned_by    uuid              [not null, note: 'Admin who attempted the scan']
+  ticket_id     uuid              [null, note: 'Null when result = not_found']
+  event_id      uuid              [null, note: 'Copied from ticket when found']
+  scanned_code  varchar(64)       [not null]
+  method        check_in_method   [not null]
+  result        check_in_result   [not null]
+  created_at    timestamptz       [not null]
+
+  indexes {
+    (ticket_id, created_at)
+    (event_id, created_at)
+    (scanned_by, created_at)
+  }
+
+  Note: 'Append-only audit log. Successful check-in still updates tickets.'
+}
+
+// ---------------------------------------------------------------------------
+// Payments (KHQR / ABA PayWay)
+// ---------------------------------------------------------------------------
+
+Table payments {
+  id              uuid            [pk]
+  event_id        uuid            [not null]
+  user_id         uuid            [not null]
+  ticket_id       uuid            [null, note: 'Set after paid reservation']
+  amount          decimal(12,2)   [not null]
+  currency        varchar(3)      [not null]
+  status          payment_status  [not null]
+  method          payment_method  [not null, default: 'khqr']
+  qr_code         text            [not null]
+  qr_md5          varchar(32)     [unique, not null]
+  payway_tran_id  varchar(20)     [unique, null, note: 'ABA PayWay transaction id']
+  aba_deeplink    text            [null]
+  qr_expires_at   timestamptz     [not null]
+  bakong_hash     varchar         [null]
+  from_account_id varchar(100)    [null]
+  to_account_id   varchar(100)    [null]
+  paid_at         timestamptz     [null]
+  created_at      timestamptz     [not null]
+  updated_at      timestamptz     [not null]
+
+  indexes {
+    (event_id, user_id) [unique, note: 'One payment intent per attendee per event']
+    (event_id, status)
+    (qr_expires_at, status)
+  }
+
+  Note: 'Pending payments hold capacity until qr_expires_at.'
+}
+
+// ---------------------------------------------------------------------------
+// Relationships
+// ---------------------------------------------------------------------------
+
+Ref: user_profiles.user_id > users.id
+
+Ref: saved_events.user_id > users.id [delete: cascade]
+Ref: saved_events.event_id > events.id [delete: cascade]
+
+Ref: tickets.event_id > events.id
+Ref: tickets.user_id > users.id
+Ref: tickets.checked_in_by > users.id
+
+Ref: check_in_attempts.scanned_by > users.id
+Ref: check_in_attempts.ticket_id > tickets.id
+Ref: check_in_attempts.event_id > events.id
+
+Ref: payments.event_id > events.id
+Ref: payments.user_id > users.id
+Ref: payments.ticket_id > tickets.id
+
+// ---------------------------------------------------------------------------
+// Slide-friendly groups (dbdiagram.io colors these)
+// ---------------------------------------------------------------------------
+
+TableGroup identity [color: #3B82F6] {
+  users
+  user_profiles
+}
+
+TableGroup catalog [color: #10B981] {
+  events
+  saved_events
+}
+
+TableGroup ticketing [color: #F59E0B] {
+  tickets
+  check_in_attempts
+}
+
+TableGroup checkout [color: #8B5CF6] {
+  payments
+}

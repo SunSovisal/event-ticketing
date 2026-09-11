@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -204,6 +205,37 @@ class AdminEventTest extends TestCase
             ->assertJsonPath('error.code', 'CAPACITY_BELOW_RESERVED');
 
         $this->assertSame(2, $event->fresh()->capacity);
+    }
+
+    public function test_cannot_reduce_capacity_below_a_grace_payment_hold(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $first = User::factory()->create();
+        $second = User::factory()->create();
+        $event = Event::factory()->published()->paid('0.01', 'USD')->create(['capacity' => 2]);
+
+        $firstPayment = $this->actingAsFirebaseUser($first)
+            ->postJson('/api/v1/events/'.$event->id.'/payments')
+            ->assertCreated();
+        $secondPayment = $this->actingAsFirebaseUser($second)
+            ->postJson('/api/v1/events/'.$event->id.'/payments')
+            ->assertCreated();
+
+        Payment::query()->whereKey([
+            $firstPayment->json('data.id'),
+            $secondPayment->json('data.id'),
+        ])->update([
+            'qr_expires_at' => now()->subMinute(),
+        ]);
+
+        $this->actingAsFirebaseUser($admin)
+            ->patchJson('/api/v1/admin/events/'.$event->id, $this->eventPayload([
+                'capacity' => 1,
+                'price_amount' => 0.01,
+                'price_currency' => 'USD',
+            ]))
+            ->assertConflict()
+            ->assertJsonPath('error.code', 'CAPACITY_BELOW_RESERVED');
     }
 
     public function test_publish_makes_a_draft_visible_on_the_public_list(): void

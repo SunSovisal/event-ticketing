@@ -36,6 +36,14 @@ class TicketService
                 throw new ApiException('EVENT_ENDED', 'Event has ended.', 422);
             }
 
+            if ($event->isPaid()) {
+                throw new ApiException(
+                    'PAYMENT_REQUIRED',
+                    'This event requires KHQR payment.',
+                    402,
+                );
+            }
+
             $existing = Ticket::query()
                 ->where('event_id', $event->id)
                 ->where('user_id', $user->id)
@@ -85,5 +93,49 @@ class TicketService
                 'created' => true,
             ];
         });
+    }
+
+    /**
+     * Issue a ticket after Bakong confirms payment. Caller must lock the event.
+     *
+     * @return array{ticket: Ticket, created: bool}
+     */
+    public function issuePaidTicket(Event $event, User $user): array
+    {
+        $existing = Ticket::query()
+            ->where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing !== null) {
+            return [
+                'ticket' => $existing->load('event'),
+                'created' => false,
+            ];
+        }
+
+        try {
+            $ticket = Ticket::query()->create([
+                'event_id' => $event->id,
+                'user_id' => $user->id,
+                'ticket_code' => 'TKT_'.Str::ulid(),
+                'status' => 'valid',
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            $ticket = Ticket::query()
+                ->where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            return [
+                'ticket' => $ticket->load('event'),
+                'created' => false,
+            ];
+        }
+
+        return [
+            'ticket' => $ticket->load('event'),
+            'created' => true,
+        ];
     }
 }

@@ -26,6 +26,8 @@ class EventFactory extends Factory
             'status' => 'draft',
             'image_url' => null,
             'image_public_id' => null,
+            'price_amount' => 0,
+            'price_currency' => 'USD',
         ];
     }
 
@@ -33,6 +35,14 @@ class EventFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'published',
+        ]);
+    }
+
+    public function paid(string $amount = '0.01', string $currency = 'USD'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'price_amount' => $amount,
+            'price_currency' => $currency,
         ]);
     }
 

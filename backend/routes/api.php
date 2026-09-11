@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminEventController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MeController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SavedEventController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -21,12 +22,12 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    Route::middleware('throttle:api')->group( function(){
+    Route::middleware('throttle:api')->group(function () {
         Route::middleware('firebase:optional')->group(function () {
             Route::get('/events', [EventController::class, 'index']);
             Route::get('/events/{id}', [EventController::class, 'show']);
         });
-        
+
         Route::middleware('firebase')->group(function () {
             Route::get('/me', [MeController::class, 'show']);
             Route::patch('/me', [MeController::class, 'update']);
@@ -35,6 +36,10 @@ Route::prefix('v1')->group(function () {
                 ->middleware('throttle:chat');
 
             Route::post('/events/{id}/tickets', [TicketController::class, 'store'])->middleware('throttle:api');
+            Route::post('/events/{id}/payments', [PaymentController::class, 'store']);
+            Route::get('/payments/{id}', [PaymentController::class, 'show']);
+            Route::post('/payments/{id}/sync', [PaymentController::class, 'sync'])
+                ->middleware('throttle:payment-sync');
             Route::post('/events/{id}/save', [SavedEventController::class, 'store']);
             Route::delete('/events/{id}/save', [SavedEventController::class, 'destroy']);
             Route::get('/saved-events', [SavedEventController::class, 'index']);
