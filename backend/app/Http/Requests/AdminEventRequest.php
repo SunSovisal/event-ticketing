@@ -26,15 +26,19 @@ class AdminEventRequest extends FormRequest
             'location_label' => ['required', 'string', 'max:120'],
             'category' => ['required', 'string', Rule::in(EventCategory::values())],
             'capacity' => ['required', 'integer', 'min:1', 'max:500'],
+            'price_amount' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'price_currency' => ['nullable', 'string', Rule::in(['USD', 'KHR'])],
         ];
     }
 
     /**
-     * @return array{title: string, description: string, starts_at: mixed, ends_at: mixed, location_label: string, category: string, capacity: int}
+     * @return array{title: string, description: string, starts_at: mixed, ends_at: mixed, location_label: string, category: string, capacity: int, price_amount: string, price_currency: string}
      */
     public function eventAttributes(): array
     {
         $validated = $this->validated();
+        $currency = strtoupper((string) ($validated['price_currency'] ?? 'USD'));
+        $amount = $validated['price_amount'] ?? 0;
 
         return [
             'title' => $validated['title'],
@@ -44,6 +48,8 @@ class AdminEventRequest extends FormRequest
             'location_label' => $validated['location_label'],
             'category' => $validated['category'],
             'capacity' => (int) $validated['capacity'],
+            'price_amount' => $amount,
+            'price_currency' => $currency,
         ];
     }
 
@@ -60,5 +66,21 @@ class AdminEventRequest extends FormRequest
         if ($merge !== []) {
             $this->merge($merge);
         }
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $amount = $this->input('price_amount');
+            $currency = strtoupper((string) $this->input('price_currency', 'USD'));
+
+            if ($amount === null || $amount === '') {
+                return;
+            }
+
+            if ($currency === 'KHR' && (float) $amount > 0 && floor((float) $amount) != (float) $amount) {
+                $validator->errors()->add('price_amount', 'KHR amounts must be whole riel.');
+            }
+        });
     }
 }

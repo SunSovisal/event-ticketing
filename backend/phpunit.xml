@@ -32,5 +32,18 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="BAKONG_ACCOUNT_USERNAME" value="itc.events@abaa"/>
+        <env name="BAKONG_ACCOUNT_NAME" value="ITC Events"/>
+        <env name="BAKONG_MERCHANT_CITY" value="PHNOM PENH"/>
+        <env name="BAKONG_ACCESS_TOKEN" value="test-token"/>
+        <env name="BAKONG_BASE_API_URL" value="https://api-bakong.nbc.gov.kh/v1"/>
+        <env name="BAKONG_QR_TTL_SECONDS" value="300"/>
+        <env name="BAKONG_GRACE_SECONDS" value="300"/>
+        <env name="BAKONG_DAILY_LIMIT" value="100"/>
+        <env name="BAKONG_MIN_CHECK_SECONDS" value="20"/>
+        <env name="PAYWAY_MERCHANT_ID" value=""/>
+        <env name="PAYWAY_API_KEY" value=""/>
+        <env name="PAYWAY_BASE_URL" value="https://checkout-sandbox.payway.com.kh"/>
+        <env name="PAYWAY_SANDBOX" value="true"/>
     </php>
 </phpunit>

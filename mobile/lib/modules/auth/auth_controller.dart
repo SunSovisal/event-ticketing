@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:itc_events/app/config/app_config.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/auth/auth_linking.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
@@ -46,6 +47,44 @@ class AuthController {
   /// Provider IDs currently linked to the signed-in Firebase account
   List<String> get linkedProviderIds =>
       currentUser?.providerData.map((p) => p.providerId).toList() ?? [];
+
+  /// Email used to detect a mismatch when linking Google or email/password.
+  String? get accountEmailForLinking {
+    String? passwordEmail;
+    for (final info in currentUser?.providerData ?? const <UserInfo>[]) {
+      if (info.providerId == 'password') {
+        passwordEmail = info.email;
+        break;
+      }
+    }
+    return resolveAccountEmailForLinking(
+      passwordProviderEmail: passwordEmail,
+      firebaseEmail: currentUser?.email,
+      profileEmail: me.value?['email']?.toString(),
+    );
+  }
+
+  Future<bool> _confirmEmailMismatch({
+    required String? incomingEmail,
+    required Future<bool> Function(String accountEmail, String incomingEmail)?
+    confirmDifferentEmail,
+  }) async {
+    final accountEmail = accountEmailForLinking;
+    if (!emailsDifferForLinking(accountEmail, incomingEmail)) {
+      return true;
+    }
+    if (confirmDifferentEmail == null) {
+      return false;
+    }
+    isLoading.value = false;
+    return confirmDifferentEmail(accountEmail!, incomingEmail!.trim());
+  }
+
+  Future<void> _completeProviderLink() async {
+    await currentUser!.reload();
+    await currentUser!.getIdToken(true);
+    await fetchMe();
+  }
 
   Future<void> registerWithEmail(
     String name,
@@ -299,29 +338,80 @@ class AuthController {
 
   // Provider linking
   /// Links the Google provider to the currently signed-in Firebase account.
-  Future<void> linkWithGoogle() async {
+  ///
+  /// When the Google email differs from the account email, [confirmDifferentEmail]
+  /// must return true before the link is applied (policy: allow, but warn).
+  Future<void> linkWithGoogle({
+    Future<bool> Function(String accountEmail, String googleEmail)?
+    confirmDifferentEmail,
+  }) async {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return;
+
+      final confirmed = await _confirmEmailMismatch(
+        incomingEmail: googleUser.email,
+        confirmDifferentEmail: confirmDifferentEmail,
+      );
+      if (!confirmed) {
+        await _googleSignIn.signOut();
+        return;
+      }
+      isLoading.value = true;
+
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       await currentUser!.linkWithCredential(credential);
-      await currentUser!.reload();
-      await currentUser!.getIdToken(
-        true,
-      ); // force fresh token with updated claims
-      await fetchMe(); // sync new claims to the database now
+      await _completeProviderLink();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _messageFor(e, fallback: 'could_not_link_google'.tr);
     } catch (error) {
       errorMessage.value = _messageFor(
         error,
         fallback: 'could_not_link_google'.tr,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Links email/password to the currently signed-in Firebase account.
+  Future<void> linkWithEmailPassword({
+    required String email,
+    required String password,
+    Future<bool> Function(String accountEmail, String newEmail)?
+    confirmDifferentEmail,
+  }) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final confirmed = await _confirmEmailMismatch(
+        incomingEmail: email,
+        confirmDifferentEmail: confirmDifferentEmail,
+      );
+      if (!confirmed) {
+        return;
+      }
+      isLoading.value = true;
+
+      final credential = EmailAuthProvider.credential(
+        email: email.trim(),
+        password: password,
+      );
+      await currentUser!.linkWithCredential(credential);
+      await _completeProviderLink();
+    } on FirebaseAuthException catch (e) {
+      errorMessage.value = _messageFor(e, fallback: 'could_not_link_email'.tr);
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'could_not_link_email'.tr,
       );
     } finally {
       isLoading.value = false;
@@ -343,11 +433,7 @@ class AuthController {
         verificationCompleted: (credential) async {
           try {
             await currentUser!.linkWithCredential(credential);
-            await currentUser!.reload();
-            await currentUser!.getIdToken(
-              true,
-            ); // force fresh token with updated claims
-            await fetchMe(); // sync new claims to the database now
+            await _completeProviderLink();
           } catch (error) {
             errorMessage.value = _messageFor(
               error,
@@ -400,11 +486,7 @@ class AuthController {
       );
 
       await currentUser!.linkWithCredential(credential);
-      await currentUser!.reload();
-      await currentUser!.getIdToken(
-        true,
-      ); // force fresh token with updated claims
-      await fetchMe(); // sync new claims to the database now
+      await _completeProviderLink();
 
       phoneVerificationId.value = '';
       phoneCodeSent.value = false;
@@ -426,7 +508,21 @@ class AuthController {
 
   String _messageFor(Object error, {required String fallback}) {
     if (error is FirebaseAuthException) {
-      return error.message ?? fallback;
+      switch (error.code) {
+        case 'provider-already-linked':
+          return 'provider_already_linked'.tr;
+        case 'credential-already-in-use':
+        case 'email-already-in-use':
+          return 'credential_already_in_use'.tr;
+        case 'weak-password':
+          return 'password_min_8'.tr;
+        case 'requires-recent-login':
+          return 'requires_recent_login'.tr;
+        case 'invalid-email':
+          return 'enter_valid_email'.tr;
+        default:
+          return error.message ?? fallback;
+      }
     }
     if (error is ApiException) {
       return error.message;

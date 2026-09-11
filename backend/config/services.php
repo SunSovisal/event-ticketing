@@ -49,4 +49,27 @@ return [
         'daily_limit' => (int) env('CHAT_DAILY_LIMIT', 30),
     ],
 
+    'bakong' => [
+        'account_id' => env('BAKONG_ACCOUNT_USERNAME'),
+        'account_name' => env('BAKONG_ACCOUNT_NAME'),
+        'merchant_city' => env('BAKONG_MERCHANT_CITY', 'PHNOM PENH'),
+        'access_token' => env('BAKONG_ACCESS_TOKEN'),
+        'base_url' => env('BAKONG_BASE_API_URL', env('BAKONG_PROD_BASE_API_URL', 'https://api-bakong.nbc.gov.kh/v1')),
+        'qr_ttl_seconds' => (int) env('BAKONG_QR_TTL_SECONDS', 300),
+        'grace_seconds' => (int) env('BAKONG_GRACE_SECONDS', 300),
+        'daily_limit' => (int) env('BAKONG_DAILY_LIMIT', 100),
+        'min_check_seconds' => (int) env('BAKONG_MIN_CHECK_SECONDS', 20),
+    ],
+
+    'payway' => [
+        'merchant_id' => env('PAYWAY_MERCHANT_ID'),
+        'api_key' => env('PAYWAY_API_KEY'),
+        'base_url' => env('PAYWAY_BASE_URL', 'https://checkout-sandbox.payway.com.kh'),
+        'qr_template' => env('PAYWAY_QR_TEMPLATE', 'template3_color'),
+        'sandbox' => filter_var(
+            env('PAYWAY_SANDBOX', str_contains((string) env('PAYWAY_BASE_URL', 'sandbox'), 'sandbox')),
+            FILTER_VALIDATE_BOOLEAN,
+        ),
+    ],
+
 ];

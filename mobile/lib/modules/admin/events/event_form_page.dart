@@ -30,7 +30,9 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   late final TextEditingController _description;
   late final TextEditingController _location;
   late final TextEditingController _capacity;
+  late final TextEditingController _priceAmount;
   late String _category;
+  late String _priceCurrency;
 
   Event? _event;
   DateTime? _startsAtLocal;
@@ -50,7 +52,13 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     _capacity = TextEditingController(
       text: _event?.capacity.toString() ?? '50',
     );
+    _priceAmount = TextEditingController(
+      text: _event == null || _event!.isFree
+          ? '0'
+          : _event!.priceAmount.toString(),
+    );
     _category = _event?.category ?? EventCategory.general;
+    _priceCurrency = _event?.priceCurrency ?? 'USD';
     _startsAtLocal = _event?.startsAt.toLocal();
     _endsAtLocal = _event?.endsAt?.toLocal();
   }
@@ -61,6 +69,7 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     _description.dispose();
     _location.dispose();
     _capacity.dispose();
+    _priceAmount.dispose();
     super.dispose();
   }
 
@@ -87,6 +96,8 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
       'location_label': _location.text.trim(),
       'category': _category,
       'capacity': int.parse(_capacity.text.trim()),
+      'price_amount': double.tryParse(_priceAmount.text.trim()) ?? 0,
+      'price_currency': _priceCurrency,
     };
   }
 
@@ -398,6 +409,44 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
                         final n = int.tryParse(value ?? '');
                         if (n == null || n < 1 || n > 500) {
                           return 'capacity_range'.tr;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _priceCurrency,
+                      decoration: InputDecoration(labelText: 'price_currency'.tr),
+                      items: const [
+                        DropdownMenuItem(value: 'USD', child: Text('USD')),
+                        DropdownMenuItem(value: 'KHR', child: Text('KHR')),
+                      ],
+                      onChanged: _readOnly
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() => _priceCurrency = value);
+                              }
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _priceAmount,
+                      enabled: !_readOnly,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'price_amount_label'.tr,
+                        helperText: 'price_amount_hint'.tr,
+                      ),
+                      validator: (value) {
+                        final n = double.tryParse(value?.trim() ?? '');
+                        if (n == null || n < 0) {
+                          return 'price_amount_invalid'.tr;
+                        }
+                        if (_priceCurrency == 'KHR' && n > 0 && n != n.roundToDouble()) {
+                          return 'price_khr_whole'.tr;
                         }
                         return null;
                       },

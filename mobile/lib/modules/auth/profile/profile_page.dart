@@ -418,6 +418,8 @@ class _LinkedProvidersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final linked = auth.linkedProviderIds;
+      // Rebuild after /me syncs newly linked providers.
+      final _ = auth.me.value;
 
       return Card(
         child: Column(
@@ -461,11 +463,27 @@ class _LinkedProvidersCard extends StatelessWidget {
     auth.errorMessage.value = '';
     switch (providerId) {
       case 'google.com':
-        await auth.linkWithGoogle();
+        await auth.linkWithGoogle(
+          confirmDifferentEmail: (accountEmail, googleEmail) {
+            return _confirmDifferentEmail(
+              context,
+              titleKey: 'link_google_mismatch_title',
+              bodyKey: 'link_google_mismatch_body',
+              accountEmail: accountEmail,
+              incomingEmail: googleEmail,
+              incomingParam: 'googleEmail',
+            );
+          },
+        );
       case 'phone':
         await Get.to(() => const PhoneSignInPage(linkMode: true));
+      case 'password':
+        if (!context.mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => _LinkEmailPasswordDialog(auth: auth),
+        );
       default:
-        // email/password already linked at registration, no action
         break;
     }
   }
@@ -524,12 +542,201 @@ class _ProviderTile extends StatelessWidget {
               padding: EdgeInsets.zero,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             )
-          : meta.id == 'password'
-          ? null // linking email/password isn't available
           : TextButton(
               onPressed: isLoading ? null : onLink,
               child: Text('link'.tr),
             ),
+    );
+  }
+}
+
+Future<bool> _confirmDifferentEmail(
+  BuildContext context, {
+  required String titleKey,
+  required String bodyKey,
+  required String accountEmail,
+  required String incomingEmail,
+  required String incomingParam,
+}) async {
+  if (!context.mounted) return false;
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(titleKey.tr),
+        content: Text(
+          bodyKey.trParams({
+            'accountEmail': accountEmail,
+            incomingParam: incomingEmail,
+          }),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('cancel'.tr),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('continue'.tr),
+          ),
+        ],
+      );
+    },
+  );
+  return result ?? false;
+}
+
+class _LinkEmailPasswordDialog extends StatefulWidget {
+  const _LinkEmailPasswordDialog({required this.auth});
+
+  final AuthController auth;
+
+  @override
+  State<_LinkEmailPasswordDialog> createState() =>
+      _LinkEmailPasswordDialogState();
+}
+
+class _LinkEmailPasswordDialogState extends State<_LinkEmailPasswordDialog> {
+  late final TextEditingController _emailController;
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(
+      text: widget.auth.accountEmailForLinking ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (email.isEmpty || !GetUtils.isEmail(email)) {
+      widget.auth.errorMessage.value = 'enter_valid_email'.tr;
+      return;
+    }
+    if (password.length < 8) {
+      widget.auth.errorMessage.value = 'password_min_8'.tr;
+      return;
+    }
+    if (password != confirmPassword) {
+      widget.auth.errorMessage.value = 'passwords_do_not_match'.tr;
+      return;
+    }
+
+    await widget.auth.linkWithEmailPassword(
+      email: email,
+      password: password,
+      confirmDifferentEmail: (accountEmail, newEmail) {
+        return _confirmDifferentEmail(
+          context,
+          titleKey: 'link_email_mismatch_title',
+          bodyKey: 'link_email_mismatch_body',
+          accountEmail: accountEmail,
+          incomingEmail: newEmail,
+          incomingParam: 'newEmail',
+        );
+      },
+    );
+
+    if (widget.auth.errorMessage.value.isEmpty &&
+        widget.auth.linkedProviderIds.contains('password') &&
+        mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('link_email_password_title'.tr),
+      content: SizedBox(
+        width: 360,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'link_email_password_subtitle'.tr,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(labelText: 'email'.tr),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: 'password'.tr,
+                  helperText: 'password_helper_min_8'.tr,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _save(),
+                decoration: InputDecoration(labelText: 'confirm_password'.tr),
+              ),
+              Obx(() {
+                if (widget.auth.errorMessage.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    widget.auth.errorMessage.value,
+                    style: TextStyle(color: AppTheme.error),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        Obx(
+          () => TextButton(
+            onPressed: widget.auth.isLoading.value
+                ? null
+                : () => Navigator.pop(context),
+            child: Text('cancel'.tr),
+          ),
+        ),
+        Obx(
+          () => FilledButton(
+            onPressed: widget.auth.isLoading.value ? null : _save,
+            child: widget.auth.isLoading.value
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text('link'.tr),
+          ),
+        ),
+      ],
     );
   }
 }

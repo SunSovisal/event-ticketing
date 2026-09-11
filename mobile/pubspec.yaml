@@ -43,9 +43,11 @@ dependencies:
   google_sign_in: ^6.2.1
   flutter_launcher_icons: ^0.14.4
   qr_flutter: ^4.1.0
+  flutter_svg: ^2.2.3
   shared_preferences: ^2.5.5
   mobile_scanner: ^7.4.0
   image_picker: ^1.2.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,11 @@ flutter:
     - assets/app_logo_transparent_primary.png
     - assets/google_logo.png
     - assets/itc_logo.png
+    - assets/khqr/khqr_logo.svg
+    - assets/khqr/dollar_symbol.png
+    - assets/khqr/riel_symbol.png
+    - assets/payments/khqr.png
+    - assets/payments/aba_pay.png
   fonts:
     - family: Roboto
       fonts:
@@ -80,6 +87,12 @@ flutter:
     - family: Siemreap
       fonts:
         - asset: fonts/Siemreap.ttf
+    - family: NunitoSans
+      fonts:
+        - asset: fonts/nunito_sans/NunitoSans_7pt-Regular.ttf
+          weight: 400
+        - asset: fonts/nunito_sans/NunitoSans_7pt-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

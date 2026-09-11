@@ -13,6 +13,7 @@ import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
+import 'package:itc_events/modules/tickets/payment_method_page.dart';
 import 'package:itc_events/modules/tickets/ticket.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
 import 'package:itc_events/modules/tickets/view_ticket_page.dart';
@@ -81,6 +82,11 @@ class EventDetailPage extends StatelessWidget {
     final existing = controller.forEvent(live.id);
     if (existing != null) {
       _openTicket(existing.id);
+      return;
+    }
+
+    if (!live.isFree) {
+      Get.to(() => PaymentMethodPage(event: live));
       return;
     }
 
@@ -165,7 +171,9 @@ class EventDetailPage extends StatelessWidget {
         ? (ownedTicket.isCheckedIn ? 'View checked-in ticket' : 'View ticket')
         : isReserving
         ? 'Reserving…'
-        : 'Get ticket';
+        : live.isFree
+        ? 'Get ticket'
+        : 'Pay with KHQR';
     final statusChip = live.isCancelled
         ? StatusChip.eventStatus('cancelled')
         : live.hasEnded()
@@ -259,7 +267,7 @@ class EventDetailPage extends StatelessWidget {
               InfoTile(
                 icon: Icons.payments_outlined,
                 label: 'Price',
-                value: live.isFree ? 'Free' : 'Paid',
+                value: live.formattedPrice,
               ),
             ],
           ),

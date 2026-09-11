@@ -1,4 +1,5 @@
 import 'package:itc_events/modules/events/event_category.dart';
+import 'package:itc_events/modules/tickets/payment_method.dart';
 
 /// UI-facing event shape aligned with public/admin event JSON (§8 / §9.3).
 class Event {
@@ -17,6 +18,9 @@ class Event {
     this.checkedInCount = 0,
     this.isSaved = false,
     this.category = EventCategory.general,
+    this.priceAmount = 0,
+    this.priceCurrency = 'USD',
+    this.paymentMethods = const [],
   });
 
   final String id;
@@ -33,12 +37,35 @@ class Event {
   final int checkedInCount;
   final bool isSaved;
   final String category;
+  final double priceAmount;
+  final String priceCurrency;
+  final List<PaymentMethodOption> paymentMethods;
 
   bool get isCancelled => status == 'cancelled';
   bool get isDraft => status == 'draft';
   bool get isPublished => status == 'published';
   bool get isSoldOut => spotsRemaining <= 0;
-  bool get isFree => true;
+  bool get isFree => priceAmount <= 0;
+
+  List<PaymentMethodOption> get availablePaymentMethods {
+    if (paymentMethods.isNotEmpty) {
+      return paymentMethods;
+    }
+    return const [PaymentMethodOption(id: PaymentMethodOption.khqr, live: true)];
+  }
+
+  bool get hasAbaPay =>
+      availablePaymentMethods.any((method) => method.isAbaPay);
+
+  String get formattedPrice {
+    if (isFree) {
+      return 'Free';
+    }
+    if (priceCurrency.toUpperCase() == 'KHR') {
+      return '${priceAmount.round()} ៛';
+    }
+    return '\$${priceAmount.toStringAsFixed(2)}';
+  }
 
   // no `ends_at` means the event ends 2 hours after start.
   DateTime get effectiveEndsAt =>
@@ -85,6 +112,9 @@ class Event {
       checkedInCount: _asInt(json['checked_in_count']),
       isSaved: json['is_saved'] == true,
       category: json['category'] as String? ?? EventCategory.general,
+      priceAmount: _asDouble(json['price_amount']),
+      priceCurrency: json['price_currency'] as String? ?? 'USD',
+      paymentMethods: _paymentMethods(json['payment_methods']),
     );
   }
 
@@ -103,6 +133,9 @@ class Event {
     int? checkedInCount,
     bool? isSaved,
     String? category,
+    double? priceAmount,
+    String? priceCurrency,
+    List<PaymentMethodOption>? paymentMethods,
   }) {
     return Event(
       id: id ?? this.id,
@@ -119,7 +152,22 @@ class Event {
       checkedInCount: checkedInCount ?? this.checkedInCount,
       isSaved: isSaved ?? this.isSaved,
       category: category ?? this.category,
+      priceAmount: priceAmount ?? this.priceAmount,
+      priceCurrency: priceCurrency ?? this.priceCurrency,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
     );
+  }
+
+  static List<PaymentMethodOption> _paymentMethods(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<Map>()
+        .map((item) => PaymentMethodOption.fromJson(Map<String, dynamic>.from(item)))
+        .where((method) => method.id.isNotEmpty)
+        .toList();
   }
 
   static DateTime? _parseOptionalDate(Object? value) {
@@ -135,6 +183,14 @@ class Event {
   static int _asInt(Object? value, {int fallback = 0}) {
     if (value is int) return value;
     if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
+  static double _asDouble(Object? value, {double fallback = 0}) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? fallback;
     return fallback;
   }
 }

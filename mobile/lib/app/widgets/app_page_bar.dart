@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 
-/// Flat, left-aligned page header used on tab roots and Profile subpages.
+/// Flat page header that matches the scaffold. Pass [title] on tab roots;
+/// omit it for a back-only bar.
 class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
   const AppPageBar({
     super.key,
-    required this.title,
+    this.title,
     this.actions,
     this.leading,
   });
 
-  final String title;
+  final String? title;
   final List<Widget>? actions;
   final Widget? leading;
 
@@ -37,22 +38,24 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
-      title: Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: foreground,
-            fontWeight:
-                Theme.of(context).textTheme.headlineMedium?.fontFamily ==
-                    AppTheme.khmerFontFamily
-                ? FontWeight.w400
-                : FontWeight.w700,
-          ),
-        ),
-      ),
+      title: title == null || title!.isEmpty
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                title!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: foreground,
+                  fontWeight:
+                      Theme.of(context).textTheme.headlineMedium?.fontFamily ==
+                          AppTheme.khmerFontFamily
+                      ? FontWeight.w400
+                      : FontWeight.w700,
+                ),
+              ),
+            ),
       actions: actions,
     );
   }

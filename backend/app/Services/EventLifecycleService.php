@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\ApiException;
 use App\Jobs\NotifyEventPublished;
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 
@@ -58,6 +59,11 @@ class EventLifecycleService
                 ->where('event_id', $event->id)
                 ->whereIn('status', ['valid', 'checked_in'])
                 ->update(['status' => 'cancelled']);
+
+            Payment::query()
+                ->where('event_id', $event->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'expired']);
 
             return $event->refresh();
         });

@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use App\Contracts\BakongGateway;
+use App\Contracts\PayWayGateway;
 use App\Contracts\PushNotifier;
 use App\Models\Event;
 use App\Models\User;
@@ -10,12 +12,24 @@ use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 use Lcobucci\JWT\Token\DataSet;
 use Lcobucci\JWT\UnencryptedToken;
 use Mockery;
+use Tests\Support\FakeBakongGateway;
+use Tests\Support\FakePayWayGateway;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected FakeBakongGateway $bakong;
+
+    protected FakePayWayGateway $payway;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->bakong = new FakeBakongGateway;
+        $this->app->instance(BakongGateway::class, $this->bakong);
+
+        $this->payway = new FakePayWayGateway;
+        $this->app->instance(PayWayGateway::class, $this->payway);
 
         $this->app->instance(PushNotifier::class, new class implements PushNotifier
         {

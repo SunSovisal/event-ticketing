@@ -3,6 +3,8 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/tickets/event_payment.dart';
+import 'package:itc_events/modules/tickets/payment_method.dart';
 import 'package:itc_events/modules/tickets/ticket.dart';
 
 class TicketController extends GetxController {
@@ -16,6 +18,7 @@ class TicketController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxBool isReserving = false.obs;
+  final RxBool isPaying = false.obs;
 
   @override
   void onInit() {
@@ -151,6 +154,96 @@ class TicketController extends GetxController {
     } finally {
       isReserving.value = false;
     }
+  }
+
+  Future<EventPayment?> startPayment(
+    Event event, {
+    String method = PaymentMethodOption.khqr,
+  }) async {
+    if (isPaying.value) return null;
+
+    isPaying.value = true;
+    try {
+      final token = await _idToken();
+      if (token == null) {
+        AppSnackbar.error('sign_in_to_reserve_ticket'.tr);
+        return null;
+      }
+
+      final response = await _apiClient.postJson(
+        '/events/${event.id}/payments',
+        body: {'method': method},
+        idToken: token,
+      );
+      return _paymentFromResponse(response, event);
+    } on ApiException catch (error) {
+      if (error.code == 'PAYWAY_DOMAIN') {
+        AppSnackbar.error('payway_domain_blocked'.tr, title: 'unable_to_get_ticket'.tr);
+        return null;
+      }
+      AppSnackbar.error(error.message, title: 'unable_to_get_ticket'.tr);
+      return null;
+    } catch (_) {
+      AppSnackbar.error('could_not_start_payment'.tr, title: 'unable_to_get_ticket'.tr);
+      return null;
+    } finally {
+      isPaying.value = false;
+    }
+  }
+
+  Future<EventPayment?> syncPayment(String paymentId, Event event) async {
+    try {
+      final token = await _idToken();
+      if (token == null) return null;
+
+      final response = await _apiClient.postJson(
+        '/payments/$paymentId/sync',
+        body: const {},
+        idToken: token,
+      );
+      return _paymentFromResponse(response, event);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  EventPayment _paymentFromResponse(Map<String, dynamic> response, Event event) {
+    final data = response['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException('Unexpected payment response');
+    }
+
+    final merged = Map<String, dynamic>.from(data);
+    final ticketJson = merged['ticket'];
+    if (ticketJson is Map<String, dynamic> && ticketJson['event'] is! Map<String, dynamic>) {
+      merged['ticket'] = {
+        ...ticketJson,
+        'event': {
+          'id': event.id,
+          'title': event.title,
+          'description': event.description,
+          'starts_at': event.startsAt.toUtc().toIso8601String(),
+          'ends_at': event.endsAt?.toUtc().toIso8601String(),
+          'location_label': event.locationLabel,
+          'category': event.category,
+          'status': event.status,
+          'image_url': event.imageUrl,
+          'capacity': event.capacity,
+          'spots_remaining': event.spotsRemaining,
+          'price_amount': event.priceAmount,
+          'price_currency': event.priceCurrency,
+        },
+      };
+    }
+
+    final payment = EventPayment.fromJson(merged);
+    final ticket = payment.ticket;
+    if (ticket != null) {
+      _upsert(ticket);
+    }
+    return payment;
   }
 
   void _upsert(Ticket ticket) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Contracts\PayWayGateway;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -29,6 +30,10 @@ class EventResource extends JsonResource
             'spots_remaining' => $this->spotsRemaining(),
             'status' => $this->status,
             'image_url' => $this->image_url,
+            'price_amount' => (float) $this->price_amount,
+            'price_currency' => $this->price_currency,
+            'is_free' => $this->isFree(),
+            'payment_methods' => $this->paymentMethods(),
         ];
 
         if ($request->is('api/v1/admin/*')) {
@@ -42,5 +47,30 @@ class EventResource extends JsonResource
         }
 
         return $payload;
+    }
+
+    /**
+     * @return list<array{id: string, live: bool, sandbox: bool}>
+     */
+    private function paymentMethods(): array
+    {
+        $methods = [
+            [
+                'id' => 'khqr',
+                'live' => true,
+                'sandbox' => false,
+            ],
+        ];
+
+        if (app(PayWayGateway::class)->isEnabled()) {
+            $sandbox = (bool) config('services.payway.sandbox', true);
+            $methods[] = [
+                'id' => 'aba_pay',
+                'live' => ! $sandbox,
+                'sandbox' => $sandbox,
+            ];
+        }
+
+        return $methods;
     }
 }

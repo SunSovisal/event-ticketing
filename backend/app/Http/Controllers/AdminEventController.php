@@ -66,8 +66,9 @@ class AdminEventController extends Controller
         $reserved = $event->tickets()
             ->whereIn('status', ['valid', 'checked_in'])
             ->count();
+        $pendingHolds = $event->payments()->activeHolds()->count();
 
-        if ($attributes['capacity'] < $reserved) {
+        if ($attributes['capacity'] < ($reserved + $pendingHolds)) {
             throw new ApiException(
                 'CAPACITY_BELOW_RESERVED',
                 'Capacity cannot be below the number of reserved tickets.',
@@ -174,6 +175,4 @@ class AdminEventController extends Controller
 
         return $event;
     }
-
-    
 }

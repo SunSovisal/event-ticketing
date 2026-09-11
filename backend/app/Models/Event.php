@@ -26,6 +26,8 @@ class Event extends Model
         'status',
         'image_url',
         'image_public_id',
+        'price_amount',
+        'price_currency',
     ];
 
     protected function casts(): array
@@ -34,12 +36,18 @@ class Event extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'capacity' => 'integer',
+            'price_amount' => 'decimal:2',
         ];
     }
 
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function savedEvents(): HasMany
@@ -85,11 +93,31 @@ class Event extends Model
         return null;
     }
 
+    public function isPaid(): bool
+    {
+        return (float) $this->price_amount > 0;
+    }
+
+    public function isFree(): bool
+    {
+        return ! $this->isPaid();
+    }
+
+    public function khqrAmount(): string
+    {
+        if (strtoupper((string) $this->price_currency) === 'KHR') {
+            return (string) (int) round((float) $this->price_amount);
+        }
+
+        return number_format((float) $this->price_amount, 2, '.', '');
+    }
+
     public function spotsRemaining(): int
     {
         $reserved = (int) ($this->reserved_count ?? 0);
+        $pending = (int) ($this->pending_payment_count ?? 0);
 
-        return max(0, $this->capacity - $reserved);
+        return max(0, $this->capacity - $reserved - $pending);
     }
 
     /**
@@ -120,6 +148,7 @@ class Event extends Model
         return $query->withCount([
             'tickets as reserved_count' => fn (Builder $tickets) => $tickets->whereIn('status', ['valid', 'checked_in']),
             'tickets as checked_in_count' => fn (Builder $tickets) => $tickets->where('status', 'checked_in'),
+            'payments as pending_payment_count' => fn (Builder $payments) => $payments->activeHolds(),
         ]);
     }
 
