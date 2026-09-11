@@ -29,6 +29,8 @@ class KhqrCheckoutPage extends StatefulWidget {
 }
 
 class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
+  static const _pollInterval = Duration(seconds: 60);
+
   EventPayment? _payment;
   String? _error;
   bool _loading = true;
@@ -36,6 +38,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
   bool _qrExpired = false;
   String _countdown = '';
   Timer? _countdownTimer;
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -45,7 +48,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
+    _cancelTimers();
     super.dispose();
   }
 
@@ -60,7 +63,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
       _qrExpired = false;
       _checking = false;
     });
-    _countdownTimer?.cancel();
+    _cancelTimers();
 
     final payment = await _tickets.startPayment(
       widget.event,
@@ -86,6 +89,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
       _loading = false;
     });
     _startCountdown();
+    _startPolling();
   }
 
   Future<void> _confirmPaid({bool quiet = false}) async {
@@ -103,7 +107,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
       }
 
       if (next.isPaid && next.ticket != null) {
-        _countdownTimer?.cancel();
+        _cancelTimers();
         _goToSuccess(next.ticket!.id);
         return;
       }
@@ -113,7 +117,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
     } on ApiException catch (error) {
       if (!mounted) return;
       if (error.code == 'QR_EXPIRED') {
-        _countdownTimer?.cancel();
+        _cancelTimers();
         setState(() {
           _error = 'qr_expired'.tr;
           _qrExpired = true;
@@ -121,11 +125,12 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
         });
         return;
       }
-      if (quiet) return;
       if (error.code == 'BAKONG_DAILY_LIMIT') {
+        _pollTimer?.cancel();
         AppSnackbar.error('bakong_daily_limit'.tr);
         return;
       }
+      if (quiet) return;
       if (error.code == 'PAYWAY_DOMAIN') {
         AppSnackbar.error('payway_domain_blocked'.tr);
         return;
@@ -152,7 +157,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
 
       final remaining = expiresAt.difference(DateTime.now().toUtc());
       if (remaining.isNegative) {
-        _countdownTimer?.cancel();
+        _cancelTimers();
         if (!mounted) return;
         setState(() {
           _countdown = '00:00';
@@ -174,7 +179,21 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
   }
 
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (!mounted || _qrExpired || _checking || _payment == null) return;
+      _confirmPaid(quiet: true);
+    });
+  }
+
+  void _cancelTimers() {
+    _countdownTimer?.cancel();
+    _pollTimer?.cancel();
+  }
+
   void _goToSuccess(String ticketId) {
+    _cancelTimers();
     Get.off(() => PaymentSuccessPage(event: widget.event, ticketId: ticketId));
   }
 
