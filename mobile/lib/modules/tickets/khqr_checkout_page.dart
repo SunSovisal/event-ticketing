@@ -412,23 +412,19 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
 }
 
 class _ButtonSpinner extends StatelessWidget {
-  const _ButtonSpinner({required this.label, this.dark = false});
+  const _ButtonSpinner({required this.label});
 
   final String label;
-  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SizedBox(
+        const SizedBox(
           width: 18,
           height: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: dark ? AppTheme.primary : Colors.white,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
         ),
         const SizedBox(width: 10),
         Text(label),
