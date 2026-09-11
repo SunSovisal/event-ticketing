@@ -58,6 +58,8 @@ class _MyAppState extends State<MyApp> {
     final themeCtrl = Get.find<ThemeController>();
     final localeCtrl = Get.find<LocaleController>();
 
+    syncAppTranslations();
+
     return GetMaterialApp(
       title: 'GoITC',
       debugShowCheckedModeBanner: false,

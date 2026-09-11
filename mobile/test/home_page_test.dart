@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:itc_events/app/locale/app_translations.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -8,7 +9,12 @@ import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
-Event _sampleEvent({String? imageUrl, String category = 'Workshop'}) {
+Event _sampleEvent({
+  String? imageUrl,
+  String category = 'Workshop',
+  double priceAmount = 0,
+  String priceCurrency = 'USD',
+}) {
   return Event(
     id: 'evt-1',
     title: 'Intro to Flutter Workshop',
@@ -20,6 +26,8 @@ Event _sampleEvent({String? imageUrl, String category = 'Workshop'}) {
     status: 'published',
     imageUrl: imageUrl,
     category: category,
+    priceAmount: priceAmount,
+    priceCurrency: priceCurrency,
   );
 }
 
@@ -34,7 +42,14 @@ void main() {
 
   Future<void> pumpHome(WidgetTester tester, EventController events) async {
     Get.put(events);
-    await tester.pumpWidget(GetMaterialApp(home: const HomePage()));
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: const HomePage(),
+      ),
+    );
   }
 
   testWidgets('Home shows loading state', (tester) async {
@@ -109,6 +124,8 @@ void main() {
     expect(find.text('Intro to Flutter Workshop'), findsWidgets);
     expect(find.text('ITC'), findsOneWidget);
     expect(find.text('50 of 50 spots left'), findsOneWidget);
+    expect(find.text('Free'), findsWidgets);
+    expect(find.byIcon(Icons.payments_outlined), findsNothing);
     expect(find.byIcon(Icons.bookmark_border), findsWidgets);
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Workshop'), findsWidgets);
@@ -140,12 +157,29 @@ void main() {
     expect(find.text('Featured'), findsNothing);
   });
 
+  testWidgets('Home cards show paid price without opening the event', (
+    tester,
+  ) async {
+    final events = controller()
+      ..events.assignAll([_sampleEvent(priceAmount: 2.5)]);
+    await pumpHome(tester, events);
+
+    expect(find.text(r'$2.50'), findsWidgets);
+    expect(find.text('Free'), findsNothing);
+    expect(find.byIcon(Icons.payments_outlined), findsWidgets);
+  });
+
   testWidgets('Event detail with live EventController does not throw', (
     tester,
   ) async {
     Get.put(controller()..events.assignAll([_sampleEvent()]));
     await tester.pumpWidget(
-      GetMaterialApp(home: EventDetailPage(event: _sampleEvent())),
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: EventDetailPage(event: _sampleEvent()),
+      ),
     );
     await tester.pump();
 
@@ -169,6 +203,9 @@ void main() {
   testWidgets('Cancelled event card shows Cancelled status', (tester) async {
     await tester.pumpWidget(
       GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
         home: Scaffold(
           body: EventListCard(
             event: Event(
@@ -191,5 +228,6 @@ void main() {
 
     expect(find.text('Cancelled'), findsOneWidget);
     expect(find.text('Event cancelled'), findsOneWidget);
+    expect(find.text('Free'), findsOneWidget);
   });
 }

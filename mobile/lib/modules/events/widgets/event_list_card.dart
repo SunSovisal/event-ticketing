@@ -7,6 +7,7 @@ import 'package:itc_events/app/widgets/event_cover_image.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
+import 'package:itc_events/modules/events/widgets/event_price_badge.dart';
 
 class EventListCard extends StatelessWidget {
   const EventListCard({
@@ -85,6 +86,11 @@ class EventListCard extends StatelessWidget {
           Stack(
             children: [
               EventCoverImage(imageUrl: event.imageUrl, borderRadius: 0),
+              Positioned(
+                left: 12,
+                bottom: 12,
+                child: EventPriceBadge(event: event, onImage: true),
+              ),
               if (onBookmark != null)
                 Positioned(
                   top: 18,

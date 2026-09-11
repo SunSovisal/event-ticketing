@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 
 class InfoTile extends StatelessWidget {
   const InfoTile({
     super.key,
     required this.icon,
-    required this.label,
+    required this.labelKey,
     required this.value,
     this.valueColor,
   });
 
   final IconData icon;
-  final String label;
+  final String labelKey;
   final String value;
   final Color? valueColor;
 
@@ -29,10 +30,17 @@ class InfoTile extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: AppTheme.primary),
           const SizedBox(height: 10),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            labelKey.tr,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: valueColor ?? AppTheme.textPrimaryOf(context),
               fontWeight: FontWeight.w600,

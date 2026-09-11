@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
+import 'package:itc_events/app/locale/locale_controller.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/event_cover_image.dart';
 import 'package:itc_events/app/widgets/info_tile.dart';
@@ -127,6 +128,9 @@ class EventDetailPage extends StatelessWidget {
 
     return _ObxAfterFrame(
       builder: () {
+        if (Get.isRegistered<LocaleController>()) {
+          Get.find<LocaleController>().locale.value;
+        }
         final reserving =
             Get.isRegistered<TicketController>() &&
             Get.find<TicketController>().isReserving.value;
@@ -149,11 +153,11 @@ class EventDetailPage extends StatelessWidget {
     required Ticket? ownedTicket,
   }) {
     final availability = live.isCancelled
-        ? 'Cancelled'
+        ? 'status_cancelled'.tr
         : live.hasEnded()
-        ? 'Ended'
+        ? 'status_ended'.tr
         : live.isSoldOut
-        ? 'Sold out'
+        ? 'sold_out'.tr
         : '${live.spotsRemaining}/${live.capacity}';
     final hasTicket = ownedTicket != null;
     final canReserve =
@@ -175,7 +179,7 @@ class EventDetailPage extends StatelessWidget {
         ? 'Reserving…'
         : live.isFree
         ? 'Get ticket'
-        : 'Pay with KHQR';
+        : 'Pay now';
     final statusChip = live.isCancelled
         ? StatusChip.eventStatus('cancelled')
         : live.hasEnded()
@@ -246,21 +250,21 @@ class EventDetailPage extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.2,
             children: [
               InfoTile(
                 icon: Icons.calendar_today_outlined,
-                label: 'Date',
+                labelKey: 'date',
                 value: EventDate.formatShort(live.startsAt),
               ),
               InfoTile(
                 icon: Icons.location_on_outlined,
-                label: 'Location',
+                labelKey: 'location',
                 value: live.locationLabel,
               ),
               InfoTile(
                 icon: Icons.people_outline,
-                label: 'Availability',
+                labelKey: 'event_detail_availability',
                 value: availability,
                 valueColor: live.isCancelled || live.isSoldOut
                     ? AppTheme.error
@@ -268,8 +272,8 @@ class EventDetailPage extends StatelessWidget {
               ),
               InfoTile(
                 icon: Icons.payments_outlined,
-                label: 'Price',
-                value: live.formattedPrice,
+                labelKey: 'event_detail_price',
+                value: live.isFree ? 'free'.tr : live.formattedPrice,
               ),
             ],
           ),

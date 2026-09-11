@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:itc_events/app/locale/app_translations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocaleController extends GetxController {
@@ -38,6 +39,7 @@ class LocaleController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    syncAppTranslations();
     Get.updateLocale(locale.value);
   }
 
@@ -58,6 +60,7 @@ class LocaleController extends GetxController {
   void setLanguage(String code) {
     final next = localeFromCode(code);
     locale.value = next;
+    syncAppTranslations();
     Get.updateLocale(next);
     _prefs?.setString(languageKey, code);
   }

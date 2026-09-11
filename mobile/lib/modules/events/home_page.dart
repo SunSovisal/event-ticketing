@@ -11,6 +11,7 @@ import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
 import 'package:itc_events/modules/events/widgets/event_category_scroller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
+import 'package:itc_events/modules/events/widgets/event_price_badge.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -359,6 +360,8 @@ class _FeaturedCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              EventPriceBadge(event: event, onImage: true),
               const SizedBox(height: 6),
               Text(
                 event.title,

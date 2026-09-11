@@ -3,13 +3,20 @@ import 'package:get/get.dart';
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
-    'en_US': _en,
-    'km_KH': _kh,
-    'kh_KH': _kh,
+    'en_US': _en(),
+    'km_KH': _kh(),
+    'kh_KH': _kh(),
   };
 }
 
-const _en = {
+/// GetX copies translations once in [GetMaterialApp] initState. Call this
+/// after editing keys or before a locale change so new strings are picked up.
+void syncAppTranslations() {
+  Get.clearTranslations();
+  Get.addTranslations(AppTranslations().keys);
+}
+
+Map<String, String> _en() => {
   // Navigation
   'nav_home': 'Home',
   'nav_tickets': 'Tickets',
@@ -140,7 +147,6 @@ const _en = {
 
   // Splash / auth
   'splash_tagline': 'Book tickets for ITC campus events.',
-  'tag_no_payment': 'No payment',
   'tag_instant_qr': 'Instant QR',
   'tag_itc_only': 'ITC only',
   'browse_events': 'Browse events',
@@ -167,6 +173,10 @@ const _en = {
   'all': 'All',
   'date': 'Date',
   'location': 'Location',
+  'price': 'Price',
+  'availability': 'Availability',
+  'event_detail_price': 'Price',
+  'event_detail_availability': 'Availability',
   'event': 'Event',
   'ticket': 'Ticket',
   'attendee': 'Attendee',
@@ -470,7 +480,7 @@ const _en = {
   'chat_view_event': 'View',
 };
 
-const _kh = {
+Map<String, String> _kh() => {
   // Navigation
   'nav_home': 'ទំព័រដើម',
   'nav_tickets': 'សំបុត្រ',
@@ -599,7 +609,6 @@ const _kh = {
 
   // Splash / auth
   'splash_tagline': 'កក់សំបុត្រសម្រាប់កម្មវិធីនៅ​ ITC។',
-  'tag_no_payment': 'គ្មានការបង់ប្រាក់',
   'tag_instant_qr': '​សំបុត្រជា ​QR',
   'tag_itc_only': 'សម្រាប់ ITC តែប៉ុណ្ណោះ',
   'browse_events': 'រកមើលកម្មវិធី',
@@ -626,6 +635,10 @@ const _kh = {
   'all': 'ទាំងអស់',
   'date': 'កាលបរិច្ឆេទ',
   'location': 'ទីតាំង',
+  'price': 'តម្លៃ',
+  'availability': 'កន្លែងនៅសល់',
+  'event_detail_price': 'តម្លៃ',
+  'event_detail_availability': 'កន្លែងនៅសល់',
   'event': 'កម្មវិធី',
   'ticket': 'សំបុត្រ',
   'attendee': 'អ្នកចូលរួម',

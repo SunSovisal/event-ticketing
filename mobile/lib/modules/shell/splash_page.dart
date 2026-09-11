@@ -48,7 +48,6 @@ class SplashPage extends StatelessWidget {
                   runSpacing: 8,
                   alignment: WrapAlignment.center,
                   children: [
-                    _TagChip(label: 'tag_no_payment'.tr),
                     _TagChip(label: 'tag_instant_qr'.tr),
                     _TagChip(label: 'tag_itc_only'.tr),
                   ],
