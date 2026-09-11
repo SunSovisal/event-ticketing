@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -42,8 +41,11 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   void initState() {
     super.initState();
     _controller = Get.find<AdminEventController>();
-    _controller.errorMessage.value = null;
     _event = widget.event;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.errorMessage.value = null;
+    });
 
     _title = TextEditingController(text: _event?.title ?? '');
     _description = TextEditingController(text: _event?.description ?? '');
@@ -248,6 +250,8 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
+      maxWidth: 1920,
+      maxHeight: 1920,
     );
     if (picked == null) return;
     setState(() {

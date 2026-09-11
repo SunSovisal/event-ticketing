@@ -31,12 +31,21 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
     super.initState();
     _controller = Get.find<AdminEventController>();
     _event = widget.event;
-    _controller.fetchEventDetail(_event.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.fetchEventDetail(_event.id);
+    });
   }
 
   @override
   void dispose() {
-    _controller.clearEventDetail();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!Get.isRegistered<AdminEventController>()) return;
+      final current = Get.find<AdminEventController>();
+      if (identical(current, _controller)) {
+        current.clearEventDetail();
+      }
+    });
     super.dispose();
   }
 
@@ -57,8 +66,12 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
       Navigator.pop(context);
       return;
     }
-    setState(() => _event = _controller.events[index]);
-    await _controller.fetchEventDetail(_event.id);
+    final updated = _controller.events[index];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _event = updated);
+      _controller.fetchEventDetail(_event.id);
+    });
   }
 
   @override
@@ -109,11 +122,7 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
               ),
               const SizedBox(height: 8),
               if (attendees.isEmpty)
-                AppCard(
-                  child: Text(
-                    'no_reservations_yet'.tr,
-                  ),
-                )
+                AppCard(child: Text('no_reservations_yet'.tr))
               else
                 ...attendees.map(
                   (attendee) => Padding(
@@ -123,16 +132,14 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
                 ),
               const SizedBox(height: 16),
               Text(
-                'check_in_attempts_count'.trParams({'count': '${attempts.length}'}),
+                'check_in_attempts_count'.trParams({
+                  'count': '${attempts.length}',
+                }),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               if (attempts.isEmpty)
-                AppCard(
-                  child: Text(
-                    'no_scan_attempts_yet'.tr,
-                  ),
-                )
+                AppCard(child: Text('no_scan_attempts_yet'.tr))
               else
                 ...attempts.map(
                   (attempt) => Padding(
@@ -173,20 +180,19 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             EventDate.format(event.startsAt),
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 4),
           Text(
             event.locationLabel,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
           Text(
-            'reserved_checked_in'.trParams({'reserved': '${event.reservedCount}', 'checkedIn': '${event.checkedInCount}'}),
+            'reserved_checked_in'.trParams({
+              'reserved': '${event.reservedCount}',
+              'checkedIn': '${event.checkedInCount}',
+            }),
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -222,10 +228,7 @@ class _AttendeeRow extends StatelessWidget {
                 ),
                 if (campus != null) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    campus,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(campus, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ],
             ),
@@ -279,9 +282,7 @@ class _AttemptRow extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '$methodLabel · ${EventDate.format(attempt.createdAt)}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),

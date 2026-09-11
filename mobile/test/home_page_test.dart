@@ -140,12 +140,29 @@ void main() {
     expect(find.text('Featured'), findsNothing);
   });
 
-  testWidgets('Event detail shows bookmark control', (tester) async {
+  testWidgets('Event detail with live EventController does not throw', (
+    tester,
+  ) async {
+    Get.put(controller()..events.assignAll([_sampleEvent()]));
     await tester.pumpWidget(
       GetMaterialApp(home: EventDetailPage(event: _sampleEvent())),
     );
+    await tester.pump();
 
-    expect(find.byIcon(Icons.bookmark_border), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Get ticket'), findsOneWidget);
+    expect(find.text('Intro to Flutter Workshop'), findsOneWidget);
+  });
+
+  testWidgets('opening event detail from home does not throw', (tester) async {
+    final events = controller()..events.assignAll([_sampleEvent()]);
+    await pumpHome(tester, events);
+
+    await tester.tap(find.text('Intro to Flutter Workshop').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(tester.takeException(), isNull);
     expect(find.text('Get ticket'), findsOneWidget);
   });
 
