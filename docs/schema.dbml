@@ -213,6 +213,41 @@ Table payments {
 }
 
 // ---------------------------------------------------------------------------
+// Inbox
+// ---------------------------------------------------------------------------
+
+Table notifications {
+  id          uuid         [pk]
+  type        varchar(40)  [not null, note: 'e.g. event_published']
+  title       varchar(160) [not null, note: 'Same title as the FCM push']
+  body        text         [not null, note: 'Same body as the FCM push']
+  event_id    uuid         [null, note: 'Published event this alert opens']
+  data        jsonb        [not null, note: 'Push payload, e.g. {type, event_id}; exposed as payload in JSON']
+  created_at  timestamptz  [not null]
+
+  indexes {
+    (type, event_id) [unique]
+    created_at
+  }
+
+  Note: 'Broadcast inbox of app push messages. One row per published event, not per user.'
+}
+
+Table notification_reads {
+  id               uuid         [pk]
+  user_id          uuid         [not null]
+  notification_id  uuid         [not null]
+  read_at          timestamptz  [not null]
+
+  indexes {
+    (user_id, notification_id) [unique]
+    (user_id, read_at)
+  }
+
+  Note: 'Per-user read receipts for the shared notifications inbox.'
+}
+
+// ---------------------------------------------------------------------------
 // Relationships
 // ---------------------------------------------------------------------------
 
@@ -233,6 +268,10 @@ Ref: payments.event_id > events.id
 Ref: payments.user_id > users.id
 Ref: payments.ticket_id > tickets.id
 
+Ref: notifications.event_id > events.id [delete: set null]
+Ref: notification_reads.user_id > users.id [delete: cascade]
+Ref: notification_reads.notification_id > notifications.id [delete: cascade]
+
 // ---------------------------------------------------------------------------
 // Slide-friendly groups (dbdiagram.io colors these)
 // ---------------------------------------------------------------------------
@@ -245,6 +284,11 @@ TableGroup identity [color: #3B82F6] {
 TableGroup catalog [color: #10B981] {
   events
   saved_events
+}
+
+TableGroup inbox [color: #06B6D4] {
+  notifications
+  notification_reads
 }
 
 TableGroup ticketing [color: #F59E0B] {

@@ -7,13 +7,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 abstract class Controller
 {
-    protected function jsonResource(JsonResource $resource, int $status = 200): JsonResponse
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    protected function jsonResource(JsonResource $resource, int $status = 200, array $meta = []): JsonResponse
     {
         return $resource
             ->additional([
-                'meta' => [
+                'meta' => array_merge([
                     'request_id' => (string) str()->uuid(),
-                ],
+                ], $meta),
             ])
             ->response()
             ->setStatusCode($status);

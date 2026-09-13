@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminCheckInController;
 use App\Http\Controllers\AdminEventController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\InboxNotificationController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SavedEventController;
@@ -26,6 +27,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('firebase:optional')->group(function () {
             Route::get('/events', [EventController::class, 'index']);
             Route::get('/events/{id}', [EventController::class, 'show']);
+            Route::get('/notifications', [InboxNotificationController::class, 'index']);
         });
 
         Route::middleware('firebase')->group(function () {
@@ -43,6 +45,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/events/{id}/save', [SavedEventController::class, 'store']);
             Route::delete('/events/{id}/save', [SavedEventController::class, 'destroy']);
             Route::get('/saved-events', [SavedEventController::class, 'index']);
+            Route::post('/notifications/read-all', [InboxNotificationController::class, 'markAllRead']);
+            Route::post('/notifications/{id}/read', [InboxNotificationController::class, 'markRead']);
             Route::get('/tickets', [TicketController::class, 'index']);
             Route::get('/tickets/{id}', [TicketController::class, 'show']);
 
