@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\AppDateTime;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,7 @@ class Ticket extends Model
     protected function casts(): array
     {
         return [
-            'checked_in_at' => 'datetime',
+            'checked_in_at' => AppDateTime::class,
         ];
     }
 

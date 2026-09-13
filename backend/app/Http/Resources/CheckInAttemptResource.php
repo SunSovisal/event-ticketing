@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\CheckInAttempt;
+use App\Support\AppDate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,7 +28,7 @@ class CheckInAttemptResource extends JsonResource
             'method' => $this->method,
             'result' => $this->result,
             'ticket_id' => $this->ticket_id,
-            'created_at' => $this->created_at?->utc()->toIso8601String(),
+            'created_at' => AppDate::iso($this->created_at),
         ];
     }
 }

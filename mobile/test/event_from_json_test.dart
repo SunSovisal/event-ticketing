@@ -31,6 +31,21 @@ void main() {
     expect(event.priceAmount, 0);
   });
 
+  test('Event.fromJson maps Cambodia offset the same as UTC', () {
+    final event = Event.fromJson({
+      'id': 'evt-ict',
+      'title': 'Open Source Meetup',
+      'description': 'Lightning talks.',
+      'starts_at': '2026-09-12T14:00:00+07:00',
+      'location_label': 'Building B - Room 204',
+      'capacity': 60,
+      'spots_remaining': 18,
+      'status': 'published',
+    });
+
+    expect(event.startsAt, DateTime.utc(2026, 9, 12, 7));
+  });
+
   test('Event.fromJson maps a paid price', () {
     final event = Event.fromJson({
       'id': 'evt-paid',

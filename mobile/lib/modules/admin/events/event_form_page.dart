@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:itc_events/app/formatters/cambodia_time.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
@@ -62,8 +63,12 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     );
     _category = _event?.category ?? EventCategory.general;
     _priceCurrency = _event?.priceCurrency ?? 'USD';
-    _startsAtLocal = _event?.startsAt.toLocal();
-    _endsAtLocal = _event?.endsAt?.toLocal();
+    _startsAtLocal = _event == null
+        ? null
+        : CambodiaTime.toWallClock(_event!.startsAt);
+    _endsAtLocal = _event?.endsAt == null
+        ? null
+        : CambodiaTime.toWallClock(_event!.endsAt!);
   }
 
   @override
@@ -94,8 +99,10 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
     return {
       'title': _title.text.trim(),
       'description': _description.text.trim(),
-      'starts_at': _startsAtLocal!.toUtc().toIso8601String(),
-      'ends_at': _endsAtLocal?.toUtc().toIso8601String(),
+      'starts_at': CambodiaTime.toIso8601(_startsAtLocal!),
+      'ends_at': _endsAtLocal == null
+          ? null
+          : CambodiaTime.toIso8601(_endsAtLocal!),
       'location_label': _location.text.trim(),
       'category': _category,
       'capacity': int.parse(_capacity.text.trim()),
@@ -225,14 +232,18 @@ class _AdminEventFormPageState extends State<AdminEventFormPage> {
   }
 
   Future<void> _pickStart() async {
-    final picked = await _pickDateTime(_startsAtLocal ?? DateTime.now());
+    final picked = await _pickDateTime(
+      _startsAtLocal ?? CambodiaTime.nowWallClock(),
+    );
     if (picked != null) setState(() => _startsAtLocal = picked);
   }
 
   Future<void> _pickEnd() async {
     final picked = await _pickDateTime(
       _endsAtLocal ??
-          (_startsAtLocal ?? DateTime.now()).add(const Duration(hours: 2)),
+          (_startsAtLocal ?? CambodiaTime.nowWallClock()).add(
+            const Duration(hours: 2),
+          ),
     );
     if (picked != null) setState(() => _endsAtLocal = picked);
   }

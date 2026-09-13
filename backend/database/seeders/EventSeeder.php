@@ -9,6 +9,7 @@ class EventSeeder extends Seeder
 {
     public function run(): void
     {
+        // Wall-clock hours are Cambodia time (UTC+7), matching APP_TIMEZONE.
         Event::factory()->published()->create([
             'title' => 'Intro to Flutter Workshop',
             'description' => 'Hands-on session covering Flutter widgets, navigation, and calling the ITC Events API.',

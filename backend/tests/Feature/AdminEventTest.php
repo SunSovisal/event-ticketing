@@ -22,7 +22,7 @@ class AdminEventTest extends TestCase
         return array_merge([
             'title' => 'Campus career fair',
             'description' => 'Meet employers at Building A.',
-            'starts_at' => now()->addDays(5)->startOfHour()->utc()->toIso8601String(),
+            'starts_at' => now()->addDays(5)->startOfHour()->toIso8601String(),
             'ends_at' => null,
             'location_label' => 'Building A - Hall',
             'category' => 'Career',

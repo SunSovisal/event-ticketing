@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:itc_events/app/formatters/cambodia_time.dart';
 
 abstract final class EventDate {
   static const _monthKeys = [
@@ -26,9 +27,9 @@ abstract final class EventDate {
     'weekday_sun',
   ];
 
-  /// Formats a UTC instant in the device local timezone, e.g. `Mon, 24 Aug · 14:00`.
-  static String format(DateTime utc) {
-    final local = utc.toLocal();
+  /// Formats an instant in Cambodia time (UTC+7), e.g. `Mon, 24 Aug · 14:00`.
+  static String format(DateTime instant) {
+    final local = CambodiaTime.toWallClock(instant);
     final weekday = _weekdayKeys[local.weekday - 1].tr;
     final month = _monthKeys[local.month - 1].tr;
     final hour = local.hour.toString().padLeft(2, '0');
@@ -37,16 +38,17 @@ abstract final class EventDate {
   }
 
   /// Short date for detail tiles, e.g. `14 Aug 2026`.
-  static String formatShort(DateTime utc) {
-    final local = utc.toLocal();
+  static String formatShort(DateTime instant) {
+    final local = CambodiaTime.toWallClock(instant);
     return '${local.day} ${_monthKeys[local.month - 1].tr} ${local.year}';
   }
 
   /// Time range for detail tiles, e.g. `14:00 – 16:00`.
-  static String formatTimeRange(DateTime startsAtUtc, DateTime? endsAtUtc) {
-    final start = startsAtUtc.toLocal();
-    final end = (endsAtUtc ?? startsAtUtc.add(const Duration(hours: 2)))
-        .toLocal();
+  static String formatTimeRange(DateTime startsAt, DateTime? endsAt) {
+    final start = CambodiaTime.toWallClock(startsAt);
+    final end = CambodiaTime.toWallClock(
+      endsAt ?? startsAt.add(const Duration(hours: 2)),
+    );
     String two(int value) => value.toString().padLeft(2, '0');
     return '${two(start.hour)}:${two(start.minute)} – ${two(end.hour)}:${two(end.minute)}';
   }

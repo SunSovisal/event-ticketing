@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Ticket;
+use App\Support\AppDate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,8 +30,8 @@ class AdminAttendeeResource extends JsonResource
             'department' => $profile?->department,
             'year' => $profile?->year,
             'ticket_status' => $this->status,
-            'issued_at' => $this->created_at?->utc()->toIso8601String(),
-            'checked_in_at' => $this->checked_in_at?->utc()->toIso8601String(),
+            'issued_at' => AppDate::iso($this->created_at),
+            'checked_in_at' => AppDate::iso($this->checked_in_at),
         ];
     }
 }

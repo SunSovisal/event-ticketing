@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Ticket;
+use App\Support\AppDate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,8 +22,8 @@ class TicketResource extends JsonResource
             'event_id' => $this->event_id,
             'ticket_code' => $this->ticket_code,
             'status' => $this->status,
-            'checked_in_at' => $this->checked_in_at?->utc()->toIso8601String(),
-            'created_at' => $this->created_at?->utc()->toIso8601String(),
+            'checked_in_at' => AppDate::iso($this->checked_in_at),
+            'created_at' => AppDate::iso($this->created_at),
             'attendee_name' => $this->when(
                 $this->relationLoaded('user'),
                 fn () => $this->user?->name
@@ -32,8 +33,8 @@ class TicketResource extends JsonResource
             'event' => $this->whenLoaded('event', fn () => [
                 'id' => $this->event->id,
                 'title' => $this->event->title,
-                'starts_at' => $this->event->starts_at?->utc()->toIso8601String(),
-                'ends_at' => $this->event->ends_at?->utc()->toIso8601String(),
+                'starts_at' => AppDate::iso($this->event->starts_at),
+                'ends_at' => AppDate::iso($this->event->ends_at),
                 'location_label' => $this->event->location_label,
                 'category' => $this->event->category,
                 'status' => $this->event->status,

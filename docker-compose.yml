@@ -9,6 +9,9 @@ services:
       POSTGRES_DB: itc_events
       POSTGRES_USER: itc
       POSTGRES_PASSWORD: itc_secret
+      TZ: Asia/Phnom_Penh
+      PGTZ: Asia/Phnom_Penh
+    command: postgres -c timezone=Asia/Phnom_Penh
     volumes:
       - itc_postgres_data:/var/lib/postgresql/data
 

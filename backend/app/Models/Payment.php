@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\AppDateTime;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -38,8 +39,8 @@ class Payment extends Model
     {
         return [
             'amount' => 'decimal:2',
-            'qr_expires_at' => 'datetime',
-            'paid_at' => 'datetime',
+            'qr_expires_at' => AppDateTime::class,
+            'paid_at' => AppDateTime::class,
         ];
     }
 
