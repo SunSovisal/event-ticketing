@@ -52,18 +52,22 @@ void main() {
     );
   }
 
-  testWidgets('Home shows loading state', (tester) async {
-    final events = controller()..isLoading.value = true;
-    await pumpHome(tester, events);
+  testWidgets('Home shows skeleton before the first fetch', (tester) async {
+    await pumpHome(tester, controller());
 
-    expect(find.text('Loading events…'), findsOneWidget);
+    expect(find.byKey(const Key('home_events_skeleton')), findsOneWidget);
+    expect(find.text('No upcoming events yet.'), findsNothing);
   });
 
-  testWidgets('Home shows empty state', (tester) async {
-    await pumpHome(tester, controller());
+  testWidgets('Home shows empty state after a finished empty fetch', (
+    tester,
+  ) async {
+    final events = controller()..hasFetched.value = true;
+    await pumpHome(tester, events);
 
     expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
     expect(find.text('No upcoming events yet.'), findsOneWidget);
+    expect(find.byKey(const Key('home_events_skeleton')), findsNothing);
   });
 
   testWidgets('Home header collapses to brand logo only when scrolled', (
@@ -108,7 +112,9 @@ void main() {
   });
 
   testWidgets('Home shows error state', (tester) async {
-    final events = controller()..errorMessage.value = 'Could not load events.';
+    final events = controller()
+      ..hasFetched.value = true
+      ..errorMessage.value = 'Could not load events.';
     await pumpHome(tester, events);
 
     expect(find.text('Could not load events.'), findsOneWidget);
