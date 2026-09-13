@@ -4,6 +4,7 @@ import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
+import 'package:itc_events/modules/events/event_map_page.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -253,7 +254,9 @@ class _HomeHeader extends StatelessWidget {
                   opacity: accentOpacity,
                   child: IgnorePointer(
                     ignoring: accentOpacity < 0.05,
-                    child: _MapActionButton(onPressed: () {}),
+                    child: _MapActionButton(onPressed: () {
+                      Get.to(()=>EventMapPage());
+                    }),
                   ),
                 ),
               ],

@@ -478,6 +478,10 @@ Map<String, String> _en() => {
   'chat_spots_left': '@count spots left',
   'chat_event_full': 'Full',
   'chat_view_event': 'View',
+  'event_map': 'Event Map',
+  'explore_events_nearby': 'Explore Event Nearby',
+  'open_in_google_maps': "Open Google Maps",
+  'find_events_desc': 'Find events happening near you',
 };
 
 Map<String, String> _kh() => {
@@ -932,4 +936,9 @@ Map<String, String> _kh() => {
   'chat_spots_left': '@count spots left',
   'chat_event_full': 'Full',
   'chat_view_event': 'View',
+
+  'event_map': 'ផែនទីព្រឹត្តិការណ៍',
+  'explore_events_nearby': 'ស្វែងរកព្រឹត្តិការណ៍នៅជិតអ្នក',
+  'open_in_google_maps': 'បើកក្នុង Google Maps',
+  'find_events_desc': 'ស្វែងរកព្រឹត្តិការណ៍ដែលកំពុងប្រព្រឹត្តទៅនៅជិតអ្នក',
 };

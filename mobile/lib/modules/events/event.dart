@@ -51,7 +51,9 @@ class Event {
     if (paymentMethods.isNotEmpty) {
       return paymentMethods;
     }
-    return const [PaymentMethodOption(id: PaymentMethodOption.khqr, live: true)];
+    return const [
+      PaymentMethodOption(id: PaymentMethodOption.khqr, live: true),
+    ];
   }
 
   bool get hasAbaPay =>
@@ -75,8 +77,7 @@ class Event {
   DateTime get checkInOpensAt => startsAt.subtract(const Duration(hours: 2));
 
   /// check-in closes 2 hours after effective end.
-  DateTime get checkInClosesAt =>
-      effectiveEndsAt.add(const Duration(hours: 2));
+  DateTime get checkInClosesAt => effectiveEndsAt.add(const Duration(hours: 2));
 
   bool hasEnded([DateTime? at]) {
     final now = (at ?? DateTime.now()).toUtc();
@@ -165,7 +166,10 @@ class Event {
 
     return value
         .whereType<Map>()
-        .map((item) => PaymentMethodOption.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) =>
+              PaymentMethodOption.fromJson(Map<String, dynamic>.from(item)),
+        )
         .where((method) => method.id.isNotEmpty)
         .toList();
   }
