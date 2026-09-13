@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -15,156 +17,146 @@ class EventMapPage extends StatefulWidget {
 class _EventMapPageState extends State<EventMapPage> {
   late GoogleMapController _mapController;
 
+  // Replace with your Google Cloud API Key (Must have Directions API enabled)
   static const String _googleApiKey = "AIzaSyBTzZVtm0j7PyCGPy7xKlHG0R5W_4dHAX0";
 
-  // ITC Destination Coordinates
-  static const LatLng _itcPosition = LatLng(11.5703975, 104.8980857);
+  // Fixed coordinates for ETEC and ITC
+  static const LatLng _etecPosition = LatLng(
+    11.5621541,
+    104.8905427,
+  ); // ETEC Center
+  static const LatLng _itcPosition = LatLng(
+    11.5703975,
+    104.8980857,
+  ); // ITC Campus
 
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
 
   String? _distanceText;
-  String? _durationText;
   bool _isLoadingRoute = false;
 
   @override
   void initState() {
     super.initState();
-    _markers.add(
+    _setupInitialMarkers();
+  }
+
+  void _setupInitialMarkers() {
+    _markers.addAll([
+      // Origin Marker (ETEC Center)
       const Marker(
-        markerId: MarkerId('itc_campus'),
+        markerId: MarkerId('etec_origin'),
+        position: _etecPosition,
+        infoWindow: InfoWindow(
+          title: 'ETEC Training Center',
+          snippet: 'Starting Point',
+        ),
+      ),
+      // Destination Marker (ITC Campus)
+      Marker(
+        markerId: const MarkerId('itc_destination'),
         position: _itcPosition,
-        infoWindow: InfoWindow(title: 'Institute of Technology of Cambodia'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: const InfoWindow(
+          title: 'Institute of Technology of Cambodia',
+          snippet: 'Destination',
+        ),
+      ),
+    ]);
+  }
+
+  /// Center map back to ETEC Center
+  void _recenterToEtec() {
+    _mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        const CameraPosition(target: _etecPosition, zoom: 16.0),
       ),
     );
   }
 
-  Future<Position?> _getUserCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      Get.snackbar('Error', 'Location services are disabled.');
-      return null;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        Get.snackbar('Error', 'Location permissions are denied.');
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      Get.snackbar('Error', 'Location permissions are permanently denied.');
-      return null;
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
-  Future<void> _connectToITC() async {
+  /// Fetches actual road navigation polyline using Google Directions API
+  Future<void> _fetchDirectionsRoute() async {
     setState(() => _isLoadingRoute = true);
 
-    final position = await _getUserCurrentLocation();
-    if (position == null) {
-      setState(() => _isLoadingRoute = false);
-      return;
-    }
-
-    final userLatLng = LatLng(position.latitude, position.longitude);
-
-    // Calculate straight line distance (in meters)
-    final distanceInMeters = Geolocator.distanceBetween(
-      userLatLng.latitude,
-      userLatLng.longitude,
-      _itcPosition.latitude,
-      _itcPosition.longitude,
-    );
-
-    // Fetch polylines from Google Directions API
-    // 1. Pass the API key to the PolylinePoints constructor
     final polylinePoints = PolylinePoints(apiKey: _googleApiKey);
 
-    // 2. Pass origin, destination, and mode inside PolylineRequest
-    final result = await polylinePoints.getRouteBetweenCoordinates(
-      request: PolylineRequest(
-        origin: PointLatLng(userLatLng.latitude, userLatLng.longitude),
-        destination: PointLatLng(_itcPosition.latitude, _itcPosition.longitude),
-        mode: TravelMode.driving,
+    try {
+      final result = await polylinePoints.getRouteBetweenCoordinates(
+        request: PolylineRequest(
+          origin: PointLatLng(_etecPosition.latitude, _etecPosition.longitude),
+          destination: PointLatLng(
+            _itcPosition.latitude,
+            _itcPosition.longitude,
+          ),
+          mode: TravelMode.driving,
+        ),
+      );
+
+      if (result.points.isNotEmpty) {
+        final List<LatLng> polylineCoordinates = result.points
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList();
+
+        // Direct distance calculation between coordinates
+        final double distanceInMeters = Geolocator.distanceBetween(
+          _etecPosition.latitude,
+          _etecPosition.longitude,
+          _itcPosition.latitude,
+          _itcPosition.longitude,
+        );
+
+        setState(() {
+          _distanceText = '${(distanceInMeters / 1000).toStringAsFixed(2)} km';
+
+          _polylines.clear();
+          _polylines.add(
+            Polyline(
+              polylineId: const PolylineId('etec_to_itc_road_route'),
+              points: polylineCoordinates, // Actual turn-by-turn road points
+              color: AppTheme.primary,
+              width: 6,
+            ),
+          );
+        });
+
+        _fitBoundsToRoute();
+      } else {
+        Get.snackbar(
+          'Route Error',
+          result.errorMessage ??
+              'Could not calculate road route. Check Directions API.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        log("${result.errorMessage}");
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch directions: $e');
+    } finally {
+      setState(() => _isLoadingRoute = false);
+    }
+  }
+
+  /// Fits camera bounds to present both markers in view comfortably
+  void _fitBoundsToRoute() {
+    final bounds = LatLngBounds(
+      southwest: LatLng(
+        _etecPosition.latitude < _itcPosition.latitude
+            ? _etecPosition.latitude
+            : _itcPosition.latitude,
+        _etecPosition.longitude < _itcPosition.longitude
+            ? _etecPosition.longitude
+            : _itcPosition.longitude,
+      ),
+      northeast: LatLng(
+        _etecPosition.latitude > _itcPosition.latitude
+            ? _etecPosition.latitude
+            : _itcPosition.latitude,
+        _etecPosition.longitude > _itcPosition.longitude
+            ? _etecPosition.longitude
+            : _itcPosition.longitude,
       ),
     );
-
-    final List<LatLng> polylineCoordinates = [];
-    if (result.points.isNotEmpty) {
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
-    } else {
-      // Direct straight line fallback if route fails
-      polylineCoordinates.addAll([userLatLng, _itcPosition]);
-    }
-
-    setState(() {
-      _isLoadingRoute = false;
-      _distanceText = '${(distanceInMeters / 1000).toStringAsFixed(1)} km';
-
-      // User Marker
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('user_location'),
-          position: userLatLng,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
-          ),
-          infoWindow: const InfoWindow(title: 'My Location'),
-        ),
-      );
-
-      // Route Polyline
-      _polylines.add(
-        Polyline(
-          polylineId: const PolylineId('route_to_itc'),
-          points: polylineCoordinates,
-          color: AppTheme.primary,
-          width: 5,
-        ),
-      );
-    });
-
-    // Fit view to include both points
-    LatLngBounds bounds;
-    if (userLatLng.latitude <= _itcPosition.latitude) {
-      bounds = LatLngBounds(
-        southwest: LatLng(
-          userLatLng.latitude,
-          userLatLng.longitude < _itcPosition.longitude
-              ? userLatLng.longitude
-              : _itcPosition.longitude,
-        ),
-        northeast: LatLng(
-          _itcPosition.latitude,
-          userLatLng.longitude > _itcPosition.longitude
-              ? userLatLng.longitude
-              : _itcPosition.longitude,
-        ),
-      );
-    } else {
-      bounds = LatLngBounds(
-        southwest: LatLng(
-          _itcPosition.latitude,
-          userLatLng.longitude < _itcPosition.longitude
-              ? userLatLng.longitude
-              : _itcPosition.longitude,
-        ),
-        northeast: LatLng(
-          userLatLng.latitude,
-          userLatLng.longitude > _itcPosition.longitude
-              ? userLatLng.longitude
-              : _itcPosition.longitude,
-        ),
-      );
-    }
 
     _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
   }
@@ -178,10 +170,10 @@ class _EventMapPageState extends State<EventMapPage> {
       backgroundColor: AppTheme.scaffoldOf(context),
       body: Stack(
         children: [
-          // Map
+          // Main Google Map View
           GoogleMap(
             initialCameraPosition: const CameraPosition(
-              target: _itcPosition,
+              target: _etecPosition,
               zoom: 15.0,
             ),
             onMapCreated: (controller) => _mapController = controller,
@@ -192,7 +184,7 @@ class _EventMapPageState extends State<EventMapPage> {
             myLocationButtonEnabled: false,
           ),
 
-          // Top Search Bar
+          // Top Floating Search Bar Header
           Positioned(
             top: MediaQuery.paddingOf(context).top + 12,
             left: 16,
@@ -221,14 +213,12 @@ class _EventMapPageState extends State<EventMapPage> {
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'search_events_hint'.tr,
+                        hintText: 'Search events, rooms...',
                         hintStyle: TextStyle(
                           color: isDark ? Colors.white54 : Colors.grey.shade600,
                           fontSize: 14,
                         ),
                         border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 14,
                         ),
@@ -245,7 +235,7 @@ class _EventMapPageState extends State<EventMapPage> {
             ),
           ),
 
-          // Action Buttons
+          // Action Floating Action Buttons
           Positioned(
             right: 16,
             bottom: 230,
@@ -255,22 +245,13 @@ class _EventMapPageState extends State<EventMapPage> {
                 const SizedBox(height: 12),
                 _FloatingMapButton(
                   icon: Icons.my_location,
-                  onPressed: () async {
-                    final pos = await _getUserCurrentLocation();
-                    if (pos != null) {
-                      _mapController.animateCamera(
-                        CameraUpdate.newLatLng(
-                          LatLng(pos.latitude, pos.longitude),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: _recenterToEtec,
                 ),
               ],
             ),
           ),
 
-          // Bottom Detail Sheet
+          // Bottom Sheet Card Widget matching your design layout
           Positioned(
             left: 0,
             right: 0,
@@ -309,7 +290,7 @@ class _EventMapPageState extends State<EventMapPage> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _isLoadingRoute ? null : _connectToITC,
+                    onPressed: _isLoadingRoute ? null : _fetchDirectionsRoute,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
@@ -328,9 +309,9 @@ class _EventMapPageState extends State<EventMapPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : Text(
-                            'confirm_location'.tr,
-                            style: const TextStyle(
+                        : const Text(
+                            'confirm_location',
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
@@ -349,8 +330,8 @@ class _EventMapPageState extends State<EventMapPage> {
                       ),
                       child: Text(
                         _distanceText != null
-                            ? 'Distance: $_distanceText to ITC'
-                            : '20 places found nearby',
+                            ? 'Distance: $_distanceText from ETEC to ITC'
+                            : 'Distance: Fetching road route...',
                         style: TextStyle(
                           color: AppTheme.primary,
                           fontSize: 12,
