@@ -11,6 +11,7 @@ import 'package:itc_events/modules/auth/sign_in/widgets/sign_in_sheet.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/modules/events/event_google_map_page.dart';
 import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
@@ -257,10 +258,14 @@ class EventDetailPage extends StatelessWidget {
                 labelKey: 'date',
                 value: EventDate.formatShort(live.startsAt),
               ),
-              InfoTile(
-                icon: Icons.location_on_outlined,
-                labelKey: 'location',
-                value: live.locationLabel,
+              InkWell(
+                onTap: () => Get.to(() => EventMapPage(event: live)),
+                borderRadius: BorderRadius.circular(14),
+                child: InfoTile(
+                  icon: Icons.location_on_outlined,
+                  labelKey: 'location',
+                  value: live.locationLabel,
+                ),
               ),
               InfoTile(
                 icon: Icons.people_outline,
