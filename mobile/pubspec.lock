@@ -464,6 +464,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.18.6"
+  google_maps_flutter_ios_sdk9:
+    dependency: "direct main"
+    description:
+      name: google_maps_flutter_ios_sdk9
+      sha256: a1841c4550b57ab88e2b178ec06ed2d5edef714793a2e538e544e01fc373a048
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.18.13"
   google_maps_flutter_platform_interface:
     dependency: transitive
     description:

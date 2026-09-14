@@ -255,7 +255,7 @@ class _HomeHeader extends StatelessWidget {
                   child: IgnorePointer(
                     ignoring: accentOpacity < 0.05,
                     child: _MapActionButton(onPressed: () {
-                      Get.to(()=>EventMapPage());
+                      Get.to(() => const EventMapPage());
                     }),
                   ),
                 ),

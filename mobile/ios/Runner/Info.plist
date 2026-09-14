@@ -8,6 +8,8 @@
 	<key>NSAllowsArbitraryLoads</key>
 	<true/>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GoITC uses your location to show a driving route to campus.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>GoITC uses the camera to scan ticket QR codes for event check-in.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
