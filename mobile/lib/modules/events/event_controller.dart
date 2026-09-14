@@ -15,9 +15,15 @@ class EventController extends GetxController {
 
   final RxList<Event> events = <Event>[].obs;
   final RxBool isLoading = false.obs;
+  final RxBool hasFetched = false.obs;
   final RxnString errorMessage = RxnString();
   final RxSet<String> savingIds = <String>{}.obs;
   int _eventsLoadId = 0;
+
+  /// True until the first `/events` response lands, so Home can show a
+  /// skeleton instead of a false empty state.
+  bool get showInitialLoading =>
+      events.isEmpty && (!hasFetched.value || isLoading.value);
 
   @override
   void onInit() {
@@ -58,7 +64,10 @@ class EventController extends GetxController {
     } catch (_) {
       _setRx(loadId, () => errorMessage.value = 'could_not_load_events'.tr);
     } finally {
-      _setRx(loadId, () => isLoading.value = false);
+      _setRx(loadId, () {
+        isLoading.value = false;
+        hasFetched.value = true;
+      });
     }
   }
 

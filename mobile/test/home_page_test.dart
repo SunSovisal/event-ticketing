@@ -19,7 +19,7 @@ Event _sampleEvent({
     id: 'evt-1',
     title: 'Intro to Flutter Workshop',
     description: 'Hands-on session.',
-    startsAt: DateTime.utc(2026, 9, 12, 7),
+    startsAt: DateTime.utc(2026, 12, 12, 7),
     locationLabel: 'Building A - Room 304',
     capacity: 50,
     spotsRemaining: 50,
@@ -52,18 +52,22 @@ void main() {
     );
   }
 
-  testWidgets('Home shows loading state', (tester) async {
-    final events = controller()..isLoading.value = true;
-    await pumpHome(tester, events);
+  testWidgets('Home shows skeleton before the first fetch', (tester) async {
+    await pumpHome(tester, controller());
 
-    expect(find.text('Loading events…'), findsOneWidget);
+    expect(find.byKey(const Key('home_events_skeleton')), findsOneWidget);
+    expect(find.text('No upcoming events yet.'), findsNothing);
   });
 
-  testWidgets('Home shows empty state', (tester) async {
-    await pumpHome(tester, controller());
+  testWidgets('Home shows empty state after a finished empty fetch', (
+    tester,
+  ) async {
+    final events = controller()..hasFetched.value = true;
+    await pumpHome(tester, events);
 
     expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
     expect(find.text('No upcoming events yet.'), findsOneWidget);
+    expect(find.byKey(const Key('home_events_skeleton')), findsNothing);
   });
 
   testWidgets('Home header collapses to brand logo only when scrolled', (
@@ -76,7 +80,7 @@ void main() {
             id: 'evt-$i',
             title: 'Campus Event $i',
             description: 'Session.',
-            startsAt: DateTime.utc(2026, 9, 12 + i, 7),
+            startsAt: DateTime.utc(2026, 12, 12 + i, 7),
             locationLabel: 'Building A - Room 30$i',
             capacity: 50,
             spotsRemaining: 50,
@@ -108,7 +112,9 @@ void main() {
   });
 
   testWidgets('Home shows error state', (tester) async {
-    final events = controller()..errorMessage.value = 'Could not load events.';
+    final events = controller()
+      ..hasFetched.value = true
+      ..errorMessage.value = 'Could not load events.';
     await pumpHome(tester, events);
 
     expect(find.text('Could not load events.'), findsOneWidget);
@@ -139,7 +145,7 @@ void main() {
           id: 'evt-2',
           title: 'Open Source Meetup',
           description: 'Lightning talks.',
-          startsAt: DateTime.utc(2026, 9, 20, 9),
+          startsAt: DateTime.utc(2026, 12, 20, 9),
           locationLabel: 'Building B - Room 204',
           capacity: 60,
           spotsRemaining: 60,

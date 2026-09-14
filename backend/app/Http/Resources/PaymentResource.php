@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Payment;
+use App\Support\AppDate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,8 +33,8 @@ class PaymentResource extends JsonResource
                 $this->aba_deeplink,
             ),
             'qr_md5' => $this->qr_md5,
-            'qr_expires_at' => $this->qr_expires_at?->utc()->toIso8601String(),
-            'paid_at' => $this->paid_at?->utc()->toIso8601String(),
+            'qr_expires_at' => AppDate::iso($this->qr_expires_at),
+            'paid_at' => AppDate::iso($this->paid_at),
             'ticket' => $this->when(
                 $ticket !== null,
                 fn () => new TicketResource($ticket),

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\ApiException;
 use App\Models\Event;
 use App\Models\User;
+use App\Support\AppDate;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -285,8 +286,8 @@ FAQ;
 
         $lines = [];
         foreach ($events as $event) {
-            $starts = optional($event->starts_at)?->toIso8601String() ?? 'unknown';
-            $ends = optional($event->ends_at)?->toIso8601String() ?? 'n/a';
+            $starts = AppDate::iso($event->starts_at) ?? 'unknown';
+            $ends = AppDate::iso($event->ends_at) ?? 'n/a';
             $desc = Str::limit(trim((string) $event->description), 180, '…');
             $spots = $event->spotsRemaining();
 
@@ -354,8 +355,8 @@ FAQ;
         return [
             'id' => $event->id,
             'title' => $event->title,
-            'starts_at' => $event->starts_at?->utc()->toIso8601String(),
-            'ends_at' => $event->ends_at?->utc()->toIso8601String(),
+            'starts_at' => AppDate::iso($event->starts_at),
+            'ends_at' => AppDate::iso($event->ends_at),
             'location_label' => $event->location_label,
             'category' => $event->category,
             'capacity' => $event->capacity,

@@ -221,7 +221,7 @@ class KhqrPaymentTest extends TestCase
             ->postJson('/api/v1/admin/events', [
                 'title' => 'Paid workshop',
                 'description' => 'KHQR entry.',
-                'starts_at' => now()->addDays(3)->utc()->toIso8601String(),
+                'starts_at' => now()->addDays(3)->toIso8601String(),
                 'location_label' => 'Building A - Hall',
                 'category' => 'Workshop',
                 'capacity' => 40,

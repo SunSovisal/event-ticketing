@@ -19,7 +19,7 @@ class HttpPayWayGateway implements PayWayGateway
         $this->assertConfigured();
 
         $tranId = $this->newTranId();
-        $reqTime = now('UTC')->format('YmdHis');
+        $reqTime = now()->format('YmdHis');
         $lifetime = max(3, $lifetimeMinutes);
         $template = (string) config('services.payway.qr_template', 'template3_color');
         $option = 'abapay_khqr';
@@ -90,7 +90,7 @@ class HttpPayWayGateway implements PayWayGateway
     {
         $this->assertConfigured();
 
-        $reqTime = now('UTC')->format('YmdHis');
+        $reqTime = now()->format('YmdHis');
         $payload = [
             'req_time' => $reqTime,
             'merchant_id' => $this->merchantId(),

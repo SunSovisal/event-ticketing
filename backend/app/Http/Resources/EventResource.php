@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Contracts\PayWayGateway;
 use App\Models\Event;
 use App\Models\User;
+use App\Support\AppDate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,8 +23,8 @@ class EventResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'starts_at' => $this->starts_at?->utc()->toIso8601String(),
-            'ends_at' => $this->ends_at?->utc()->toIso8601String(),
+            'starts_at' => AppDate::iso($this->starts_at),
+            'ends_at' => AppDate::iso($this->ends_at),
             'location_label' => $this->location_label,
             'category' => $this->category,
             'capacity' => $this->capacity,

@@ -46,7 +46,7 @@ class HttpPayWayGatewayTest extends TestCase
 
     public function test_create_khqr_posts_generate_qr_to_the_origin_host(): void
     {
-        Carbon::setTestNow(Carbon::parse('2025-02-12 10:42:16', 'UTC'));
+        Carbon::setTestNow(Carbon::parse('2025-02-12 17:42:16', 'Asia/Phnom_Penh'));
 
         Http::fake([
             'https://checkout-sandbox.payway.com.kh/api/payment-gateway/v1/payments/generate-qr' => Http::response([
@@ -71,7 +71,7 @@ class HttpPayWayGatewayTest extends TestCase
                 && $body['amount'] === '0.01'
                 && $body['payment_option'] === 'abapay_khqr'
                 && $body['lifetime'] === 5
-                && $body['req_time'] === '20250212104216'
+                && $body['req_time'] === '20250212174216'
                 && is_string($body['hash'])
                 && $body['hash'] !== '';
         });

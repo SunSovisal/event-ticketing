@@ -13,6 +13,7 @@ import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
 import 'package:itc_events/modules/events/widgets/event_category_scroller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 import 'package:itc_events/modules/events/widgets/event_price_badge.dart';
+import 'package:itc_events/modules/events/widgets/home_events_skeleton.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -111,10 +112,9 @@ class _HomePageState extends State<HomePage> {
                             setState(() => _category = value),
                       ),
                       const SizedBox(height: 20),
-                      if (events.isLoading.value && events.events.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 48),
-                          child: LoadingView(message: 'loading_events'.tr),
+                      if (events.showInitialLoading)
+                        const HomeEventsSkeleton(
+                          key: Key('home_events_skeleton'),
                         )
                       else if (events.errorMessage.value != null &&
                           events.events.isEmpty)

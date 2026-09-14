@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\AppDateTime;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,7 @@ class CheckInAttempt extends Model
     protected function casts(): array
     {
         return [
-            'created_at' => 'datetime',
+            'created_at' => AppDateTime::class,
         ];
     }
 

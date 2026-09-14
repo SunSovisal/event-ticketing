@@ -7,6 +7,7 @@ use App\Models\CheckInAttempt;
 use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\AppDate;
 use Illuminate\Support\Facades\DB;
 
 class CheckInService
@@ -73,7 +74,7 @@ class CheckInService
                 'ALREADY_CHECKED_IN',
                 'Ticket already checked in.',
                 409,
-                ['checked_in_at' => $ticket->checked_in_at?->utc()->toIso8601String()],
+                ['checked_in_at' => AppDate::iso($ticket->checked_in_at)],
             ),
             'cancelled' => throw new ApiException('TICKET_CANCELLED', 'This ticket is cancelled.', 422),
             'event_cancelled' => throw new ApiException('EVENT_CANCELLED', 'Event cancelled.', 422),
