@@ -10,6 +10,7 @@ import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_linking.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
+import 'package:itc_events/modules/notifications/notification_controller.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
@@ -333,6 +334,9 @@ class AuthController {
     }
     if (Get.isRegistered<TicketController>()) {
       Get.find<TicketController>().fetchTickets();
+    }
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().fetchNotifications();
     }
   }
 

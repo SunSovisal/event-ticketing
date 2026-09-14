@@ -56,6 +56,11 @@ class Event extends Model
         return $this->hasMany(SavedEvent::class);
     }
 
+    public function inboxNotifications(): HasMany
+    {
+        return $this->hasMany(InboxNotification::class);
+    }
+
     public function effectiveEndsAt(): Carbon
     {
         return $this->ends_at ?? $this->starts_at->copy()->addHours(2);

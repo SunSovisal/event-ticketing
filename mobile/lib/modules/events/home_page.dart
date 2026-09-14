@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
+import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
@@ -14,6 +15,8 @@ import 'package:itc_events/modules/events/widgets/event_category_scroller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 import 'package:itc_events/modules/events/widgets/event_price_badge.dart';
 import 'package:itc_events/modules/events/widgets/home_events_skeleton.dart';
+import 'package:itc_events/modules/notifications/notification_controller.dart';
+import 'package:itc_events/modules/notifications/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -74,16 +77,26 @@ class _HomePageState extends State<HomePage> {
           ? events.events.first
           : null;
 
+      final unread = Get.isRegistered<NotificationController>()
+          ? Get.find<NotificationController>().unreadCount.value
+          : 0;
+
       return Scaffold(
         backgroundColor: AppTheme.scaffoldOf(context),
         body: Column(
           children: [
-            _HomeHeader(collapse: _headerCollapse),
+            _HomeHeader(collapse: _headerCollapse, unreadCount: unread),
             Expanded(
               child: NotificationListener<ScrollNotification>(
                 onNotification: _onScroll,
                 child: RefreshIndicator(
-                  onRefresh: events.fetchEvents,
+                  onRefresh: () async {
+                    await events.fetchEvents();
+                    if (Get.isRegistered<NotificationController>()) {
+                      await Get.find<NotificationController>()
+                          .fetchNotifications();
+                    }
+                  },
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -180,10 +193,11 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.collapse});
+  const _HomeHeader({required this.collapse, required this.unreadCount});
 
   /// 0 expanded, 1 collapsed.
   final double collapse;
+  final int unreadCount;
 
   static const _expandedBody = 64.0;
   static const _collapsedBody = 52.0;
@@ -268,22 +282,47 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-class _MapActionButton extends StatelessWidget {
-  const _MapActionButton({required this.onPressed});
+void _openNotifications() {
+  if (!Get.isRegistered<NotificationController>()) {
+    if (!Get.isRegistered<ApiClient>()) {
+      return;
+    }
+    Get.put(
+      NotificationController(
+        apiClient: Get.find<ApiClient>(),
+        fetchOnStart: false,
+      ),
+    );
+  }
+  Get.to(() => const NotificationsPage());
+}
 
+class _HeaderActionButton extends StatelessWidget {
+  const _HeaderActionButton({
+    required this.buttonKey,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.badgeCount = 0,
+  });
+
+  final Key buttonKey;
+  final String tooltip;
+  final IconData icon;
   final VoidCallback onPressed;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Map',
+      message: tooltip,
       child: Material(
         color: AppTheme.surfaceOf(context),
         shape: const CircleBorder(),
         elevation: 0,
         shadowColor: AppTheme.primary.withValues(alpha: 0.2),
         child: InkWell(
-          key: const Key('home_header_map'),
+          key: buttonKey,
           customBorder: const CircleBorder(),
           onTap: onPressed,
           child: Ink(
@@ -296,13 +335,44 @@ class _MapActionButton extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: 0.01),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
-            child: Icon(Icons.map_outlined, color: AppTheme.primary, size: 22),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(icon, color: AppTheme.primary, size: 22),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      key: const Key('home_header_notifications_badge'),
+                      constraints: const BoxConstraints(minWidth: 14),
+                      height: 14,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.error,
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        badgeCount > 99 ? '99+' : '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

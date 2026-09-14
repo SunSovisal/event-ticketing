@@ -11,6 +11,8 @@ import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
+import 'package:itc_events/modules/notifications/notification_controller.dart';
+import 'package:itc_events/modules/notifications/notifications_page.dart';
 
 const kEventsPublishedTopic = 'events_published';
 const kEventsPublishedChannelId = 'events_published';
@@ -94,6 +96,9 @@ class PushNotificationService {
     final title = message.notification?.title ?? 'New event at ITC';
     final body = message.notification?.body ?? '';
     final eventId = message.data['event_id']?.toString() ?? '';
+    final notificationId = message.data['notification_id']?.toString() ?? '';
+
+    await _refreshInbox();
 
     await _localNotifications.show(
       message.hashCode,
@@ -112,6 +117,7 @@ class PushNotificationService {
       payload: jsonEncode({
         'type': 'event_published',
         'event_id': eventId,
+        'notification_id': notificationId,
       }),
     );
   }
@@ -127,25 +133,51 @@ class PushNotificationService {
       if (data is! Map<String, dynamic>) {
         return;
       }
-      final eventId = data['event_id']?.toString();
-      if (eventId == null || eventId.isEmpty) {
-        return;
-      }
-      _openEventById(eventId);
+      _openInboxFromPayload(
+        eventId: data['event_id']?.toString(),
+        notificationId: data['notification_id']?.toString(),
+      );
     } catch (error, stack) {
       debugPrint('Local notification tap failed: $error\n$stack');
     }
   }
 
   static Future<void> _openFromMessage(RemoteMessage message) async {
-    final eventId = message.data['event_id'];
-    if (eventId is! String || eventId.isEmpty) {
-      return;
-    }
-    await _openEventById(eventId);
+    await _openInboxFromPayload(
+      eventId: message.data['event_id']?.toString(),
+      notificationId: message.data['notification_id']?.toString(),
+    );
   }
 
-  static Future<void> _openEventById(String eventId) async {
+  static Future<void> _openInboxFromPayload({
+    String? eventId,
+    String? notificationId,
+  }) async {
+    await _refreshInbox();
+    if (Get.isRegistered<NotificationController>()) {
+      final inbox = Get.find<NotificationController>();
+      if (notificationId != null && notificationId.isNotEmpty) {
+        await inbox.markReadById(notificationId);
+      } else if (eventId != null && eventId.isNotEmpty) {
+        await inbox.markReadForEvent(eventId);
+      }
+    }
+    await _openNotificationsPage();
+  }
+
+  static Future<void> _openNotificationsPage() async {
+    if (Get.isRegistered<NotificationController>()) {
+      await Get.to(() => const NotificationsPage());
+    }
+  }
+
+  static Future<void> _refreshInbox() async {
+    if (Get.isRegistered<NotificationController>()) {
+      await Get.find<NotificationController>().fetchNotifications();
+    }
+  }
+
+  static Future<void> openEventById(String eventId) async {
     if (!Get.isRegistered<ApiClient>()) {
       return;
     }
@@ -165,7 +197,7 @@ class PushNotificationService {
     } on ApiException catch (error) {
       AppSnackbar.error(error.message);
     } catch (_) {
-      AppSnackbar.error('Could not open this event.');
+      AppSnackbar.error('could_not_open_event'.tr);
     }
   }
 

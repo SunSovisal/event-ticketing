@@ -43,6 +43,24 @@ abstract final class EventDate {
     return '${local.day} ${_monthKeys[local.month - 1].tr} ${local.year}';
   }
 
+  /// Relative time for inbox rows, e.g. `3 min ago`.
+  static String formatRelative(DateTime instant, [DateTime? now]) {
+    final diff = (now ?? DateTime.now()).toUtc().difference(instant.toUtc());
+    if (diff.isNegative || diff.inSeconds < 60) {
+      return 'just_now'.tr;
+    }
+    if (diff.inMinutes < 60) {
+      return 'minutes_ago'.trParams({'count': '${diff.inMinutes}'});
+    }
+    if (diff.inHours < 24) {
+      return 'hours_ago'.trParams({'count': '${diff.inHours}'});
+    }
+    if (diff.inDays < 7) {
+      return 'days_ago'.trParams({'count': '${diff.inDays}'});
+    }
+    return formatShort(instant);
+  }
+
   /// Time range for detail tiles, e.g. `14:00 – 16:00`.
   static String formatTimeRange(DateTime startsAt, DateTime? endsAt) {
     final start = CambodiaTime.toWallClock(startsAt);

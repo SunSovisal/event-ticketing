@@ -31,6 +31,13 @@ class EventPublishNotificationTest extends TestCase
             NotifyEventPublished::class,
             fn (NotifyEventPublished $job) => $job->eventId === $event->id,
         );
+
+        $this->assertDatabaseHas('notifications', [
+            'type' => 'event_published',
+            'title' => 'New event at ITC',
+            'body' => $event->title,
+            'event_id' => $event->id,
+        ]);
     }
 
     public function test_failed_publish_does_not_dispatch_a_notification_job(): void
@@ -60,5 +67,6 @@ class EventPublishNotificationTest extends TestCase
             ->assertJsonPath('error.code', 'EVENT_CANCELLED');
 
         Queue::assertNothingPushed();
+        $this->assertDatabaseCount('notifications', 0);
     }
 }

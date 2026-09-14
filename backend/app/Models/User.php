@@ -31,6 +31,11 @@ class User extends Model
         return $this->hasMany(SavedEvent::class);
     }
 
+    public function notificationReads(): HasMany
+    {
+        return $this->hasMany(NotificationRead::class);
+    }
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);

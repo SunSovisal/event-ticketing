@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\PushNotifier;
 use App\Models\Event;
+use App\Models\InboxNotification;
 use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -17,16 +18,25 @@ class FcmPushNotifier implements PushNotifier
 
     public function notifyEventPublished(Event $event): void
     {
+        $data = [
+            'type' => 'event_published',
+            'event_id' => (string) $event->id,
+        ];
+        $inboxId = InboxNotification::query()
+            ->where('type', InboxNotification::TYPE_EVENT_PUBLISHED)
+            ->where('event_id', $event->id)
+            ->value('id');
+        if (is_string($inboxId) && $inboxId !== '') {
+            $data['notification_id'] = $inboxId;
+        }
+
         $message = CloudMessage::new()
             ->withTopic(self::TOPIC)
             ->withNotification(Notification::create(
-                'New event at ITC',
+                InboxNotification::TITLE_EVENT_PUBLISHED,
                 $event->title,
             ))
-            ->withData([
-                'type' => 'event_published',
-                'event_id' => (string) $event->id,
-            ])
+            ->withData($data)
             ->withAndroidConfig([
                 'collapse_key' => 'event-published-'.$event->id,
                 'priority' => 'high',

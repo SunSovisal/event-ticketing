@@ -10,6 +10,7 @@ import 'package:itc_events/modules/chat/chat_binding.dart';
 import 'package:itc_events/modules/chat/chat_page.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/home_page.dart';
+import 'package:itc_events/modules/notifications/notification_controller.dart';
 import 'package:itc_events/modules/health/health_binding.dart';
 import 'package:itc_events/modules/health/health_page.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';
@@ -45,9 +46,18 @@ class _MainShellState extends State<MainShell> {
         TicketController(apiClient: Get.find<ApiClient>(), fetchOnStart: true),
       );
     }
+    if (!Get.isRegistered<NotificationController>()) {
+      Get.put(
+        NotificationController(
+          apiClient: Get.find<ApiClient>(),
+          fetchOnStart: false,
+        ),
+      );
+    }
 
     final auth = Get.find<AuthController>();
     Get.find<EventController>().fetchEvents();
+    Get.find<NotificationController>().fetchNotifications();
     if (auth.isSignedIn && auth.me.value == null) {
       auth.restoreSession();
     }

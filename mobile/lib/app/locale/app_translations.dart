@@ -125,6 +125,18 @@ Map<String, String> _en() => {
   'no_upcoming_events': 'No upcoming events yet.',
   'no_events_match_filters': 'No events match your filters.',
   'view_details': 'View details',
+  'notifications': 'Notifications',
+  'loading_notifications': 'Loading notifications…',
+  'no_notifications': 'No notifications yet',
+  'no_notifications_subtitle':
+      'New campus events will show up here when they are published.',
+  'mark_all_read': 'Mark all read',
+  'could_not_load_notifications': 'Could not load notifications.',
+  'could_not_open_event': 'Could not open this event.',
+  'just_now': 'Just now',
+  'minutes_ago': '@count min ago',
+  'hours_ago': '@count hr ago',
+  'days_ago': '@count days ago',
 
   // Tickets
   'my_bookings': 'My Bookings',
@@ -615,6 +627,18 @@ Map<String, String> _kh() => {
   'no_upcoming_events': 'មិនទាន់មានកម្មវិធីនឹងមកដល់ទេ។',
   'no_events_match_filters': 'គ្មានកម្មវិធីត្រូវនឹងជម្រើសរបស់អ្នកទេ។',
   'view_details': 'មើលព័ត៌មានលម្អិត',
+  'notifications': 'ការជូនដំណឹង',
+  'loading_notifications': 'កំពុងផ្ទុកការជូនដំណឹង…',
+  'no_notifications': 'មិនទាន់មានការជូនដំណឹងទេ',
+  'no_notifications_subtitle':
+      'កម្មវិធីថ្មីនឹងបង្ហាញនៅទីនេះនៅពេលត្រូវបានផ្សាយ។',
+  'mark_all_read': 'សម្គាល់ថាអានហើយ',
+  'could_not_load_notifications': 'មិនអាចផ្ទុកការជូនដំណឹង។',
+  'could_not_open_event': 'មិនអាចបើកកម្មវិធីនេះ។',
+  'just_now': 'អម្បាញ់មិញ',
+  'minutes_ago': '@count នាទីមុន',
+  'hours_ago': '@count ម៉ោងមុន',
+  'days_ago': '@count ថ្ងៃមុន',
 
   // Tickets
   'my_bookings': 'ការកក់របស់ខ្ញុំ',

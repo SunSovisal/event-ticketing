@@ -91,6 +91,7 @@ void main() {
     await pumpHome(tester, events);
 
     expect(find.byKey(const Key('home_header_brand')), findsOneWidget);
+    expect(find.byKey(const Key('home_header_notifications')), findsOneWidget);
     expect(find.byKey(const Key('home_header_map')), findsOneWidget);
     expect(
       tester

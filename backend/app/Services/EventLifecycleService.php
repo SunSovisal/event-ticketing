@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class EventLifecycleService
 {
+    public function __construct(
+        private InboxNotificationService $inbox,
+    ) {}
+
     public function publish(string $eventId): Event
     {
         $event = DB::transaction(function () use ($eventId) {
@@ -31,8 +35,10 @@ class EventLifecycleService
             $this->assertReadyToPublish($event);
 
             $event->update(['status' => 'published']);
+            $event = $event->refresh();
+            $this->inbox->recordEventPublished($event);
 
-            return $event->refresh();
+            return $event;
         });
 
         NotifyEventPublished::dispatch($event->id);
