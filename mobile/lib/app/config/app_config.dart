@@ -11,7 +11,7 @@ class AppConfig {
   );
 
   /// Web OAuth client ID (Firebase Console → Authentication → Google → Web client ID).
-  /// Required on Android for Google Sign-In tokens Laravel can verify.
+  /// required on Android for Google Sign-In tokens Laravel can verify.
   static const String firebaseWebClientId = String.fromEnvironment(
     'FIREBASE_WEB_CLIENT_ID',
     defaultValue:
@@ -19,4 +19,9 @@ class AppConfig {
   );
 
   static const Duration requestTimeout = Duration(seconds: 15);
+
+  static const String googleRoutesApiKey = String.fromEnvironment(
+    'GOOGLE_ROUTES_API_KEY',
+    defaultValue: 'AIzaSyDosjExpczk6lQdKNM474WIE6t9umAKUOM',
+  );
 }

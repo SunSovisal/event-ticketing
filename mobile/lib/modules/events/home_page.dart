@@ -4,6 +4,8 @@ import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
+import 'package:itc_events/app/widgets/loading_view.dart';
+import 'package:itc_events/modules/events/event_google_map_page.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
@@ -266,24 +268,9 @@ class _HomeHeader extends StatelessWidget {
                   opacity: accentOpacity,
                   child: IgnorePointer(
                     ignoring: accentOpacity < 0.05,
-                    child: Row(
-                      children: [
-                        _HeaderActionButton(
-                          buttonKey: const Key('home_header_notifications'),
-                          tooltip: 'notifications'.tr,
-                          icon: Icons.notifications_outlined,
-                          badgeCount: unreadCount,
-                          onPressed: _openNotifications,
-                        ),
-                        const SizedBox(width: 8),
-                        _HeaderActionButton(
-                          buttonKey: const Key('home_header_map'),
-                          tooltip: 'Map',
-                          icon: Icons.map_outlined,
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
+                    child: _MapActionButton(onPressed: () {
+                      Get.to(() => const EventMapPage());
+                    }),
                   ),
                 ),
               ],
