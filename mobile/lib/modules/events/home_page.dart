@@ -268,9 +268,24 @@ class _HomeHeader extends StatelessWidget {
                   opacity: accentOpacity,
                   child: IgnorePointer(
                     ignoring: accentOpacity < 0.05,
-                    child: _MapActionButton(onPressed: () {
-                      Get.to(() => const EventMapPage());
-                    }),
+                    child: Row(
+                      children: [
+                        _HeaderActionButton(
+                          buttonKey: const Key('home_header_notifications'),
+                          tooltip: 'notifications'.tr,
+                          icon: Icons.notifications_outlined,
+                          badgeCount: unreadCount,
+                          onPressed: _openNotifications,
+                        ),
+                        const SizedBox(width: 8),
+                        _HeaderActionButton(
+                          buttonKey: const Key('home_header_map'),
+                          tooltip: 'Map',
+                          icon: Icons.map_outlined,
+                          onPressed: () => Get.to(() => const EventMapPage()),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
