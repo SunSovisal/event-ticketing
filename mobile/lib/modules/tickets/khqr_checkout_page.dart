@@ -29,7 +29,7 @@ class KhqrCheckoutPage extends StatefulWidget {
 }
 
 class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
-  static const _pollInterval = Duration(seconds: 60);
+  static const _pollInterval = Duration(seconds: 10);
 
   EventPayment? _payment;
   String? _error;
