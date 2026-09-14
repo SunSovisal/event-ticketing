@@ -431,7 +431,7 @@ Map<String, String> _en() => {
   'payment_success': 'Success',
   'payment_success_body': 'We received your payment for @title.',
   'aba_pay_sandbox_hint':
-      'ABA PAY sandbox cannot be paid with the live ABA app. Use ABA’s UAT simulator, or choose KHQR Payment to pay for real.',
+      'ABA PAY Sandbox Mode cannot be paid with the live ABA app. Use ABA’s UAT simulator, or choose KHQR Payment to pay for real.',
   'scan_aba_pay_qr': 'Scan this ABA PAY QR to pay',
   'payway_domain_blocked':
       'PayWay blocked this server. Ask ABA to whitelist your public IP for sandbox.',
@@ -926,7 +926,7 @@ Map<String, String> _kh() => {
   'payment_success': 'ជោគជ័យ',
   'payment_success_body': 'យើងបានទទួលការទូទាត់សម្រាប់ @title។',
   'aba_pay_sandbox_hint':
-      'ABA PAY sandbox មិនអាចទូទាត់ជាមួយកម្មវិធី ABA ផ្ទាល់បានទេ។ ប្រើ UAT របស់ ABA ឬជ្រើស KHQR Payment ដើម្បីទូទាត់ពិត។',
+      'ABA PAY Sandbox Mode មិនអាចទូទាត់ជាមួយកម្មវិធី ABA ផ្ទាល់បានទេ។ ប្រើ UAT របស់ ABA ឬជ្រើស KHQR Payment ដើម្បីទូទាត់ពិត។',
   'scan_aba_pay_qr': 'ស្កេន QR ABA PAY នេះដើម្បីទូទាត់',
   'payway_domain_blocked':
       'PayWay បានទប់ស្កាត់ម៉ាស៊ីនមេនេះ។ សូមឲ្យ ABA ដាក់ IP សាធារណៈរបស់អ្នកក្នុង whitelist។',
