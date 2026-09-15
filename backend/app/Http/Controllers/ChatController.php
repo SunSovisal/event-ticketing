@@ -33,6 +33,7 @@ class ChatController extends Controller
                 'reply' => $result['reply'],
                 'refused' => $result['refused'],
                 'events' => $result['events'],
+                'actions' => $result['actions'],
             ],
             'meta' => [
                 'request_id' => (string) str()->uuid(),
