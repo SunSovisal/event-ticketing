@@ -515,6 +515,7 @@ Map<String, String> _en() => {
   'chat_spots_left': '@count spots left',
   'chat_event_full': 'Full',
   'chat_view_event': 'View',
+  'chat_open_tickets': 'Tickets',
 };
 
 Map<String, String> _kh() => {
@@ -1006,4 +1007,5 @@ Map<String, String> _kh() => {
   'chat_spots_left': '@count spots left',
   'chat_event_full': 'Full',
   'chat_view_event': 'View',
+  'chat_open_tickets': 'សំបុត្រ',
 };

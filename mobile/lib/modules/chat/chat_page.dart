@@ -6,6 +6,7 @@ import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
 import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
+import 'package:itc_events/modules/shell/main_shell.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -455,6 +456,28 @@ class _MessageRow extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (message.hasTicketsButton) ...[
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () => openMainShell(index: 1),
+                      icon: const Icon(
+                        Icons.confirmation_number_outlined,
+                        size: 18,
+                      ),
+                      label: Text('chat_open_tickets'.tr),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (message.hasEventCards) ...[
                     const SizedBox(height: 8),
                     ...message.events.map(

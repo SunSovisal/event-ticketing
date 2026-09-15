@@ -9,16 +9,19 @@ class ChatMessage {
     required this.role,
     required this.content,
     this.events = const [],
+    this.navActions = const [],
     this.showActionMenu = false,
   });
 
   final String role; // user | assistant
   final String content;
   final List<Event> events;
+  final List<String> navActions;
   final bool showActionMenu;
 
   bool get isUser => role == 'user';
   bool get hasEventCards => events.isNotEmpty;
+  bool get hasTicketsButton => navActions.contains('tickets');
 }
 
 class ChatController extends GetxController {
@@ -117,12 +120,17 @@ class ChatController extends GetxController {
       }
 
       final events = _parseEvents(data['events']);
+      var navActions = _parseNavActions(data['actions']);
+      if (navActions.isEmpty && events.isEmpty && _wantsTicketsShortcut(text)) {
+        navActions = const ['tickets'];
+      }
 
       messages.add(
         ChatMessage(
           role: 'assistant',
           content: reply,
           events: events,
+          navActions: navActions,
           showActionMenu: events.isEmpty && _wantsActionMenu(text),
         ),
       );
@@ -158,5 +166,34 @@ class ChatController extends GetxController {
       }
     }
     return events;
+  }
+
+  List<String> _parseNavActions(dynamic raw) {
+    if (raw is! List) return const [];
+    final actions = <String>[];
+    for (final item in raw) {
+      if (item is Map && item['type']?.toString() == 'tickets') {
+        actions.add('tickets');
+      } else if (item == 'tickets') {
+        actions.add('tickets');
+      }
+    }
+    return actions;
+  }
+
+  bool _wantsTicketsShortcut(String text) {
+    final lower = text.toLowerCase();
+    final looksLikeReserve = RegExp(
+      r'\b(reserv|book|get\s+(a\s+)?ticket|save\s+(an?\s+)?event)\b',
+    ).hasMatch(lower);
+    if (looksLikeReserve && !lower.contains('qr')) {
+      return false;
+    }
+
+    return RegExp(
+          r'\b(where.*\b(qr|ticket)|qr\s*(ticket|code)|my\s+(qr\s+)?tickets?|tickets?\s+tab)\b',
+        ).hasMatch(lower) ||
+        text.contains('សំបុត្រ QR') ||
+        text.contains('QR នៅ');
   }
 }
