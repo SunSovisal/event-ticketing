@@ -83,11 +83,7 @@ class StatusChip extends StatelessWidget {
           color: color,
           fontSize: 12,
           fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
-          fontWeight:
-              Theme.of(context).textTheme.bodySmall?.fontFamily ==
-                  AppTheme.khmerFontFamily
-              ? FontWeight.w400
-              : FontWeight.w600,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

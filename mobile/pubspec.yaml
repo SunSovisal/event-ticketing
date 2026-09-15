@@ -90,9 +90,9 @@ flutter:
     - family: Roboto
       fonts:
         - asset: fonts/Roboto-Variable.ttf
-    - family: Siemreap
+    - family: NotoSansKhmer
       fonts:
-        - asset: fonts/Siemreap.ttf
+        - asset: fonts/NotoSansKhmer-Variable.ttf
     - family: NunitoSans
       fonts:
         - asset: fonts/nunito_sans/NunitoSans_7pt-Regular.ttf

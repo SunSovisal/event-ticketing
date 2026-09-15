@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Central theme for ITC Events — Light and Dark theme configurations.
 abstract final class AppTheme {
   static const String englishFontFamily = 'Roboto';
-  static const String khmerFontFamily = 'Siemreap';
+  static const String khmerFontFamily = 'NotoSansKhmer';
 
   // Light Palette
   static const Color primary = Color(0xFF2563EB);
@@ -409,11 +409,10 @@ abstract final class AppTheme {
     );
   }
 
-  /// Siemreap 
+  /// Noto Sans Khmer
   static TextStyle khmerStyle(TextStyle style) {
     return style.copyWith(
       fontFamily: khmerFontFamily,
-      fontWeight: FontWeight.w400,
       letterSpacing: 0,
       height: style.height == null || style.height! < 1.35 ? 1.4 : style.height,
     );

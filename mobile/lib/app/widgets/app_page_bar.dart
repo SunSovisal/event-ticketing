@@ -48,11 +48,7 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: foreground,
-                  fontWeight:
-                      Theme.of(context).textTheme.headlineMedium?.fontFamily ==
-                          AppTheme.khmerFontFamily
-                      ? FontWeight.w400
-                      : FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
