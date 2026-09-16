@@ -21,6 +21,8 @@ class AdminAttendee {
   final DateTime issuedAt;
   final DateTime? checkedInAt;
 
+  bool get isCheckedIn => ticketStatus == 'checked_in';
+
   String get displayName =>
       (name != null && name!.trim().isNotEmpty) ? name!.trim() : 'unknown'.tr;
 

@@ -377,9 +377,20 @@ Map<String, String> _en() => {
 
   // Admin event detail
   'event_detail': 'Event detail',
+  'event_logs': 'Event logs',
+  'manage_event': 'Manage',
+  'manage_event_subtitle': 'Tickets, attendees, and check-in attempts.',
+  'tickets_purchased': 'Tickets purchased',
+  'tab_tickets': 'Tickets',
+  'tab_attendees': 'Attendees',
+  'tab_attempts': 'Attempts',
   'loading_attendees': 'Loading attendees…',
+  'loading_event_logs': 'Loading logs…',
+  'tickets_purchased_count': 'Tickets purchased (@count)',
   'attendees_count': 'Attendees (@count)',
+  'no_tickets_purchased_yet': 'No tickets purchased yet.',
   'no_reservations_yet': 'No reservations yet.',
+  'no_attendees_yet': 'No one has checked in yet.',
   'check_in_attempts_count': 'Check-in attempts (@count)',
   'no_scan_attempts_yet': 'No scan attempts yet.',
 
@@ -454,6 +465,7 @@ Map<String, String> _en() => {
   'delete_draft': 'Delete draft',
   'could_not_delete_event': 'Could not delete event.',
   'could_not_load_attendees': 'Could not load attendees.',
+  'could_not_load_event_logs': 'Could not load logs.',
   'could_not_save_event': 'Could not save event.',
 
   // Check-in
@@ -872,9 +884,20 @@ Map<String, String> _kh() => {
 
   // Admin event detail
   'event_detail': 'ព័ត៌មានលម្អិតកម្មវិធី',
+  'event_logs': 'កំណត់ត្រាកម្មវិធី',
+  'manage_event': 'គ្រប់គ្រង',
+  'manage_event_subtitle': 'សំបុត្រ អ្នកចូលរួម និងការព្យាយាមចុះឈ្មោះ។',
+  'tickets_purchased': 'សំបុត្រដែលបានទិញ',
+  'tab_tickets': 'សំបុត្រ',
+  'tab_attendees': 'អ្នកចូលរួម',
+  'tab_attempts': 'ការព្យាយាម',
   'loading_attendees': 'កំពុងផ្ទុកអ្នកចូលរួម…',
+  'loading_event_logs': 'កំពុងផ្ទុកកំណត់ត្រា…',
+  'tickets_purchased_count': 'សំបុត្រដែលបានទិញ (@count)',
   'attendees_count': 'អ្នកចូលរួម (@count)',
+  'no_tickets_purchased_yet': 'មិនទាន់មានការទិញសំបុត្រទេ។',
   'no_reservations_yet': 'មិនទាន់មានការកក់ទេ។',
+  'no_attendees_yet': 'មិនទាន់មានអ្នកចុះឈ្មោះទេ។',
   'check_in_attempts_count': 'ការព្យាយាមចុះឈ្មោះ (@count)',
   'no_scan_attempts_yet': 'មិនទាន់មានការស្កេនទេ។',
 
@@ -951,6 +974,7 @@ Map<String, String> _kh() => {
   'delete_draft': 'លុបសេចក្តីព្រាង',
   'could_not_delete_event': 'មិនអាចលុបកម្មវិធី។',
   'could_not_load_attendees': 'មិនអាចផ្ទុកអ្នកចូលរួម។',
+  'could_not_load_event_logs': 'មិនអាចផ្ទុកកំណត់ត្រា។',
   'could_not_save_event': 'មិនអាចរក្សាទុកកម្មវិធី។',
 
   // Check-in

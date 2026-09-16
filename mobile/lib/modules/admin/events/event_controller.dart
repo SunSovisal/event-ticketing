@@ -10,9 +10,11 @@ import 'package:itc_events/modules/events/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 
 class AdminEventController extends GetxController {
-  AdminEventController({required ApiClient apiClient}) : _apiClient = apiClient;
+  AdminEventController({required ApiClient apiClient, this.fetchOnStart = true})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+  final bool fetchOnStart;
 
   final RxList<Event> events = <Event>[].obs;
   final RxBool isLoading = false.obs;
@@ -37,7 +39,9 @@ class AdminEventController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchEvents();
+    if (fetchOnStart) {
+      fetchEvents();
+    }
   }
 
   Future<void> fetchEvents() async {
@@ -179,7 +183,7 @@ class AdminEventController extends GetxController {
     } catch (_) {
       _setRx(
         loadId,
-        () => detailErrorMessage.value = 'could_not_load_attendees'.tr,
+        () => detailErrorMessage.value = 'could_not_load_event_logs'.tr,
         detail: true,
       );
     } finally {
