@@ -64,11 +64,10 @@ class EventResource extends JsonResource
         ];
 
         if (app(PayWayGateway::class)->isEnabled()) {
-            $sandbox = (bool) config('services.payway.sandbox', true);
             $methods[] = [
                 'id' => 'aba_pay',
-                'live' => ! $sandbox,
-                'sandbox' => $sandbox,
+                'live' => false,
+                'sandbox' => true,
             ];
         }
 

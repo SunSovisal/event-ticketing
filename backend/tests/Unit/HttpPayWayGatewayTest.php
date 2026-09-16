@@ -72,6 +72,10 @@ class HttpPayWayGatewayTest extends TestCase
                 && $body['payment_option'] === 'abapay_khqr'
                 && $body['lifetime'] === 5
                 && $body['req_time'] === '20250212174216'
+                && $body['return_deeplink'] === base64_encode(json_encode([
+                    'android_scheme' => 'goitc://pay',
+                    'ios_scheme' => 'goitc://pay',
+                ], JSON_UNESCAPED_SLASHES))
                 && is_string($body['hash'])
                 && $body['hash'] !== '';
         });

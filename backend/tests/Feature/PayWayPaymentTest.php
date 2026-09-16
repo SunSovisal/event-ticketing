@@ -142,7 +142,7 @@ class PayWayPaymentTest extends TestCase
     public function test_paid_event_lists_sandbox_aba_pay_when_payway_is_enabled(): void
     {
         $this->payway->enabled = true;
-        config(['services.payway.sandbox' => true]);
+        config(['services.payway.sandbox' => false]);
 
         $event = Event::factory()->published()->paid('0.01', 'USD')->create();
 

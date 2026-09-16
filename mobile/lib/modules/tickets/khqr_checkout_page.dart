@@ -7,6 +7,7 @@ import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/tickets/aba_pay_launcher.dart';
 import 'package:itc_events/modules/tickets/event_payment.dart';
 import 'package:itc_events/modules/tickets/khqr_card.dart';
 import 'package:itc_events/modules/tickets/payment_method.dart';
@@ -28,33 +29,48 @@ class KhqrCheckoutPage extends StatefulWidget {
   State<KhqrCheckoutPage> createState() => _KhqrCheckoutPageState();
 }
 
-class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
+class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
+    with WidgetsBindingObserver {
   static const _pollInterval = Duration(seconds: 10);
 
   EventPayment? _payment;
   String? _error;
   bool _loading = true;
   bool _checking = false;
+  bool _openingAba = false;
+  bool _didOpenAba = false;
   bool _qrExpired = false;
   String _countdown = '';
   Timer? _countdownTimer;
   Timer? _pollTimer;
+  final AbaPayLauncher _abaPayLauncher = AbaPayLauncher();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _start();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cancelTimers();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!_isAbaPay || _qrExpired || _payment == null) return;
+    _confirmPaid(quiet: true);
   }
 
   TicketController get _tickets => Get.find<TicketController>();
 
   bool get _isAbaPay => widget.method == PaymentMethodOption.abaPay;
+
+  bool get _hasAbaDeeplink => (_payment?.abaDeeplink ?? '').isNotEmpty;
 
   Future<void> _start() async {
     setState(() {
@@ -62,6 +78,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
       _error = null;
       _qrExpired = false;
       _checking = false;
+      _didOpenAba = false;
     });
     _cancelTimers();
 
@@ -90,6 +107,31 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
     });
     _startCountdown();
     _startPolling();
+    _maybeOpenAba();
+  }
+
+  Future<void> _maybeOpenAba() async {
+    if (_didOpenAba || !_isAbaPay || _qrExpired || !_hasAbaDeeplink) return;
+    _didOpenAba = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openAba();
+    });
+  }
+
+  Future<void> _openAba() async {
+    final deeplink = _payment?.abaDeeplink;
+    if (deeplink == null || deeplink.isEmpty || _openingAba) return;
+
+    setState(() => _openingAba = true);
+    try {
+      final opened = await _abaPayLauncher.open(deeplink);
+      if (!opened && mounted) {
+        AppSnackbar.error('could_not_open_aba'.tr);
+      }
+    } finally {
+      if (mounted) setState(() => _openingAba = false);
+    }
   }
 
   Future<void> _confirmPaid({bool quiet = false}) async {
@@ -417,11 +459,24 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage> {
                         ? _ButtonSpinner(label: 'checking_payment'.tr)
                         : Text('generate_new_qr'.tr),
                   )
-                : FilledButton(
-                    onPressed: _checking ? null : () => _confirmPaid(),
-                    child: _checking
-                        ? _ButtonSpinner(label: 'checking_payment'.tr)
-                        : Text('i_have_paid'.tr),
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_hasAbaDeeplink)
+                        FilledButton(
+                          onPressed: _checking || _openingAba ? null : _openAba,
+                          child: _openingAba
+                              ? _ButtonSpinner(label: 'opening_aba'.tr)
+                              : Text('pay_with_aba_mobile'.tr),
+                        ),
+                      if (_hasAbaDeeplink) const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _checking ? null : () => _confirmPaid(),
+                        child: Text(
+                          _checking ? 'checking_payment'.tr : 'i_have_paid'.tr,
+                        ),
+                      ),
+                    ],
                   ),
           ),
         ),

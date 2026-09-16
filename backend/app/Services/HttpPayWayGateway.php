@@ -39,7 +39,7 @@ class HttpPayWayGateway implements PayWayGateway
             'purchase_type' => $purchaseType,
             'payment_option' => $option,
             'callback_url' => '',
-            'return_deeplink' => '',
+            'return_deeplink' => $this->returnDeeplink(),
             'currency' => $currency,
             'custom_fields' => '',
             'return_params' => '',
@@ -184,6 +184,22 @@ class HttpPayWayGateway implements PayWayGateway
     private function newTranId(): string
     {
         return substr(str_replace('-', '', (string) Str::ulid()), 0, 20);
+    }
+
+    /**
+     * Tells ABA Mobile / UAT which URL to open after the customer confirms payment.
+     */
+    private function returnDeeplink(): string
+    {
+        $scheme = trim((string) config('services.payway.return_deeplink_scheme', 'goitc://pay'));
+        if ($scheme === '') {
+            return '';
+        }
+
+        return base64_encode(json_encode([
+            'android_scheme' => $scheme,
+            'ios_scheme' => $scheme,
+        ], JSON_UNESCAPED_SLASHES));
     }
 
     private function origin(): string

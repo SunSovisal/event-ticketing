@@ -16,5 +16,18 @@ import GoogleMaps
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let channel = FlutterMethodChannel(
+      name: "goitc.aba_pay_launcher",
+      binaryMessenger: engineBridge.applicationRegistrar.messenger()
+    )
+    channel.setMethodCallHandler { call, result in
+      guard call.method == "isAppInstalled",
+            let bundleId = call.arguments as? String
+      else {
+        result(false)
+        return
+      }
+      result(GoITCAppIsInstalled(bundleId))
+    }
   }
 }
