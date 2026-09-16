@@ -22,6 +22,16 @@ class ChatMessage {
   bool get isUser => role == 'user';
   bool get hasEventCards => events.isNotEmpty;
   bool get hasTicketsButton => navActions.contains('tickets');
+
+  ChatMessage copyWith({bool? showActionMenu}) {
+    return ChatMessage(
+      role: role,
+      content: content,
+      events: events,
+      navActions: navActions,
+      showActionMenu: showActionMenu ?? this.showActionMenu,
+    );
+  }
 }
 
 class ChatController extends GetxController {
@@ -59,11 +69,14 @@ class ChatController extends GetxController {
     errorMessage.value = null;
   }
 
-  bool _wantsActionMenu(String text) {
-    final lower = text.toLowerCase();
-    return RegExp(
-      r'\b(hi|hello|hey|help|menu|options|what can you|how can i)\b',
-    ).hasMatch(lower);
+  void _addAssistantReply(ChatMessage message) {
+    for (var i = 0; i < messages.length; i++) {
+      final existing = messages[i];
+      if (!existing.isUser && existing.showActionMenu) {
+        messages[i] = existing.copyWith(showActionMenu: false);
+      }
+    }
+    messages.add(message.copyWith(showActionMenu: true));
   }
 
   Future<void> send(String raw) async {
@@ -125,13 +138,12 @@ class ChatController extends GetxController {
         navActions = const ['tickets'];
       }
 
-      messages.add(
+      _addAssistantReply(
         ChatMessage(
           role: 'assistant',
           content: reply,
           events: events,
           navActions: navActions,
-          showActionMenu: events.isEmpty && _wantsActionMenu(text),
         ),
       );
 
@@ -141,12 +153,12 @@ class ChatController extends GetxController {
       }
     } on ApiException catch (error) {
       errorMessage.value = error.message;
-      messages.add(
+      _addAssistantReply(
         ChatMessage(role: 'assistant', content: error.message),
       );
     } catch (_) {
       errorMessage.value = 'chat_unreachable'.tr;
-      messages.add(
+      _addAssistantReply(
         ChatMessage(role: 'assistant', content: 'chat_unreachable'.tr),
       );
     } finally {

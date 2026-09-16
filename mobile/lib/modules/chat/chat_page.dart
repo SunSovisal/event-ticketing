@@ -19,6 +19,8 @@ class _ChatPageState extends State<ChatPage> {
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
+  final _latestMessageKey = GlobalKey();
+  bool _wasBusy = false;
 
   ChatController get controller => Get.find<ChatController>();
 
@@ -30,11 +32,13 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _scrollToEnd() {
+  void _revealLatestReply() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+      final target = _latestMessageKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        alignment: 0.06,
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
       );
@@ -84,20 +88,26 @@ class _ChatPageState extends State<ChatPage> {
               ),
               Expanded(
                 child: Obx(() {
-                  _scrollToEnd();
                   final items = controller.messages;
                   final busy = controller.isSending.value;
+                  final replyJustFinished = _wasBusy && !busy;
+                  _wasBusy = busy;
+                  if (replyJustFinished) {
+                    _revealLatestReply();
+                  }
 
                   return ListView(
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     children: [
-                      ...items.map(
-                        (message) => _MessageRow(
-                          message: message,
+                      for (var i = 0; i < items.length; i++)
+                        _MessageRow(
+                          key: !busy && i == items.length - 1
+                              ? _latestMessageKey
+                              : null,
+                          message: items[i],
                           onSelectAction: busy ? null : _submit,
                         ),
-                      ),
                       if (busy) const _TypingIndicator(),
                     ],
                   );
@@ -366,6 +376,7 @@ class _ActionMenuGrid extends StatelessWidget {
 
 class _MessageRow extends StatelessWidget {
   const _MessageRow({
+    super.key,
     required this.message,
     this.onSelectAction,
   });
