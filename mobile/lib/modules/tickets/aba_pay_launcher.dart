@@ -2,39 +2,32 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Opens ABA to finish a PayWay transaction.
-///
-/// Live ABA and Simulator UAT both register `abaMobileBank`. Sandbox therefore
-/// opens Simulator UAT by bundle id and passes it the PayWay URL. Dart's [Uri]
-/// lowercases schemes, so the native payload keeps ABA's registered casing.
+// Offline Aba Mobile to use Simulator UAT
 class AbaPayLauncher {
   AbaPayLauncher({
     Future<bool> Function(Uri uri)? launch,
-    Future<bool> Function(String bundleId, String url)? openInstalledApp,
+    Future<bool> Function(String bundleId)? isInstalled,
   }) : _launch = launch ?? _launchExternal,
-       _openInstalledApp = openInstalledApp ?? _openInstalledAppNative;
+       _isInstalled = isInstalled ?? _isInstalledNative;
 
+  static const abaMobileBundleId = 'com.paygo24.ababank';
   static const uatBundleId = 'com.ababank.abamobile-simulator';
-  static const uatScheme = 'abaMobileBank';
   static const _channel = MethodChannel('goitc.aba_pay_launcher');
 
   final Future<bool> Function(Uri uri) _launch;
-  final Future<bool> Function(String bundleId, String url) _openInstalledApp;
+  final Future<bool> Function(String bundleId) _isInstalled;
 
   static Future<bool> _launchExternal(Uri uri) {
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  static Future<bool> _openInstalledAppNative(
-    String bundleId,
-    String url,
-  ) async {
+  static Future<bool> _isInstalledNative(String bundleId) async {
     try {
-      final opened = await _channel.invokeMethod<bool>('openInstalledApp', {
-        'bundleId': bundleId,
-        'url': url,
-      });
-      return opened == true;
+      final installed = await _channel.invokeMethod<bool>(
+        'isAppInstalled',
+        bundleId,
+      );
+      return installed == true;
     } on MissingPluginException {
       return false;
     } catch (_) {
@@ -42,45 +35,23 @@ class AbaPayLauncher {
     }
   }
 
-  /// PayWay sends `abamobilebank://…`. Simulator UAT registers `abaMobileBank`.
-  static String paymentUrlForSimulatorUat(String deeplink) {
-    final trimmed = deeplink.trim();
-    final colon = trimmed.indexOf(':');
-    if (colon <= 0) {
-      return trimmed;
-    }
-    return '$uatScheme${trimmed.substring(colon)}';
-  }
-
-  Future<bool> open(
-    String? deeplink, {
-    bool sandbox = false,
-    TargetPlatform? platform,
-  }) async {
+  Future<bool> open(String? deeplink, {TargetPlatform? platform}) async {
     final target = platform ?? defaultTargetPlatform;
-    final raw = deeplink?.trim() ?? '';
-    final uri = Uri.tryParse(raw);
-
-    if (sandbox) {
-      if (target != TargetPlatform.iOS || raw.isEmpty || uri == null) {
-        return false;
-      }
-      if (!uri.hasScheme) {
-        return false;
-      }
-      return _openInstalledApp(
-        uatBundleId,
-        paymentUrlForSimulatorUat(raw),
-      );
+    if (target != TargetPlatform.iOS) {
+      return false;
     }
 
-    if (uri != null && uri.scheme.toLowerCase() == 'abamobilebank') {
-      if (await _tryLaunch(uri)) {
-        return true;
-      }
+    final uri = Uri.tryParse(deeplink?.trim() ?? '');
+    if (uri == null || !uri.hasScheme) {
+      return false;
     }
-
-    return false;
+    if (uri.scheme.toLowerCase() != 'abamobilebank') {
+      return false;
+    }
+    if (await _isInstalled(abaMobileBundleId)) {
+      return false;
+    }
+    return _tryLaunch(uri);
   }
 
   Future<bool> _tryLaunch(Uri uri) async {

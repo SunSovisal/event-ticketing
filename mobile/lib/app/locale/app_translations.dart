@@ -431,12 +431,12 @@ Map<String, String> _en() => {
   'payment_success': 'Success',
   'payment_success_body': 'We received your payment for @title.',
   'aba_pay_sandbox_hint':
-      'Sandbox opens Simulator UAT, not the live ABA app. Live ABA cannot finish sandbox payments.',
+      'Pay in Simulator UAT only. Offload ABA Mobile if it is installed — iOS cannot open UAT while both apps share the payment link.',
   'scan_aba_pay_qr': 'Or scan this QR from another device',
   'pay_with_aba_mobile': 'Pay with Simulator UAT',
   'opening_aba': 'Opening Simulator UAT…',
   'could_not_open_aba':
-      'Could not open Simulator UAT. Open that app and scan the QR. Live ABA cannot finish sandbox payments.',
+      'Could not open Simulator UAT. Offload ABA Mobile if it is installed, then try again. Or scan this QR from Simulator UAT.',
   'payway_domain_blocked':
       'PayWay blocked this server. Ask ABA to whitelist your public IP for sandbox.',
   'i_have_paid': 'I have paid',
@@ -931,12 +931,12 @@ Map<String, String> _kh() => {
   'payment_success': 'ជោគជ័យ',
   'payment_success_body': 'យើងបានទទួលការទូទាត់សម្រាប់ @title។',
   'aba_pay_sandbox_hint':
-      'Sandbox បើក Simulator UAT មិនមែនកម្មវិធី ABA ផ្ទាល់ទេ។ ABA ផ្ទាល់មិនអាចបញ្ចប់ការទូទាត់ sandbox បានទេ។',
+      'ទូទាត់តែក្នុង Simulator UAT។ សូមលុប ABA Mobile បើមាន — iOS មិនអាចបើក UAT បានទេ បើកម្មវិធីទាំងពីរប្រើតំណទូទាត់ដូចគ្នា។',
   'scan_aba_pay_qr': 'ឬស្កេន QR នេះពីឧបករណ៍ផ្សេង',
   'pay_with_aba_mobile': 'ទូទាត់តាម Simulator UAT',
   'opening_aba': 'កំពុងបើក Simulator UAT…',
   'could_not_open_aba':
-      'មិនអាចបើក Simulator UAT បានទេ។ សូមបើកកម្មវិធីនោះ រួចស្កេន QR។ ABA ផ្ទាល់មិនអាចបញ្ចប់ការទូទាត់ sandbox បានទេ។',
+      'មិនអាចបើក Simulator UAT បានទេ។ សូមលុប ABA Mobile បើមាន រួចព្យាយាមម្ដងទៀត។ ឬស្កេន QR នេះពី Simulator UAT។',
   'payway_domain_blocked':
       'PayWay បានទប់ស្កាត់ម៉ាស៊ីនមេនេះ។ សូមឲ្យ ABA ដាក់ IP សាធារណៈរបស់អ្នកក្នុង whitelist។',
   'i_have_paid': 'ខ្ញុំបានទូទាត់ហើយ',

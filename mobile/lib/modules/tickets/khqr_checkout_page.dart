@@ -70,10 +70,6 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
 
   bool get _isAbaPay => widget.method == PaymentMethodOption.abaPay;
 
-  bool get _isAbaSandbox => widget.event.availablePaymentMethods.any(
-    (method) => method.isAbaPay && method.sandbox,
-  );
-
   bool get _hasAbaDeeplink => (_payment?.abaDeeplink ?? '').isNotEmpty;
 
   Future<void> _start() async {
@@ -129,10 +125,7 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
 
     setState(() => _openingAba = true);
     try {
-      final opened = await _abaPayLauncher.open(
-        deeplink,
-        sandbox: _isAbaSandbox,
-      );
+      final opened = await _abaPayLauncher.open(deeplink);
       if (!opened && mounted) {
         AppSnackbar.error('could_not_open_aba'.tr);
       }
@@ -424,17 +417,14 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
                           color: AppTheme.textSecondaryOf(context),
                         ),
                       ),
-                      if (_isAbaSandbox) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          'aba_pay_sandbox_hint'.tr,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppTheme.textSecondaryOf(context),
-                              ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'aba_pay_sandbox_hint'.tr,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondaryOf(context),
                         ),
-                      ],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         _qrExpired

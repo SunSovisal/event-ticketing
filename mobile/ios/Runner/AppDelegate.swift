@@ -21,16 +21,13 @@ import GoogleMaps
       binaryMessenger: engineBridge.applicationRegistrar.messenger()
     )
     channel.setMethodCallHandler { call, result in
-      guard call.method == "openInstalledApp",
-            let args = call.arguments as? [String: Any],
-            let bundleId = args["bundleId"] as? String,
-            let urlString = args["url"] as? String,
-            let url = URL(string: urlString)
+      guard call.method == "isAppInstalled",
+            let bundleId = call.arguments as? String
       else {
         result(false)
         return
       }
-      result(GoITCOpenInstalledApp(bundleId, url))
+      result(GoITCAppIsInstalled(bundleId))
     }
   }
 }

@@ -6,74 +6,10 @@ void main() {
   const deeplink =
       'abamobilebank://ababank.com?type=payway&qrcode=000201PAYWAY';
 
-  test('sandbox keeps ABA’s registered scheme casing on the payment URL', () {
-    expect(
-      AbaPayLauncher.paymentUrlForSimulatorUat(deeplink),
-      'abaMobileBank://ababank.com?type=payway&qrcode=000201PAYWAY',
-    );
-  });
-
-  test(
-    'sandbox on iOS opens Simulator UAT by app id with the PayWay transaction',
-    () async {
-      final opened = <(String, String)>[];
-      final launcher = AbaPayLauncher(
-        openInstalledApp: (bundleId, url) async {
-          opened.add((bundleId, url));
-          return true;
-        },
-        launch: (_) async => fail('sandbox must not use the shared ABA scheme'),
-      );
-
-      expect(
-        await launcher.open(
-          deeplink,
-          sandbox: true,
-          platform: TargetPlatform.iOS,
-        ),
-        isTrue,
-      );
-      expect(opened, [
-        (
-          'com.ababank.abamobile-simulator',
-          'abaMobileBank://ababank.com?type=payway&qrcode=000201PAYWAY',
-        ),
-      ]);
-    },
-  );
-
-  test('sandbox never opens live ABA or TestFlight', () async {
-    final launched = <Uri>[];
-    final launcher = AbaPayLauncher(
-      openInstalledApp: (bundleId, url) async {
-        expect(bundleId, 'com.ababank.abamobile-simulator');
-        expect(
-          url,
-          'abaMobileBank://ababank.com?type=payway&qrcode=000201PAYWAY',
-        );
-        return true;
-      },
-      launch: (uri) async {
-        launched.add(uri);
-        return true;
-      },
-    );
-
-    expect(
-      await launcher.open(
-        deeplink,
-        sandbox: true,
-        platform: TargetPlatform.iOS,
-      ),
-      isTrue,
-    );
-    expect(launched, isEmpty);
-  });
-
-  test('sandbox on Android does not open live ABA', () async {
+  test('iOS opens Simulator UAT with the PayWay URL when ABA Mobile is offloaded', () async {
     final opened = <Uri>[];
     final launcher = AbaPayLauncher(
-      openInstalledApp: (_, __) async => fail('Android sandbox must not launch'),
+      isInstalled: (bundleId) async => bundleId == AbaPayLauncher.uatBundleId,
       launch: (uri) async {
         opened.add(uri);
         return true;
@@ -81,27 +17,59 @@ void main() {
     );
 
     expect(
-      await launcher.open(
-        deeplink,
-        sandbox: true,
-        platform: TargetPlatform.android,
-      ),
+      await launcher.open(deeplink, platform: TargetPlatform.iOS),
+      isTrue,
+    );
+    expect(opened, [Uri.parse(deeplink)]);
+  });
+
+  test('does not open ABA Mobile', () async {
+    final opened = <Uri>[];
+    final launcher = AbaPayLauncher(
+      isInstalled: (bundleId) async =>
+          bundleId == AbaPayLauncher.abaMobileBundleId ||
+          bundleId == AbaPayLauncher.uatBundleId,
+      launch: (uri) async {
+        opened.add(uri);
+        return true;
+      },
+    );
+
+    expect(
+      await launcher.open(deeplink, platform: TargetPlatform.iOS),
       isFalse,
     );
     expect(opened, isEmpty);
   });
 
-  test('live iOS payments still open the PayWay deeplink', () async {
+  test('never opens TestFlight', () async {
     final opened = <Uri>[];
     final launcher = AbaPayLauncher(
-      openInstalledApp: (_, __) async => fail('live payments use the ABA scheme'),
+      isInstalled: (_) async => false,
       launch: (uri) async {
         opened.add(uri);
         return true;
       },
     );
 
-    expect(await launcher.open(deeplink, platform: TargetPlatform.iOS), isTrue);
-    expect(opened, [Uri.parse(deeplink)]);
+    await launcher.open(deeplink, platform: TargetPlatform.iOS);
+    expect(opened.every((uri) => !uri.host.contains('testflight')), isTrue);
+  });
+
+  test('does not open on Android', () async {
+    final opened = <Uri>[];
+    final launcher = AbaPayLauncher(
+      isInstalled: (_) async => fail('must not probe apps on Android'),
+      launch: (uri) async {
+        opened.add(uri);
+        return true;
+      },
+    );
+
+    expect(
+      await launcher.open(deeplink, platform: TargetPlatform.android),
+      isFalse,
+    );
+    expect(opened, isEmpty);
   });
 }
