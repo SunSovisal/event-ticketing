@@ -427,12 +427,16 @@ Map<String, String> _en() => {
   'method_khqr': 'KHQR Payment',
   'method_khqr_sub': 'Scan to pay with Bakong app or any bank apps',
   'method_aba_pay': 'ABA PAY',
-  'method_aba_pay_sub': 'Scan the ABA PAY QR from PayWay',
+  'method_aba_pay_sub': 'Open Simulator UAT to pay',
   'payment_success': 'Success',
   'payment_success_body': 'We received your payment for @title.',
   'aba_pay_sandbox_hint':
-      'ABA PAY Sandbox Mode cannot be paid with the live ABA app. Use ABA’s UAT simulator, or choose KHQR Payment to pay for real.',
-  'scan_aba_pay_qr': 'Scan this ABA PAY QR to pay',
+      'Sandbox opens Simulator UAT, not the live ABA app. Live ABA cannot finish sandbox payments.',
+  'scan_aba_pay_qr': 'Or scan this QR from another device',
+  'pay_with_aba_mobile': 'Pay with Simulator UAT',
+  'opening_aba': 'Opening Simulator UAT…',
+  'could_not_open_aba':
+      'Could not open Simulator UAT. Open that app and scan the QR. Live ABA cannot finish sandbox payments.',
   'payway_domain_blocked':
       'PayWay blocked this server. Ask ABA to whitelist your public IP for sandbox.',
   'i_have_paid': 'I have paid',
@@ -923,12 +927,16 @@ Map<String, String> _kh() => {
   'method_khqr': 'KHQR Payment',
   'method_khqr_sub': 'ស្កេនទូទាត់ជាមួយកម្មវិធី Bakong ឬកម្មវិធីធនាគារណាមួយ',
   'method_aba_pay': 'ABA PAY',
-  'method_aba_pay_sub': 'ស្កេន QR ABA PAY ពី PayWay',
+  'method_aba_pay_sub': 'បើក Simulator UAT ដើម្បីទូទាត់',
   'payment_success': 'ជោគជ័យ',
   'payment_success_body': 'យើងបានទទួលការទូទាត់សម្រាប់ @title។',
   'aba_pay_sandbox_hint':
-      'ABA PAY Sandbox Mode មិនអាចទូទាត់ជាមួយកម្មវិធី ABA ផ្ទាល់បានទេ។ ប្រើ UAT របស់ ABA ឬជ្រើស KHQR Payment ដើម្បីទូទាត់ពិត។',
-  'scan_aba_pay_qr': 'ស្កេន QR ABA PAY នេះដើម្បីទូទាត់',
+      'Sandbox បើក Simulator UAT មិនមែនកម្មវិធី ABA ផ្ទាល់ទេ។ ABA ផ្ទាល់មិនអាចបញ្ចប់ការទូទាត់ sandbox បានទេ។',
+  'scan_aba_pay_qr': 'ឬស្កេន QR នេះពីឧបករណ៍ផ្សេង',
+  'pay_with_aba_mobile': 'ទូទាត់តាម Simulator UAT',
+  'opening_aba': 'កំពុងបើក Simulator UAT…',
+  'could_not_open_aba':
+      'មិនអាចបើក Simulator UAT បានទេ។ សូមបើកកម្មវិធីនោះ រួចស្កេន QR។ ABA ផ្ទាល់មិនអាចបញ្ចប់ការទូទាត់ sandbox បានទេ។',
   'payway_domain_blocked':
       'PayWay បានទប់ស្កាត់ម៉ាស៊ីនមេនេះ។ សូមឲ្យ ABA ដាក់ IP សាធារណៈរបស់អ្នកក្នុង whitelist។',
   'i_have_paid': 'ខ្ញុំបានទូទាត់ហើយ',

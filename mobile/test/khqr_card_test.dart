@@ -128,7 +128,7 @@ void main() {
     },
   );
 
-  testWidgets('ABA PAY method copy asks to scan the PayWay QR', (tester) async {
+  testWidgets('ABA PAY method copy opens the ABA simulator', (tester) async {
     addTearDown(Get.reset);
 
     final event = Event(
@@ -144,10 +144,7 @@ void main() {
       priceCurrency: 'USD',
       paymentMethods: const [
         PaymentMethodOption(id: PaymentMethodOption.khqr, live: true),
-        PaymentMethodOption(
-          id: PaymentMethodOption.abaPay,
-          sandbox: true,
-        ),
+        PaymentMethodOption(id: PaymentMethodOption.abaPay, sandbox: true),
       ],
     );
 
@@ -161,7 +158,6 @@ void main() {
     );
 
     expect(find.text('ABA PAY'), findsOneWidget);
-    expect(find.text('Scan the ABA PAY QR from PayWay'), findsOneWidget);
-    expect(find.text('Pay from ABA Mobile'), findsNothing);
+    expect(find.text('Open Simulator UAT to pay'), findsOneWidget);
   });
 }

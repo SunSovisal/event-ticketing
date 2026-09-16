@@ -66,6 +66,7 @@ return [
         'api_key' => env('PAYWAY_API_KEY'),
         'base_url' => env('PAYWAY_BASE_URL', 'https://checkout-sandbox.payway.com.kh'),
         'qr_template' => env('PAYWAY_QR_TEMPLATE', 'template3_color'),
+        'return_deeplink_scheme' => env('PAYWAY_RETURN_DEEPLINK_SCHEME', 'goitc://pay'),
         'sandbox' => filter_var(
             env('PAYWAY_SANDBOX', str_contains((string) env('PAYWAY_BASE_URL', 'sandbox'), 'sandbox')),
             FILTER_VALIDATE_BOOLEAN,
