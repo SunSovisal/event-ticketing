@@ -123,6 +123,20 @@ Table events {
   }
 }
 
+Table event_views {
+  id          uuid         [pk]
+  event_id    uuid         [not null]
+  user_id     uuid         [null, note: 'Null for guest views']
+  created_at  timestamptz  [not null]
+
+  indexes {
+    (event_id, created_at)
+    (event_id, user_id, created_at)
+  }
+
+  Note: 'One row per event detail view. Authenticated users are unique per event per day.'
+}
+
 Table saved_events {
   id          uuid         [pk]
   user_id     uuid         [not null]
@@ -256,6 +270,9 @@ Ref: user_profiles.user_id > users.id
 Ref: saved_events.user_id > users.id [delete: cascade]
 Ref: saved_events.event_id > events.id [delete: cascade]
 
+Ref: event_views.event_id > events.id [delete: cascade]
+Ref: event_views.user_id > users.id [delete: set null]
+
 Ref: tickets.event_id > events.id
 Ref: tickets.user_id > users.id
 Ref: tickets.checked_in_by > users.id
@@ -284,6 +301,7 @@ TableGroup identity [color: #3B82F6] {
 TableGroup catalog [color: #10B981] {
   events
   saved_events
+  event_views
 }
 
 TableGroup inbox [color: #06B6D4] {

@@ -8,6 +8,7 @@ import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/admin/events/event_controller.dart';
 import 'package:itc_events/modules/admin/events/event_form_page.dart';
 import 'package:itc_events/modules/admin/events/event_logs_page.dart';
+import 'package:itc_events/modules/admin/kpis/event_kpi_page.dart';
 import 'package:itc_events/modules/events/event.dart';
 
 class AdminEventDetailPage extends StatefulWidget {
@@ -78,6 +79,14 @@ class _AdminEventDetailPageState extends State<AdminEventDetailPage> {
           children: [
             _SummaryCard(event: _event),
             const SizedBox(height: 16),
+            _LogsNavCard(
+              key: const Key('admin_event_kpi_nav'),
+              icon: Icons.insights_outlined,
+              title: 'event_insights'.tr,
+              subtitle: 'event_insights_subtitle'.tr,
+              onTap: () => Get.to(() => EventKpiPage(eventId: _event.id)),
+            ),
+            const SizedBox(height: 12),
             _LogsNavCard(
               key: const Key('admin_event_manage_nav'),
               icon: Icons.manage_accounts_outlined,
