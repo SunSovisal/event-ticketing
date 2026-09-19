@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\User;
+use App\Services\EventViewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
+    public function __construct(private EventViewService $views) {}
+
     public function index(Request $request): JsonResponse
     {
         $events = Event::query()
@@ -33,6 +36,8 @@ class EventController extends Controller
         if ($event === null) {
             return $this->jsonError('NOT_FOUND', 'Event not found.', 404);
         }
+
+        $this->views->record($event, $this->viewer($request));
 
         return $this->jsonResource(new EventResource($event));
     }

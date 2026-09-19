@@ -77,6 +77,8 @@ void main() {
 
     expect(find.text('Intro to Flutter Workshop'), findsOneWidget);
     expect(find.text('2 reserved · 1 checked in'), findsOneWidget);
+    expect(find.byKey(const Key('admin_event_kpi_nav')), findsOneWidget);
+    expect(find.text('Event insights'), findsOneWidget);
     expect(find.byKey(const Key('admin_event_manage_nav')), findsOneWidget);
     expect(find.text('Manage'), findsOneWidget);
     expect(

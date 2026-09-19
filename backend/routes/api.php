@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminCheckInController;
 use App\Http\Controllers\AdminEventController;
+use App\Http\Controllers\AdminKpiController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\InboxNotificationController;
@@ -51,6 +52,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/tickets/{id}', [TicketController::class, 'show']);
 
             Route::middleware('admin')->prefix('admin')->group(function () {
+                Route::get('/kpis', [AdminKpiController::class, 'index']);
+                Route::get('/events/{id}/kpis', [AdminKpiController::class, 'show']);
                 Route::get('/events', [AdminEventController::class, 'index']);
                 Route::post('/events', [AdminEventController::class, 'store']);
                 Route::get('/events/{id}', [AdminEventController::class, 'show']);

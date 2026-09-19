@@ -5,6 +5,7 @@ import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/admin/check_in/check_in_page.dart';
 import 'package:itc_events/modules/admin/check_in/scanner_page.dart';
 import 'package:itc_events/modules/admin/events/events_page.dart';
+import 'package:itc_events/modules/admin/kpis/kpi_dashboard_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
@@ -158,6 +159,17 @@ class ProfilePage extends StatelessWidget {
                     Card(
                       child: Column(
                         children: [
+                          ListTile(
+                            leading: Icon(
+                              Icons.insights_outlined,
+                              color: AppTheme.primary,
+                            ),
+                            title: Text('kpi_dashboard'.tr),
+                            subtitle: Text('kpi_dashboard_subtitle'.tr),
+                            trailing: Icon(Icons.chevron_right),
+                            onTap: () => Get.to(() => const KpiDashboardPage()),
+                          ),
+                          Divider(height: 1),
                           ListTile(
                             leading: Icon(
                               Icons.event_rounded,
