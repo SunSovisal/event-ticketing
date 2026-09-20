@@ -6,7 +6,7 @@ import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
-import 'package:itc_events/modules/notifications/inbox_notification.dart';
+import 'package:itc_events/modules/notifications/models/inbox_notification.dart';
 import 'package:itc_events/modules/notifications/notification_controller.dart';
 
 class NotificationsPage extends StatelessWidget {

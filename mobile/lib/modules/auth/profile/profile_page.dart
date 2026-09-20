@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
-import 'package:itc_events/modules/admin/check_in/check_in_page.dart';
-import 'package:itc_events/modules/admin/check_in/scanner_page.dart';
-import 'package:itc_events/modules/admin/events/events_page.dart';
+import 'package:itc_events/modules/admin/check_in/admin_check_in_binding.dart';
+import 'package:itc_events/modules/admin/check_in/admin_check_in_page.dart';
+import 'package:itc_events/modules/admin/check_in/admin_scanner_page.dart';
+import 'package:itc_events/modules/admin/events/admin_event_binding.dart';
+import 'package:itc_events/modules/admin/events/admin_events_page.dart';
+import 'package:itc_events/modules/admin/kpis/kpi_binding.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_dashboard_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
 import 'package:itc_events/modules/auth/profile/settings_page.dart';
 import 'package:itc_events/modules/auth/profile/widgets/campus_profile_fields.dart';
+import 'package:itc_events/modules/events/saved/saved_event_binding.dart';
 import 'package:itc_events/modules/events/saved/saved_events_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -151,7 +155,10 @@ class ProfilePage extends StatelessWidget {
                       ),
                       title: Text('saved_events'.tr),
                       trailing: Icon(Icons.chevron_right),
-                      onTap: () => Get.to(() => const SavedEventsPage()),
+                      onTap: () => Get.to(
+                        () => const SavedEventsPage(),
+                        binding: SavedEventBinding(),
+                      ),
                     ),
                   ),
                   if (auth.isAdmin) ...[
@@ -167,7 +174,10 @@ class ProfilePage extends StatelessWidget {
                             title: Text('kpi_dashboard'.tr),
                             subtitle: Text('kpi_dashboard_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () => Get.to(() => const KpiDashboardPage()),
+                            onTap: () => Get.to(
+                              () => const KpiDashboardPage(),
+                              binding: KpiBinding(),
+                            ),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -178,7 +188,10 @@ class ProfilePage extends StatelessWidget {
                             title: Text('manage_events'.tr),
                             subtitle: Text('manage_events_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () => Get.to(() => const AdminEventsPage()),
+                            onTap: () => Get.to(
+                              () => const AdminEventsPage(),
+                              binding: AdminEventBinding(),
+                            ),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -189,7 +202,10 @@ class ProfilePage extends StatelessWidget {
                             title: Text('admin_scanner'.tr),
                             subtitle: Text('admin_scanner_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () => Get.to(() => const AdminScanerPage()),
+                            onTap: () => Get.to(
+                              () => const AdminScannerPage(),
+                              binding: AdminCheckInBinding(),
+                            ),
                           ),
                           Divider(height: 1),
                           ListTile(
@@ -200,7 +216,10 @@ class ProfilePage extends StatelessWidget {
                             title: Text('manual_check_in'.tr),
                             subtitle: Text('manual_check_in_subtitle'.tr),
                             trailing: Icon(Icons.chevron_right),
-                            onTap: () => Get.to(() => const AdminCheckInPage()),
+                            onTap: () => Get.to(
+                              () => const AdminCheckInPage(),
+                              binding: AdminCheckInBinding(),
+                            ),
                           ),
                         ],
                       ),
@@ -402,7 +421,6 @@ class _SignedOutProfile extends StatelessWidget {
   }
 }
 
-// Linked sign-in methods card
 class _LinkedProvidersCard extends StatelessWidget {
   const _LinkedProvidersCard({required this.auth});
 

@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 
 class SavedEventController extends GetxController {
   SavedEventController({required ApiClient apiClient}) : _apiClient = apiClient;

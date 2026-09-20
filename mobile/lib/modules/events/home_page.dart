@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
-// import 'package:itc_events/app/widgets/loading_view.dart';
-import 'package:itc_events/modules/events/event_google_map_page.dart';
+import 'package:itc_events/modules/events/event_map_page.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
@@ -234,7 +232,6 @@ class _HomeHeader extends StatelessWidget {
     final mid = AppTheme.isDark(context)
         ? AppTheme.surfaceDark
         : const Color(0xFFEFF6FF);
-    // final brandLogoHeight = 34.0 - 6.0 * t;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 80),
@@ -317,17 +314,6 @@ class _HomeHeader extends StatelessWidget {
 }
 
 void _openNotifications() {
-  if (!Get.isRegistered<NotificationController>()) {
-    if (!Get.isRegistered<ApiClient>()) {
-      return;
-    }
-    Get.put(
-      NotificationController(
-        apiClient: Get.find<ApiClient>(),
-        fetchOnStart: false,
-      ),
-    );
-  }
   Get.to(() => const NotificationsPage());
 }
 
@@ -674,10 +660,10 @@ class _FeaturedCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: _hasPhoto
                         ? [
-                            Colors.black.withValues(alpha: 0.45),
+                            Colors.black.withValues(alpha: 0.25),
                             Colors.black.withValues(alpha: 0.05),
-                            Colors.black.withValues(alpha: 0.45),
-                            Colors.black.withValues(alpha: 0.85),
+                            Colors.black.withValues(alpha: 0.25),
+                            Colors.black.withValues(alpha: 0.65),
                           ]
                         : [
                             Colors.black.withValues(alpha: 0.12),

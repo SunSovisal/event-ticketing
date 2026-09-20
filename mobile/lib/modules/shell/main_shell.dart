@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
+import 'package:itc_events/modules/admin/health/health_binding.dart';
+import 'package:itc_events/modules/admin/health/health_page.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/profile/profile_page.dart';
 import 'package:itc_events/modules/auth/sign_in/sign_in_page.dart';
@@ -11,13 +12,14 @@ import 'package:itc_events/modules/chat/chat_page.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/notifications/notification_controller.dart';
-import 'package:itc_events/modules/health/health_binding.dart';
-import 'package:itc_events/modules/health/health_page.dart';
+import 'package:itc_events/modules/shell/shell_binding.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';
-import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
 void openMainShell({int index = 0}) {
-  Get.offAll(() => MainShell(initialIndex: index));
+  Get.offAll(
+    () => MainShell(initialIndex: index),
+    binding: ShellBinding(),
+  );
 }
 
 class MainShell extends StatefulWidget {
@@ -36,24 +38,7 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
-    if (!Get.isRegistered<EventController>()) {
-      Get.put(
-        EventController(apiClient: Get.find<ApiClient>(), fetchOnStart: false),
-      );
-    }
-    if (!Get.isRegistered<TicketController>()) {
-      Get.put(
-        TicketController(apiClient: Get.find<ApiClient>(), fetchOnStart: true),
-      );
-    }
-    if (!Get.isRegistered<NotificationController>()) {
-      Get.put(
-        NotificationController(
-          apiClient: Get.find<ApiClient>(),
-          fetchOnStart: false,
-        ),
-      );
-    }
+    ShellBinding().dependencies();
 
     final auth = Get.find<AuthController>();
     Get.find<EventController>().fetchEvents();
@@ -96,7 +81,7 @@ class _MainShellState extends State<MainShell> {
                 heroTag: 'health_fab',
                 tooltip: 'GoITC',
                 onPressed: () {
-                  Get.to(() => HealthPage(), binding: HealthBinding());
+                  Get.to(() => const HealthPage(), binding: HealthBinding());
                 },
                 child: const Icon(Icons.network_check),
               ),

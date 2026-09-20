@@ -6,10 +6,9 @@ import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
 class PhoneSignInPage extends StatefulWidget {
-  // Set linkMode to true when the user is already signed in and wants to
-  // link a phone number to their existing Firebase account.
   const PhoneSignInPage({super.key, this.linkMode = false});
 
+  /// When true, links a phone number to the signed-in Firebase account.
   final bool linkMode;
 
   @override
@@ -61,13 +60,11 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
     if (widget.linkMode) {
       await _auth.confirmPhoneLinkCode(code);
       if (_auth.errorMessage.value.isEmpty && mounted) {
-        Get.back(); // return to ProfilePage
+        Get.back();
       }
       return;
     }
 
-    // -- original sign-in path 
-    // read name after fetchMe() to get value from DB
     await _auth.confirmPhoneCode(code);
     if (_auth.isSignedIn && _auth.me.value != null) {
       final name = _auth.me.value?['name']?.toString().trim() ?? '';

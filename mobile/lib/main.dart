@@ -9,7 +9,7 @@ import 'package:itc_events/app/locale/app_translations.dart';
 import 'package:itc_events/app/locale/locale_controller.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/auth/auth_binding.dart';
-import 'package:itc_events/app/theme/them_controller_page.dart';
+import 'package:itc_events/app/theme/theme_controller.dart';
 import 'package:itc_events/modules/shell/splash_page.dart';
 
 Future<void> main() async {
@@ -27,7 +27,6 @@ Future<void> main() async {
     );
   }
 
-  // ApiClient lives for the whole app
   final apiClient = ApiClient();
 
   Get.put<ApiClient>(apiClient, permanent: true);

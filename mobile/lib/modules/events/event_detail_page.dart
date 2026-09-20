@@ -9,14 +9,14 @@ import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/widgets/sign_in_sheet.dart';
 import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
-import 'package:itc_events/modules/events/event_google_map_page.dart';
+import 'package:itc_events/modules/events/event_map_page.dart';
 import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
-import 'package:itc_events/modules/tickets/confirm_tickets_page.dart';
-import 'package:itc_events/modules/tickets/payment_method_page.dart';
-import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/tickets/confirm_ticket_page.dart';
+import 'package:itc_events/modules/tickets/payment/payment_method_page.dart';
+import 'package:itc_events/modules/tickets/models/ticket.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
 import 'package:itc_events/modules/tickets/view_ticket_page.dart';
 
@@ -188,7 +188,6 @@ class EventDetailPage extends StatelessWidget {
         : null;
 
     return Scaffold(
-      // backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: const Text('Event'),
         actions: [

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/modules/events/event_category.dart';
+import 'package:itc_events/modules/events/models/event_category.dart';
 
 /// Horizontally scrolling category filter. [selected] of null means All.
 class EventCategoryScroller extends StatelessWidget {

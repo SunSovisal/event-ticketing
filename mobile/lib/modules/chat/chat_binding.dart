@@ -1,4 +1,4 @@
-import 'package:get/instance_manager.dart';
+import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
 

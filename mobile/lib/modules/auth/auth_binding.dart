@@ -8,7 +8,7 @@ class AuthBinding extends Bindings {
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(apiClient: Get.find<ApiClient>()),
-        permanent: true, // won't dispose
+        permanent: true,
       );
     }
   }

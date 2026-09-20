@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/widgets/sign_in_sheet.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 

@@ -340,7 +340,6 @@ class AuthController {
     }
   }
 
-  // Provider linking
   /// Links the Google provider to the currently signed-in Firebase account.
   ///
   /// When the Google email differs from the account email, [confirmDifferentEmail]

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
-import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
 import 'package:itc_events/modules/events/event_controller.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
+import 'package:itc_events/modules/events/saved/bookmark_actions.dart';
+import 'package:itc_events/modules/events/saved/saved_event_binding.dart';
 import 'package:itc_events/modules/events/saved/saved_event_controller.dart';
 import 'package:itc_events/modules/events/widgets/event_list_card.dart';
 
@@ -24,9 +24,8 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.put(
-      SavedEventController(apiClient: Get.find<ApiClient>()),
-    );
+    SavedEventBinding().dependencies();
+    _controller = Get.find<SavedEventController>();
   }
 
   @override

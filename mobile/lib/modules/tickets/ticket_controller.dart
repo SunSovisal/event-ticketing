@@ -2,10 +2,10 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/events/event.dart';
-import 'package:itc_events/modules/tickets/event_payment.dart';
-import 'package:itc_events/modules/tickets/payment_method.dart';
-import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/events/models/event.dart';
+import 'package:itc_events/modules/tickets/payment/models/event_payment.dart';
+import 'package:itc_events/modules/tickets/payment/models/payment_method.dart';
+import 'package:itc_events/modules/tickets/models/ticket.dart';
 
 class TicketController extends GetxController {
   TicketController({required ApiClient apiClient, this.fetchOnStart = true})

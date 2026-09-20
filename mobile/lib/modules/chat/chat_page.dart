@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/chat/models/chat_message.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 import 'package:itc_events/modules/events/event_detail_page.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 

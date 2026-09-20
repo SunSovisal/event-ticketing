@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/services/push_notification_service.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/notifications/inbox_notification.dart';
+import 'package:itc_events/modules/notifications/models/inbox_notification.dart';
 
 class NotificationController extends GetxController {
   NotificationController({

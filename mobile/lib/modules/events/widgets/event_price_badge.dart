@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 
 /// Free / price pill so a card shows whether checkout is needed.
 class EventPriceBadge extends StatelessWidget {

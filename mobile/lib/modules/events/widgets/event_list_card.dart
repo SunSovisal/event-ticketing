@@ -5,7 +5,7 @@ import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/event_cover_image.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
-import 'package:itc_events/modules/events/event.dart';
+import 'package:itc_events/modules/events/models/event.dart';
 import 'package:itc_events/modules/events/widgets/event_bookmark_button.dart';
 import 'package:itc_events/modules/events/widgets/event_price_badge.dart';
 

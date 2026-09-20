@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/modules/admin/kpis/event_kpi_page.dart';
+import 'package:itc_events/modules/admin/kpis/kpi_binding.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_charts.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_controller.dart';
-import 'package:itc_events/modules/admin/kpis/kpi_models.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_widgets.dart';
+import 'package:itc_events/modules/admin/kpis/models/kpi_models.dart';
 
 class KpiDashboardPage extends StatefulWidget {
   const KpiDashboardPage({super.key, this.fetchOnStart = true});
@@ -26,7 +26,8 @@ class _KpiDashboardPageState extends State<KpiDashboardPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.put(KpiController(apiClient: Get.find<ApiClient>()));
+    KpiBinding().dependencies();
+    _controller = Get.find<KpiController>();
     if (widget.fetchOnStart) {
       _controller.fetchOverview();
     }
@@ -168,7 +169,10 @@ class _TopEventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Get.to(() => EventKpiPage(eventId: event.id)),
+      onTap: () => Get.to(
+        () => EventKpiPage(eventId: event.id),
+        binding: EventKpiBinding(event.id),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(

@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/modules/admin/kpis/kpi_models.dart';
+import 'package:itc_events/modules/admin/kpis/models/kpi_models.dart';
 
 class KpiTrendChart extends StatelessWidget {
   const KpiTrendChart({

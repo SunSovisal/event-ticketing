@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
+import 'package:itc_events/modules/admin/kpis/kpi_binding.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_charts.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_controller.dart';
-import 'package:itc_events/modules/admin/kpis/kpi_models.dart';
 import 'package:itc_events/modules/admin/kpis/kpi_widgets.dart';
+import 'package:itc_events/modules/admin/kpis/models/kpi_models.dart';
 
 class EventKpiPage extends StatefulWidget {
   const EventKpiPage({
@@ -31,10 +31,8 @@ class _EventKpiPageState extends State<EventKpiPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.put(
-      KpiController(apiClient: Get.find<ApiClient>()),
-      tag: widget.eventId,
-    );
+    EventKpiBinding(widget.eventId).dependencies();
+    _controller = Get.find<KpiController>(tag: widget.eventId);
     if (widget.fetchOnStart) {
       _controller.fetchEvent(widget.eventId);
     }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Central theme for ITC Events — Light and Dark theme configurations.
 abstract final class AppTheme {
   static const String englishFontFamily = 'Roboto';
   static const String khmerFontFamily = 'NotoSansKhmer';
@@ -409,7 +408,6 @@ abstract final class AppTheme {
     );
   }
 
-  /// Noto Sans Khmer
   static TextStyle khmerStyle(TextStyle style) {
     return style.copyWith(
       fontFamily: khmerFontFamily,

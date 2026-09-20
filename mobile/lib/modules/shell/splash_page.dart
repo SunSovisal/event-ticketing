@@ -7,10 +7,8 @@ import 'package:itc_events/modules/shell/main_shell.dart';
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
-  void _browseEvents(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const MainShell()),
-    );
+  void _browseEvents() {
+    openMainShell();
   }
 
   void _openSignIn() {
@@ -54,7 +52,7 @@ class SplashPage extends StatelessWidget {
                 ),
                 const Spacer(flex: 3),
                 FilledButton(
-                  onPressed: () => _browseEvents(context),
+                  onPressed: _browseEvents,
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppTheme.primary,

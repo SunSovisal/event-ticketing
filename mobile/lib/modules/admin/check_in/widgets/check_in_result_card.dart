@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
 import 'package:itc_events/app/widgets/app_card.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
-import 'package:itc_events/modules/admin/check_in/check_in_outcome.dart';
+import 'package:itc_events/modules/admin/check_in/models/check_in_outcome.dart';
 
 class CheckInResultCard extends StatelessWidget {
   const CheckInResultCard({super.key, required this.outcome});

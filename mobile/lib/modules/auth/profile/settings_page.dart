@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/locale/locale_controller.dart';
 import 'package:itc_events/app/theme/app_theme.dart';
-import 'package:itc_events/app/theme/them_controller_page.dart';
+import 'package:itc_events/app/theme/theme_controller.dart';
 import 'package:itc_events/app/widgets/app_page_bar.dart';
 import 'package:itc_events/modules/auth/profile/legal_document_page.dart';
 

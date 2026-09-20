@@ -8,7 +8,7 @@ import 'package:itc_events/app/widgets/empty_state_view.dart';
 import 'package:itc_events/app/widgets/loading_view.dart';
 import 'package:itc_events/app/widgets/status_chip.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
-import 'package:itc_events/modules/tickets/ticket.dart';
+import 'package:itc_events/modules/tickets/models/ticket.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
 import 'package:itc_events/modules/tickets/view_ticket_page.dart';
 

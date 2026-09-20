@@ -20,9 +20,6 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->singleton(CoverStorage::class, CloudinaryCoverStorage::class);
@@ -35,9 +32,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PayWayGateway::class, HttpPayWayGateway::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {

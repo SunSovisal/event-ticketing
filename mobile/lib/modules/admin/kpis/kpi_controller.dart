@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:itc_events/app/services/api_client.dart';
-import 'package:itc_events/modules/admin/kpis/kpi_models.dart';
+import 'package:itc_events/modules/admin/kpis/models/kpi_models.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 
 class KpiController extends GetxController {
