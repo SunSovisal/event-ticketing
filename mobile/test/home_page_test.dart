@@ -31,6 +31,20 @@ Event _sampleEvent({
   );
 }
 
+Event _filler(int index) {
+  return Event(
+    id: 'filler-$index',
+    title: 'Campus Event $index',
+    description: 'Session.',
+    startsAt: DateTime.utc(2026, 11, index + 1, 7),
+    locationLabel: 'Building C - Room 10$index',
+    capacity: 30,
+    spotsRemaining: 30,
+    status: 'published',
+    category: 'Workshop',
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -125,7 +139,10 @@ void main() {
   testWidgets('Home shows published events and ITC placeholder', (
     tester,
   ) async {
-    final events = controller()..events.assignAll([_sampleEvent()]);
+    // The first three events go to the featured carousel and are kept out of
+    // the list below, so the sample needs a fourth slot to reach a list card.
+    final events = controller()
+      ..events.assignAll([_filler(1), _filler(2), _filler(3), _sampleEvent()]);
     await pumpHome(tester, events);
 
     expect(find.text('Intro to Flutter Workshop'), findsWidgets);
@@ -136,6 +153,55 @@ void main() {
     expect(find.byIcon(Icons.bookmark_border), findsWidgets);
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Workshop'), findsWidgets);
+  });
+
+  testWidgets('Featured carousel holds the top 3 and skips them in the list', (
+    tester,
+  ) async {
+    final events = controller()
+      ..events.assignAll([_filler(1), _filler(2), _filler(3), _sampleEvent()]);
+    await pumpHome(tester, events);
+
+    expect(find.byKey(const Key('home_featured_carousel')), findsOneWidget);
+    expect(find.byType(PageView), findsOneWidget);
+
+    // Featured events appear once (carousel only), not again in the list.
+    expect(find.text('Campus Event 1'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Intro to Flutter Workshop'), findsOneWidget);
+  });
+
+  testWidgets('Featured carousel auto-advances and loops back to the first', (
+    tester,
+  ) async {
+    final events = controller()
+      ..events.assignAll([_filler(1), _filler(2), _filler(3)]);
+    await pumpHome(tester, events);
+
+    final controllerOf = tester
+        .widget<PageView>(find.byType(PageView))
+        .controller!;
+    final start = controllerOf.page!.round();
+
+    for (var step = 1; step <= 3; step++) {
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(controllerOf.page!.round(), start + step);
+    }
+
+    // Three advances across three events lands back on the first one.
+    expect((controllerOf.page!.round() - start) % 3, 0);
+  });
+
+  testWidgets('A single featured event renders without carousel chrome', (
+    tester,
+  ) async {
+    final events = controller()..events.assignAll([_sampleEvent()]);
+    await pumpHome(tester, events);
+
+    expect(find.byKey(const Key('home_featured_carousel')), findsOneWidget);
+    expect(find.byType(PageView), findsNothing);
+    expect(find.text('Upcoming'), findsNothing);
   });
 
   testWidgets('Home category chip filters the upcoming list', (tester) async {

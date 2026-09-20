@@ -69,23 +69,22 @@ class _FeaturedBone extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      height: 228,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.primary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Bone(color: color, width: 72, height: 12),
-          const SizedBox(height: 16),
-          _Bone(color: color, width: 56, height: 22, radius: 8),
-          const SizedBox(height: 12),
-          _Bone(color: color, width: 220, height: 22),
+          const Spacer(),
+          _Bone(color: color, width: 56, height: 20, radius: 8),
           const SizedBox(height: 8),
-          _Bone(color: color, width: 140, height: 14),
-          const SizedBox(height: 20),
-          _Bone(color: color, width: 120, height: 36, radius: 10),
+          _Bone(color: color, width: 180, height: 16),
+          const SizedBox(height: 6),
+          _Bone(color: color, width: 140, height: 12),
         ],
       ),
     );
@@ -101,29 +100,40 @@ class _EventCardBone extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ColoredBox(
-            color: color,
-            child: const SizedBox(height: 140, width: double.infinity),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Bone(color: color, width: 84, height: 22, radius: 11),
-                const SizedBox(height: 10),
-                _Bone(color: color, width: 200, height: 16),
-                const SizedBox(height: 10),
-                _Bone(color: color, width: 160, height: 12),
-                const SizedBox(height: 6),
-                _Bone(color: color, width: 180, height: 12),
-              ],
+      child: SizedBox(
+        height: 112,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Bone(color: color, width: 64, height: 16, radius: 6),
+                    const SizedBox(height: 8),
+                    _Bone(color: color, width: 160, height: 13),
+                    const Spacer(),
+                    _Bone(color: color, width: 120, height: 10),
+                    const SizedBox(height: 4),
+                    _Bone(color: color, width: 88, height: 10),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

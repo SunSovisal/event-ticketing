@@ -9,6 +9,8 @@ class EventCoverImage extends StatelessWidget {
     this.height = 140,
     this.borderRadius = 12,
     this.expand = false,
+    this.fit = BoxFit.cover,
+    this.letterboxColor,
   });
 
   final String? imageUrl;
@@ -18,13 +20,19 @@ class EventCoverImage extends StatelessWidget {
   /// When true, fills the parent (e.g. inside [AspectRatio]) instead of a fixed height.
   final bool expand;
 
+  /// [BoxFit.contain] keeps the whole poster visible; unused area uses
+  /// [letterboxColor] (white by default).
+  final BoxFit fit;
+  final Color? letterboxColor;
+
   @override
   Widget build(BuildContext context) {
     final image = imageUrl == null || imageUrl!.isEmpty
         ? const _ItcPlaceholder()
         : Image.network(
             imageUrl!,
-            fit: BoxFit.cover,
+            fit: fit,
+            alignment: Alignment.center,
             width: double.infinity,
             height: double.infinity,
             errorBuilder: (_, _, _) => const _ItcPlaceholder(),
@@ -32,13 +40,16 @@ class EventCoverImage extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: expand
-          ? SizedBox.expand(child: image)
-          : SizedBox(
-              height: height,
-              width: double.infinity,
-              child: image,
-            ),
+      child: ColoredBox(
+        color:
+            letterboxColor ??
+            (fit == BoxFit.cover
+                ? AppTheme.primary.withValues(alpha: 0.08)
+                : Colors.white),
+        child: expand
+            ? SizedBox.expand(child: image)
+            : SizedBox(height: height, width: double.infinity, child: image),
+      ),
     );
   }
 }
@@ -53,17 +64,7 @@ class _ItcPlaceholder extends StatelessWidget {
       child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/itc_logo.png', height: 36),
-            const SizedBox(width: 10),
-            Text(
-              'ITC',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+          children: [Image.asset('assets/itc_logo.png', height: 36)],
         ),
       ),
     );

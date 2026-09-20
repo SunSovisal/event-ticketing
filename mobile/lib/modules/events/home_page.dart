@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:itc_events/app/formatters/event_date.dart';
@@ -34,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   double _headerCollapse = 0;
 
   static const _collapseRange = 56.0;
+  static const _featuredCount = 3;
 
   @override
   void dispose() {
@@ -48,6 +51,13 @@ class _HomePageState extends State<HomePage> {
       setState(() => _headerCollapse = next);
     }
     return false;
+  }
+
+  /// Top events for the hero carousel. Hidden while searching or filtering so
+  /// the results are the only thing on screen.
+  List<Event> _featuredEvents(List<Event> events) {
+    if (_query.trim().isNotEmpty || _category != null) return const [];
+    return events.take(_featuredCount).toList();
   }
 
   List<Event> _filteredEvents(List<Event> events) {
@@ -71,11 +81,18 @@ class _HomePageState extends State<HomePage> {
     final events = Get.find<EventController>();
 
     return Obx(() {
-      final visible = _filteredEvents(events.events);
-      final featured =
-          _query.trim().isEmpty && _category == null && events.events.isNotEmpty
-          ? events.events.first
-          : null;
+      final featured = _featuredEvents(events.events);
+      final featuredIds = featured.map((event) => event.id).toSet();
+
+      // Featured events are not repeated in the list below.
+      final visible = _filteredEvents(
+        events.events,
+      ).where((event) => !featuredIds.contains(event.id)).toList();
+
+      // With few events the carousel can consume all of them; showing an
+      // "upcoming" empty state under a full carousel would read as a bug.
+      final showUpcoming = visible.isNotEmpty || featured.isEmpty;
+      final busyIds = events.savingIds.toSet();
 
       final unread = Get.isRegistered<NotificationController>()
           ? Get.find<NotificationController>().unreadCount.value
@@ -138,47 +155,49 @@ class _HomePageState extends State<HomePage> {
                           onAction: events.fetchEvents,
                         )
                       else ...[
-                        if (featured != null) ...[
-                          _FeaturedCard(
-                            event: featured,
-                            onTap: () =>
-                                Get.to(() => EventDetailPage(event: featured)),
-                            onBookmark: () =>
-                                toggleEventBookmark(context, featured),
-                            isBookmarkBusy: events.savingIds.contains(
-                              featured.id,
-                            ),
+                        if (featured.isNotEmpty) ...[
+                          _FeaturedCarousel(
+                            key: const Key('home_featured_carousel'),
+                            events: featured,
+                            busyIds: busyIds,
+                            onOpen: (event) =>
+                                Get.to(() => EventDetailPage(event: event)),
+                            onBookmark: (event) =>
+                                toggleEventBookmark(context, event),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
                         ],
-                        Text(
-                          'upcoming'.tr,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        if (visible.isEmpty)
-                          EmptyStateView(
-                            icon: Icons.event_busy,
-                            message: _query.trim().isEmpty && _category == null
-                                ? 'no_upcoming_events'.tr
-                                : 'no_events_match_filters'.tr,
-                          )
-                        else
-                          ...visible.map(
-                            (event) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: EventListCard(
-                                event: event,
-                                onTap: () =>
-                                    Get.to(() => EventDetailPage(event: event)),
-                                onBookmark: () =>
-                                    toggleEventBookmark(context, event),
-                                isBookmarkBusy: events.savingIds.contains(
-                                  event.id,
+                        if (showUpcoming) ...[
+                          Text(
+                            'upcoming'.tr,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          if (visible.isEmpty)
+                            EmptyStateView(
+                              icon: Icons.event_busy,
+                              message:
+                                  _query.trim().isEmpty && _category == null
+                                  ? 'no_upcoming_events'.tr
+                                  : 'no_events_match_filters'.tr,
+                            )
+                          else
+                            ...visible.map(
+                              (event) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: EventListCard(
+                                  event: event,
+                                  compact: true,
+                                  onTap: () => Get.to(
+                                    () => EventDetailPage(event: event),
+                                  ),
+                                  onBookmark: () =>
+                                      toggleEventBookmark(context, event),
+                                  isBookmarkBusy: busyIds.contains(event.id),
                                 ),
                               ),
                             ),
-                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -332,30 +351,15 @@ class _HeaderActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: AppTheme.surfaceOf(context),
+        color: Colors.transparent,
         shape: const CircleBorder(),
-        elevation: 0,
-        shadowColor: AppTheme.primary.withValues(alpha: 0.2),
         child: InkWell(
           key: buttonKey,
           customBorder: const CircleBorder(),
           onTap: onPressed,
-          child: Ink(
+          child: SizedBox(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppTheme.primary.withValues(alpha: 0.12),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.01),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -395,6 +399,215 @@ class _HeaderActionButton extends StatelessWidget {
   }
 }
 
+/// Auto-advancing hero carousel for the top events. Swiping wraps around in
+/// both directions, so there is no dead end at either edge.
+class _FeaturedCarousel extends StatefulWidget {
+  const _FeaturedCarousel({
+    super.key,
+    required this.events,
+    required this.busyIds,
+    required this.onOpen,
+    required this.onBookmark,
+  });
+
+  final List<Event> events;
+  final Set<String> busyIds;
+  final ValueChanged<Event> onOpen;
+  final ValueChanged<Event> onBookmark;
+
+  @override
+  State<_FeaturedCarousel> createState() => _FeaturedCarouselState();
+}
+
+class _FeaturedCarouselState extends State<_FeaturedCarousel> {
+  static const _autoAdvance = Duration(seconds: 5);
+  static const _slide = Duration(milliseconds: 450);
+
+  /// The page list is the events repeated many times to fake an endless strip.
+  /// [_onPageChanged] recenters long before either end is reachable.
+  static const _loops = 400;
+
+  static const _viewportFraction = 0.94;
+
+  late final PageController _controller = PageController(
+    initialPage: _middlePage,
+    viewportFraction: _viewportFraction,
+  );
+
+  Timer? _timer;
+  int _index = 0;
+
+  int get _count => widget.events.length;
+  int get _middlePage => _count * (_loops ~/ 2);
+
+  /// Full-width hero, capped so tablets don't get a billboard.
+  static double _heightFor(double width) => (width / 1.55).clamp(216.0, 248.0);
+
+  static double _sideInset(double width) => width * (1 - _viewportFraction) / 2;
+
+  @override
+  void initState() {
+    super.initState();
+    _restartTimer();
+  }
+
+  @override
+  void didUpdateWidget(_FeaturedCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.events.length != _count) {
+      _index = 0;
+      if (_controller.hasClients) _controller.jumpToPage(_middlePage);
+      _restartTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _restartTimer() {
+    _timer?.cancel();
+    if (_count < 2) return;
+    _timer = Timer.periodic(_autoAdvance, (_) {
+      if (!mounted || !_controller.hasClients) return;
+
+      // Home stays mounted behind a pushed event page; don't advance there.
+      final route = ModalRoute.of(context);
+      if (route != null && !route.isCurrent) return;
+
+      _controller.nextPage(duration: _slide, curve: Curves.easeInOutCubic);
+    });
+  }
+
+  void _onPageChanged(int page) {
+    setState(() => _index = page % _count);
+
+    if (page < _count || page > _count * (_loops - 1)) {
+      // Recenter once the slide has settled so the jump is never visible.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _controller.hasClients) {
+          _controller.jumpToPage(_middlePage + _index);
+        }
+      });
+    }
+  }
+
+  void _goTo(int index) {
+    if (!_controller.hasClients) return;
+    final current = _controller.page?.round() ?? _middlePage;
+    _controller.animateToPage(
+      current + (index - _index),
+      duration: _slide,
+      curve: Curves.easeInOutCubic,
+    );
+    _restartTimer();
+  }
+
+  Widget _cardFor(Event event) {
+    return _FeaturedCard(
+      event: event,
+      onTap: () => widget.onOpen(event),
+      onBookmark: () => widget.onBookmark(event),
+      isBookmarkBusy: widget.busyIds.contains(event.id),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = _heightFor(constraints.maxWidth);
+
+        if (_count < 2) {
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _sideInset(constraints.maxWidth),
+            ),
+            child: SizedBox(
+              height: height,
+              child: _cardFor(widget.events.first),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            SizedBox(
+              height: height,
+              child: Listener(
+                // Auto-advance should never fight the user's thumb.
+                onPointerDown: (_) => _timer?.cancel(),
+                onPointerUp: (_) => _restartTimer(),
+                onPointerCancel: (_) => _restartTimer(),
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: _onPageChanged,
+                  itemCount: _count * _loops,
+                  itemBuilder: (context, page) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: _cardFor(widget.events[page % _count]),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _CarouselDots(count: _count, index: _index, onTap: _goTo),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CarouselDots extends StatelessWidget {
+  const _CarouselDots({
+    required this.count,
+    required this.index,
+    required this.onTap,
+  });
+
+  final int count;
+  final int index;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < count; i++)
+          GestureDetector(
+            onTap: () => onTap(i),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 5),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                width: i == index ? 22 : 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(
+                    alpha: i == index ? 1 : 0.25,
+                  ),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Hero card for a featured event: cover photo under a scrim, or a branded
+/// gradient backdrop when the event has no cover. Tapping anywhere opens the
+/// event, so there is no separate action button.
 class _FeaturedCard extends StatelessWidget {
   const _FeaturedCard({
     required this.event,
@@ -408,76 +621,314 @@ class _FeaturedCard extends StatelessWidget {
   final VoidCallback onBookmark;
   final bool isBookmarkBusy;
 
+  static const _radius = 22.0;
+
+  bool get _hasPhoto => event.imageUrl != null && event.imageUrl!.isNotEmpty;
+
+  Widget? get _statusChip {
+    if (event.isCancelled) {
+      return _HeroChip(label: 'status_cancelled'.tr, color: AppTheme.error);
+    }
+    if (event.hasEnded()) {
+      return _HeroChip(label: 'status_ended'.tr, color: AppTheme.textSecondary);
+    }
+    if (event.isSoldOut) {
+      return _HeroChip(label: 'sold_out'.tr, color: AppTheme.warning);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final statusChip = _statusChip;
+
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(_radius),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
+        key: Key('home_featured_card_${event.id}'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppTheme.primary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'featured'.tr,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_hasPhoto)
+              Image.network(
+                event.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const _FeaturedBackdrop(),
+              )
+            else
+              const _FeaturedBackdrop(),
+
+            // Photos need a heavy scrim plus a brand tint to keep white
+            // text readable and match the rest of the app. The gradient
+            // backdrop is already dark by design, so it only gets a
+            // light lift under the text.
+            IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: _hasPhoto
+                        ? [
+                            Colors.black.withValues(alpha: 0.45),
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.45),
+                            Colors.black.withValues(alpha: 0.85),
+                          ]
+                        : [
+                            Colors.black.withValues(alpha: 0.12),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.45),
+                          ],
+                    stops: const [0, 0.3, 0.62, 1],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '·  ${event.category}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+                child: _hasPhoto
+                    ? ColoredBox(
+                        color: AppTheme.heroBlue.withValues(alpha: 0.2),
+                      )
+                    : null,
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const _FeaturedPill(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          event.category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 40),
+                    ],
                   ),
                   const Spacer(),
-                  EventBookmarkButton(
-                    isSaved: event.isSaved,
-                    isBusy: isBookmarkBusy,
-                    onDark: true,
-                    onPressed: onBookmark,
+                  EventPriceBadge(event: event, onImage: true),
+                  if (statusChip != null) ...[
+                    const SizedBox(height: 8),
+                    statusChip,
+                  ],
+                  const SizedBox(height: 10),
+                  Text(
+                    event.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _HeroMetaRow(
+                    icon: Icons.calendar_today_outlined,
+                    text: EventDate.format(event.startsAt),
+                    emphasized: true,
+                  ),
+                  const SizedBox(height: 4),
+                  _HeroMetaRow(
+                    icon: Icons.location_on_outlined,
+                    text: event.locationLabel,
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              EventPriceBadge(event: event, onImage: true),
-              const SizedBox(height: 6),
-              Text(
-                event.title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: Colors.white),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: EventBookmarkButton(
+                isSaved: event.isSaved,
+                isBusy: isBookmarkBusy,
+                onDark: true,
+                compact: true,
+                onPressed: onBookmark,
               ),
-              const SizedBox(height: 8),
-              Text(
-                EventDate.format(event.startsAt),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Branded backdrop used when an event has no cover photo, so the fallback
+/// reads as a deliberate design rather than a missing image.
+class _FeaturedBackdrop extends StatelessWidget {
+  const _FeaturedBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.heroIndigo, AppTheme.primary, AppTheme.heroBlue],
+          stops: [0, 0.52, 1],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Align(
+            alignment: const Alignment(1.15, -1.25),
+            child: _Glow(size: 200, color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          Align(
+            alignment: const Alignment(-1.2, 1.35),
+            child: _Glow(
+              size: 180,
+              color: AppTheme.heroIndigo.withValues(alpha: 0.55),
+            ),
+          ),
+          Positioned(
+            right: -16,
+            bottom: -12,
+            child: Opacity(
+              opacity: 0.1,
+              child: Image.asset('assets/itc_logo.png', height: 130),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Glow extends StatelessWidget {
+  const _Glow({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedPill extends StatelessWidget {
+  const _FeaturedPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.auto_awesome, size: 13, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              'featured'.tr,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
               ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: onTap,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white54),
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
-                ),
-                child: Text('view_details'.tr),
-              ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Status pill with enough contrast to sit on a cover photo.
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HeroMetaRow extends StatelessWidget {
+  const _HeroMetaRow({
+    required this.icon,
+    required this.text,
+    this.emphasized = false,
+  });
+
+  final IconData icon;
+  final String text;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Colors.white.withValues(alpha: emphasized ? 0.95 : 0.75);
+    return Row(
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontSize: 12,
+              fontWeight: emphasized ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
