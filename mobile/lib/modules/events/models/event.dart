@@ -74,9 +74,8 @@ class Event {
   /// check-in opens 2 hours before start.
   DateTime get checkInOpensAt => startsAt.subtract(const Duration(hours: 2));
 
-  /// check-in closes 2 hours after effective end.
-  DateTime get checkInClosesAt =>
-      effectiveEndsAt.add(const Duration(hours: 2));
+  /// check-in closes 1 hour after start.
+  DateTime get checkInClosesAt => startsAt.add(const Duration(hours: 1));
 
   bool hasEnded([DateTime? at]) {
     final now = (at ?? DateTime.now()).toUtc();

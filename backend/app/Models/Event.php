@@ -83,7 +83,7 @@ class Event extends Model
 
     public function checkInClosesAt(): Carbon
     {
-        return $this->effectiveEndsAt()->copy()->addHours(2);
+        return $this->starts_at->copy()->addHour();
     }
 
     /**

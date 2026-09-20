@@ -169,4 +169,23 @@ void main() {
     expect(payment.isPending, isTrue);
     expect(payment.isAbaPay, isTrue);
   });
+
+  test('check-in closes one hour after start', () {
+    final event = Event.fromJson({
+      'id': 'evt-window',
+      'title': 'Open Source Meetup',
+      'description': 'Lightning talks.',
+      'starts_at': '2026-09-12T07:00:00+00:00',
+      'ends_at': '2026-09-12T09:00:00+00:00',
+      'location_label': 'Building B - Room 204',
+      'capacity': 60,
+      'spots_remaining': 18,
+      'status': 'published',
+    });
+
+    expect(event.checkInOpensAt, DateTime.utc(2026, 9, 12, 5));
+    expect(event.checkInClosesAt, DateTime.utc(2026, 9, 12, 8));
+    expect(event.isCheckInClosed(DateTime.utc(2026, 9, 12, 8)), isFalse);
+    expect(event.isCheckInClosed(DateTime.utc(2026, 9, 12, 8, 0, 1)), isTrue);
+  });
 }

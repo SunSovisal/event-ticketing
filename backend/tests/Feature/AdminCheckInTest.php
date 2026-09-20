@@ -143,6 +143,29 @@ class AdminCheckInTest extends TestCase
         ]);
     }
 
+    public function test_too_late_is_rejected_after_start_plus_one_hour(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $event = Event::factory()->published()->create([
+            'starts_at' => now()->subHours(2),
+            'ends_at' => now()->addHour(),
+        ]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id]);
+
+        $this->actingAsFirebaseUser($admin)
+            ->postJson('/api/v1/admin/check-in', [
+                'ticket_code' => $ticket->ticket_code,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'TOO_LATE');
+
+        $this->assertSame('valid', $ticket->fresh()->status);
+        $this->assertDatabaseHas('check_in_attempts', [
+            'ticket_id' => $ticket->id,
+            'result' => 'too_late',
+        ]);
+    }
+
     public function test_cancelled_ticket_is_rejected(): void
     {
         $admin = User::factory()->admin()->create();

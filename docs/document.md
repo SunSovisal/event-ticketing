@@ -316,7 +316,7 @@ function checkIn(ticketCode, authenticatedAdmin, method):
 - `tickets.checked_in_at` and `tickets.checked_in_by` remain the source of truth for a successful check-in.
 - `check_in_attempts` is append-only. Never update or delete an attempt row.
 - Insert an attempt for **every** scan, including failures and unknown codes.
-- The fixed MVP check-in window opens two hours before `starts_at` and closes two hours after the effective event end. Flutter scanning and manual entry must call the same Laravel `CheckInService` so their behavior cannot diverge.
+- The fixed MVP check-in window opens two hours before `starts_at` and closes one hour after `starts_at`. Flutter scanning and manual entry must call the same Laravel `CheckInService` so their behavior cannot diverge.
 
 ### 5.5 Cancellation logic
 
