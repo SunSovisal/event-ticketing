@@ -42,7 +42,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
   Future<void> _saveProfile() async {
     final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
 
     if (name.isEmpty) {
       _auth.errorMessage.value = 'enter_your_name'.tr;
@@ -54,22 +53,15 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       return;
     }
 
-    if (email.isEmpty || !GetUtils.isEmail(email)) {
-      _auth.errorMessage.value = 'enter_valid_email'.tr;
-      return;
-    }
-
     await _auth.updateProfile(
       name: name,
-      email: email,
       studentId: _studentIdController.text,
       department: _department,
       year: _year,
     );
 
     if (_auth.errorMessage.value.isEmpty &&
-        _auth.me.value?['name']?.toString().isNotEmpty == true &&
-        _auth.me.value?['email']?.toString().isNotEmpty == true) {
+        _auth.me.value?['name']?.toString().isNotEmpty == true) {
       openMainShell();
     }
   }
@@ -94,16 +86,19 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: 'email'.tr,
-                  prefixIcon: const Icon(Icons.email_outlined),
+              if (_emailController.text.trim().isNotEmpty) ...[
+                TextField(
+                  controller: _emailController,
+                  readOnly: true,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'email'.tr,
+                    helperText: 'email_from_sign_in'.tr,
+                    prefixIcon: const Icon(Icons.email_outlined),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
               CampusProfileFields(
                 studentIdController: _studentIdController,
                 department: _department,

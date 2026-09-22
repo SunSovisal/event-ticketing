@@ -9,10 +9,7 @@ import 'package:itc_events/app/services/api_client.dart';
 import 'package:itc_events/app/widgets/app_snackbar.dart';
 import 'package:itc_events/modules/auth/auth_linking.dart';
 import 'package:itc_events/modules/chat/chat_controller.dart';
-import 'package:itc_events/modules/events/event_controller.dart';
-import 'package:itc_events/modules/notifications/notification_controller.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
-import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
 class AuthController {
   AuthController({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -35,6 +32,28 @@ class AuthController {
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;
   bool get isAdmin => me.value?['is_admin'] == true;
+
+  /// Campus admin address. It is not a real inbox, so it cannot confirm a link.
+  static const skippedVerificationEmail = 'admin@itc.edu.kh';
+
+  /// Email/password accounts stay out of the app until Firebase marks the
+  /// address verified. Google and phone sign-in are already verified.
+  bool get needsEmailVerification {
+    final user = currentUser;
+    if (user == null || user.emailVerified) return false;
+    if (_skipsEmailVerification(user.email)) return false;
+
+    final providers = user.providerData.map((info) => info.providerId).toSet();
+    if (providers.contains('google.com') || providers.contains('phone')) {
+      return false;
+    }
+
+    return providers.contains('password');
+  }
+
+  bool _skipsEmailVerification(String? email) {
+    return email?.trim().toLowerCase() == skippedVerificationEmail;
+  }
 
   /// Clears [errorMessage] after the current frame so Obx listeners are not
   /// marked dirty mid-build (e.g. Register → Sign in via Get.off).
@@ -101,7 +120,12 @@ class AuthController {
       );
       await credential.user?.updateDisplayName(name.trim());
       await credential.user?.reload();
-      await credential.user?.getIdToken(true);
+      await _sendEmailVerificationIfNeeded();
+      await currentUser?.reload();
+      if (needsEmailVerification) {
+        return;
+      }
+      await currentUser?.getIdToken(true);
       await fetchMe();
     } catch (error) {
       errorMessage.value = _messageFor(
@@ -121,6 +145,11 @@ class AuthController {
         email: email.trim(),
         password: password,
       );
+      await currentUser?.reload();
+      if (needsEmailVerification) {
+        return;
+      }
+      await currentUser?.getIdToken(true);
       await fetchMe();
     } catch (error) {
       errorMessage.value = _messageFor(error, fallback: 'sign_in_failed'.tr);
@@ -241,8 +270,15 @@ class AuthController {
   }
 
   Future<void> restoreSession() async {
-    if (currentUser == null || me.value != null) return;
+    final user = currentUser;
+    if (user == null || me.value != null) return;
     try {
+      await user.reload();
+      if (needsEmailVerification) {
+        await _auth.signOut();
+        me.value = null;
+        return;
+      }
       await fetchMe();
     } catch (_) {
       // Profile stays in the signed-out layout until the user signs in again.
@@ -260,7 +296,6 @@ class AuthController {
     final data = response['data'];
     if (data is Map<String, dynamic>) {
       me.value = data;
-      _refreshHomeEvents();
       return;
     }
     throw ApiException('Unexpected /me response');
@@ -268,7 +303,7 @@ class AuthController {
 
   Future<void> updateProfile({
     required String name,
-    required String email,
+    String? email,
     String? studentId,
     String? department,
     int? year,
@@ -282,16 +317,21 @@ class AuthController {
         throw ApiException('Not signed in', statusCode: 401);
       }
 
+      final body = <String, dynamic>{
+        'name': name.trim(),
+        'student_id': _blankToNull(studentId),
+        'department': _blankToNull(department),
+        'year': year,
+      };
+      final trimmedEmail = email?.trim();
+      if (trimmedEmail != null && trimmedEmail.isNotEmpty) {
+        body['email'] = trimmedEmail;
+      }
+
       final response = await _apiClient.patchJson(
         '/me',
         idToken: token,
-        body: {
-          'name': name.trim(),
-          'email': email.trim(),
-          'student_id': _blankToNull(studentId),
-          'department': _blankToNull(department),
-          'year': year,
-        },
+        body: body,
       );
 
       final data = response['data'];
@@ -310,6 +350,22 @@ class AuthController {
     }
   }
 
+  Future<void> _sendEmailVerificationIfNeeded() async {
+    final user = currentUser;
+    if (user == null ||
+        user.emailVerified ||
+        user.email == null ||
+        _skipsEmailVerification(user.email)) {
+      return;
+    }
+
+    try {
+      await user.sendEmailVerification();
+    } catch (_) {
+      // Sign-in already succeeded. The address stays unverified until this send works.
+    }
+  }
+
   String? _blankToNull(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) {
@@ -318,25 +374,35 @@ class AuthController {
     return trimmed;
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut({bool openShell = true}) async {
     await _auth.signOut();
     await _googleSignIn.signOut();
     me.value = null;
     if (Get.isRegistered<ChatController>()) {
       Get.find<ChatController>().clearChat();
     }
-    openMainShell();
+    if (openShell) {
+      openMainShell();
+    }
   }
 
-  void _refreshHomeEvents() {
-    if (Get.isRegistered<EventController>()) {
-      Get.find<EventController>().fetchEvents();
-    }
-    if (Get.isRegistered<TicketController>()) {
-      Get.find<TicketController>().fetchTickets();
-    }
-    if (Get.isRegistered<NotificationController>()) {
-      Get.find<NotificationController>().fetchNotifications();
+  Future<void> resendVerificationEmail() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      await currentUser?.reload();
+      final user = currentUser;
+      if (user == null || user.emailVerified) {
+        return;
+      }
+      await user.sendEmailVerification();
+    } catch (error) {
+      errorMessage.value = _messageFor(
+        error,
+        fallback: 'could_not_send_verification'.tr,
+      );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -408,6 +474,8 @@ class AuthController {
         password: password,
       );
       await currentUser!.linkWithCredential(credential);
+      await currentUser!.reload();
+      await _sendEmailVerificationIfNeeded();
       await _completeProviderLink();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _messageFor(e, fallback: 'could_not_link_email'.tr);

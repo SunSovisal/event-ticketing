@@ -2,15 +2,25 @@
 
 namespace App\Models;
 
+use App\Exceptions\ApiException;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Kreait\Firebase\Contract\Auth as FirebaseAuth;
+use Kreait\Firebase\Exception\Auth\UserNotFound;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class User extends Model
 {
     use HasFactory, HasUuids;
+
+    /**
+     * Campus admin login. This inbox is not real, so Firebase cannot verify it.
+     */
+    public const TRUSTED_UNVERIFIED_EMAIL = 'admin@itc.edu.kh';
 
     protected $fillable = [
         'firebase_uid',
@@ -95,36 +105,150 @@ class User extends Model
         ];
     }
 
+    /**
+     * Seeded accounts use this prefix until a verified Firebase login claims them.
+     */
+    public function hasPlaceholderFirebaseUid(): bool
+    {
+        return str_starts_with($this->firebase_uid, 'pending-');
+    }
+
+    public static function sameEmail(?string $left, ?string $right): bool
+    {
+        $left = self::canonicalEmail($left);
+        $right = self::canonicalEmail($right);
+
+        return $left !== null && $left === $right;
+    }
+
     public static function syncFromFirebase(
         string $firebaseUid,
         ?string $email,
         ?string $name,
         ?string $phone,
+        bool $emailVerified = false,
     ): self {
-        $user = static::query()->where('firebase_uid', $firebaseUid)->first();
-
-        if (! $user && $email) {
-            $user = static::query()->where('email', $email)->first();
+        $email = self::canonicalEmail($email);
+        if ($email === self::TRUSTED_UNVERIFIED_EMAIL) {
+            $emailVerified = true;
         }
 
-        if ($user) {
-            $user->update([
+        return DB::transaction(function () use ($firebaseUid, $email, $name, $phone, $emailVerified) {
+            $user = static::query()->where('firebase_uid', $firebaseUid)->lockForUpdate()->first();
+
+            if ($user) {
+                $user->update(self::profileUpdates($user, $firebaseUid, $email, $emailVerified, $name, $phone));
+
+                return $user;
+            }
+
+            if ($email !== null && ! $emailVerified) {
+                $existing = static::query()->whereRaw('lower(email) = ?', [$email])->lockForUpdate()->first();
+                if ($existing !== null) {
+                    throw new ApiException(
+                        'EMAIL_UNVERIFIED',
+                        'Verify this email before signing in.',
+                        403,
+                    );
+                }
+            }
+
+            if ($email !== null && $emailVerified) {
+                $existing = static::query()->whereRaw('lower(email) = ?', [$email])->lockForUpdate()->first();
+                if ($existing !== null) {
+                    $canClaim = $existing->hasPlaceholderFirebaseUid()
+                        || ! self::firebaseUidExists($existing->firebase_uid);
+
+                    if (! $canClaim) {
+                        throw new ApiException(
+                            'EMAIL_TAKEN',
+                            'This email is already used by another account.',
+                            409,
+                        );
+                    }
+
+                    $existing->update(self::profileUpdates(
+                        $existing,
+                        $firebaseUid,
+                        $email,
+                        true,
+                        $name,
+                        $phone,
+                        true,
+                    ));
+
+                    return $existing;
+                }
+            }
+
+            return static::query()->create([
                 'firebase_uid' => $firebaseUid,
-                'email' => $email ?? $user->email,
-                'name' => $user->name ?? $name,
-                'phone_number' => $phone ?? $user->phone_number,
+                'email' => $emailVerified ? $email : null,
+                'name' => $name,
+                'phone_number' => $phone,
+                'is_admin' => false,
+                'is_active' => true,
             ]);
+        });
+    }
 
-            return $user;
+    /**
+     * @return array{firebase_uid?: string, email?: ?string, name: ?string, phone_number: ?string}
+     */
+    private static function profileUpdates(
+        self $user,
+        string $firebaseUid,
+        ?string $email,
+        bool $emailVerified,
+        ?string $name,
+        ?string $phone,
+        bool $claimUid = false,
+    ): array {
+        $updates = [
+            'name' => $user->name ?? $name,
+            'phone_number' => $phone ?? $user->phone_number,
+        ];
+
+        if ($claimUid || $user->hasPlaceholderFirebaseUid()) {
+            $updates['firebase_uid'] = $firebaseUid;
         }
 
-        return static::query()->create([
-            'firebase_uid' => $firebaseUid,
-            'email' => $email,
-            'name' => $name,
-            'phone_number' => $phone,
-            'is_admin' => false,
-            'is_active' => true,
-        ]);
+        if ($emailVerified && $email !== null && self::emailAvailable($email, $user)) {
+            $updates['email'] = $email;
+        }
+
+        return $updates;
+    }
+
+    private static function canonicalEmail(?string $email): ?string
+    {
+        if (! is_string($email)) {
+            return null;
+        }
+
+        $email = Str::lower(trim($email));
+
+        return $email === '' ? null : $email;
+    }
+
+    private static function firebaseUidExists(string $uid): bool
+    {
+        try {
+            app(FirebaseAuth::class)->getUser($uid);
+
+            return true;
+        } catch (UserNotFound) {
+            return false;
+        } catch (\Throwable) {
+            return true;
+        }
+    }
+
+    private static function emailAvailable(string $email, self $except): bool
+    {
+        return ! static::query()
+            ->whereRaw('lower(email) = ?', [$email])
+            ->whereKeyNot($except->id)
+            ->exists();
     }
 }

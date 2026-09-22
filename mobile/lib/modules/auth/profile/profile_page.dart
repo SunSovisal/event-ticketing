@@ -284,19 +284,14 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
 
-    if (name.isEmpty || email.isEmpty) {
-      widget.auth.errorMessage.value = 'name_email_required'.tr;
-      return;
-    }
-
-    if (!GetUtils.isEmail(email)) {
-      widget.auth.errorMessage.value = 'enter_valid_email'.tr;
+    if (name.isEmpty) {
+      widget.auth.errorMessage.value = 'enter_your_name'.tr;
       return;
     }
 
     await widget.auth.updateProfile(
       name: name,
-      email: email,
+      email: email.isEmpty ? null : email,
       studentId: _studentIdController.text,
       department: _department,
       year: _year,
@@ -326,9 +321,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
+                readOnly: true,
                 keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(labelText: 'email'.tr),
+                decoration: InputDecoration(
+                  labelText: 'email'.tr,
+                  helperText: 'email_from_sign_in'.tr,
+                ),
               ),
               const SizedBox(height: 16),
               CampusProfileFields(

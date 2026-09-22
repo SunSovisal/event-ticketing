@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in/register_page.dart';
+import 'package:itc_events/modules/auth/sign_in/verify_email_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 
 /// Presents sign-in as a dismissible sheet so guests can return to event detail.
@@ -60,10 +61,14 @@ class _SignInSheetState extends State<SignInSheet> {
   }
 
   Future<void> _handleEmailSignIn() async {
-    await _auth.signInWithEmail(
-      _emailController.text,
-      _passwordController.text,
-    );
+    final email = _emailController.text.trim();
+    await _auth.signInWithEmail(email, _passwordController.text);
+    if (!mounted || _auth.errorMessage.value.isNotEmpty) return;
+    if (_auth.needsEmailVerification) {
+      Navigator.pop(context, false);
+      Get.to(() => VerifyEmailPage(email: email));
+      return;
+    }
     await _completeSignIn();
   }
 

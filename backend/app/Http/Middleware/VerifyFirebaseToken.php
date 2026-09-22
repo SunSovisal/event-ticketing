@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\ApiException;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -52,11 +53,15 @@ class VerifyFirebaseToken
                 );
             }
 
+            $email = $this->optionalClaim($claims->get('email'));
+            $emailVerified = $claims->get('email_verified') === true;
+
             $user = User::syncFromFirebase(
                 $firebaseUid,
-                $this->optionalClaim($claims->get('email')),
+                $email,
                 $this->optionalClaim($claims->get('name')),
                 $this->optionalClaim($claims->get('phone_number')),
+                $emailVerified,
             );
 
             if (! $user->is_active) {
@@ -68,6 +73,14 @@ class VerifyFirebaseToken
             }
 
             $request->attributes->set('auth_user', $user);
+            $request->attributes->set('auth_email', $email);
+            $request->attributes->set('auth_email_verified', $emailVerified);
+        } catch (ApiException $exception) {
+            return $this->errorResponse(
+                $exception->errorCode,
+                $exception->getMessage(),
+                $exception->httpStatus,
+            );
         } catch (FailedToVerifyToken $exception) {
             report($exception);
 

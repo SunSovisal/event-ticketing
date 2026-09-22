@@ -4,6 +4,7 @@ import 'package:itc_events/modules/auth/auth_controller.dart';
 import 'package:itc_events/modules/auth/sign_in/forgot_password_page.dart';
 import 'package:itc_events/modules/auth/sign_in/phone_sign_in_page.dart';
 import 'package:itc_events/modules/auth/sign_in/register_page.dart';
+import 'package:itc_events/modules/auth/sign_in/verify_email_page.dart';
 import 'package:itc_events/modules/auth/widgets/auth_page_layout.dart';
 import 'package:itc_events/modules/shell/main_shell.dart';
 
@@ -34,10 +35,13 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   Future<void> _handleEmailSignIn() async {
-    await _auth.signInWithEmail(
-      _emailController.text,
-      _passwordController.text,
-    );
+    final email = _emailController.text.trim();
+    await _auth.signInWithEmail(email, _passwordController.text);
+    if (!mounted || _auth.errorMessage.value.isNotEmpty) return;
+    if (_auth.needsEmailVerification) {
+      Get.off(() => VerifyEmailPage(email: email));
+      return;
+    }
     if (_auth.isSignedIn && _auth.me.value != null) {
       openMainShell();
     }

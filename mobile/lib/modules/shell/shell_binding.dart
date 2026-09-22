@@ -19,7 +19,7 @@ class ShellBinding extends Bindings {
     }
     if (!Get.isRegistered<TicketController>()) {
       Get.put(
-        TicketController(apiClient: apiClient, fetchOnStart: true),
+        TicketController(apiClient: apiClient, fetchOnStart: false),
         permanent: true,
       );
     }

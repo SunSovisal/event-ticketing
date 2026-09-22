@@ -10,6 +10,7 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        // pending-* is claimed when this admin address signs in.
         $user = User::firstOrCreate(
             ['email' => 'admin@itc.edu.kh'],
             [

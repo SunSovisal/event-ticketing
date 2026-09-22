@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class MeController extends Controller
 {
@@ -37,7 +38,33 @@ class MeController extends Controller
             $userUpdates['name'] = trim($validated['name']);
         }
         if (array_key_exists('email', $validated)) {
-            $userUpdates['email'] = trim($validated['email']);
+            $incoming = trim($validated['email']);
+            if (! User::sameEmail($incoming, $user->email)) {
+                $tokenEmail = $request->attributes->get('auth_email');
+                $verified = $request->attributes->get('auth_email_verified') === true;
+
+                if (! $verified || ! is_string($tokenEmail) || ! User::sameEmail($incoming, $tokenEmail)) {
+                    return $this->jsonError(
+                        'EMAIL_UNVERIFIED',
+                        'Email must match the verified email on your sign-in account.',
+                        422,
+                    );
+                }
+
+                $taken = User::query()
+                    ->whereRaw('lower(email) = ?', [Str::lower($incoming)])
+                    ->whereKeyNot($user->id)
+                    ->exists();
+                if ($taken) {
+                    return $this->jsonError(
+                        'EMAIL_TAKEN',
+                        'This email is already used by another account.',
+                        409,
+                    );
+                }
+
+                $userUpdates['email'] = Str::lower($incoming);
+            }
         }
         if ($userUpdates !== []) {
             $user->update($userUpdates);

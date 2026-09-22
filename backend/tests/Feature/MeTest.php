@@ -167,6 +167,85 @@ class MeTest extends TestCase
         ]);
     }
 
+    public function test_patch_me_rejects_an_email_the_token_does_not_prove(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'dara@student.itc.edu.kh',
+        ]);
+
+        $this->actingAsFirebaseUser($user)
+            ->patchJson('/api/v1/me', [
+                'email' => 'admin@itc.edu.kh',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'EMAIL_UNVERIFIED');
+
+        $this->assertSame('dara@student.itc.edu.kh', $user->fresh()->email);
+    }
+
+    public function test_patch_me_accepts_the_verified_token_email(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'old@student.itc.edu.kh',
+        ]);
+
+        $claims = new DataSet([
+            'sub' => $user->firebase_uid,
+            'email' => 'new@student.itc.edu.kh',
+            'email_verified' => true,
+            'name' => $user->name,
+        ], '{}');
+
+        $verifiedToken = Mockery::mock(UnencryptedToken::class);
+        $verifiedToken->shouldReceive('claims')->andReturn($claims);
+
+        $this->mock(FirebaseAuth::class, function ($mock) use ($verifiedToken) {
+            $mock->shouldReceive('verifyIdToken')
+                ->with('valid-token')
+                ->andReturn($verifiedToken);
+        });
+
+        $this->withHeader('Authorization', 'Bearer valid-token')
+            ->patchJson('/api/v1/me', [
+                'email' => 'new@student.itc.edu.kh',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.email', 'new@student.itc.edu.kh');
+    }
+
+    public function test_admin_address_signs_in_without_email_verification(): void
+    {
+        $admin = User::factory()->admin()->create([
+            'firebase_uid' => 'pending-admin',
+            'email' => 'admin@itc.edu.kh',
+            'name' => 'ITC Admin',
+        ]);
+
+        $claims = new DataSet([
+            'sub' => 'stranger-uid',
+            'email' => 'admin@itc.edu.kh',
+            'email_verified' => false,
+            'name' => 'ITC Admin',
+        ], '{}');
+
+        $verifiedToken = Mockery::mock(UnencryptedToken::class);
+        $verifiedToken->shouldReceive('claims')->andReturn($claims);
+
+        $this->mock(FirebaseAuth::class, function ($mock) use ($verifiedToken) {
+            $mock->shouldReceive('verifyIdToken')
+                ->with('valid-token')
+                ->andReturn($verifiedToken);
+        });
+
+        $this->withHeader('Authorization', 'Bearer valid-token')
+            ->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.email', 'admin@itc.edu.kh')
+            ->assertJsonPath('data.is_admin', true);
+
+        $this->assertSame('stranger-uid', $admin->fresh()->firebase_uid);
+    }
+
     public function test_patch_me_rejects_invalid_year(): void
     {
         $user = User::factory()->create();

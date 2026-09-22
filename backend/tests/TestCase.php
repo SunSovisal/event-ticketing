@@ -42,6 +42,7 @@ abstract class TestCase extends BaseTestCase
         $claims = new DataSet([
             'sub' => $user->firebase_uid,
             'email' => $user->email,
+            'email_verified' => true,
             'name' => $user->name,
         ], '{}');
 
