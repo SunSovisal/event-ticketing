@@ -14,12 +14,10 @@ import 'package:itc_events/modules/events/home_page.dart';
 import 'package:itc_events/modules/notifications/notification_controller.dart';
 import 'package:itc_events/modules/shell/shell_binding.dart';
 import 'package:itc_events/modules/tickets/my_tickets_page.dart';
+import 'package:itc_events/modules/tickets/ticket_controller.dart';
 
 void openMainShell({int index = 0}) {
-  Get.offAll(
-    () => MainShell(initialIndex: index),
-    binding: ShellBinding(),
-  );
+  Get.offAll(() => MainShell(initialIndex: index), binding: ShellBinding());
 }
 
 class MainShell extends StatefulWidget {
@@ -42,6 +40,7 @@ class _MainShellState extends State<MainShell> {
 
     final auth = Get.find<AuthController>();
     Get.find<EventController>().fetchEvents();
+    Get.find<TicketController>().fetchTickets();
     Get.find<NotificationController>().fetchNotifications();
     if (auth.isSignedIn && auth.me.value == null) {
       auth.restoreSession();
