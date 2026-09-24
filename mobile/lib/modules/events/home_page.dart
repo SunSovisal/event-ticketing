@@ -406,8 +406,8 @@ class _FeaturedCarousel extends StatefulWidget {
 }
 
 class _FeaturedCarouselState extends State<_FeaturedCarousel> {
-  static const _autoAdvance = Duration(seconds: 5);
-  static const _slide = Duration(milliseconds: 450);
+  static const _autoAdvance = Duration(seconds: 3);
+  static const _slide = Duration(milliseconds: 120);
 
   /// The page list is the events repeated many times to fake an endless strip.
   /// [_onPageChanged] recenters long before either end is reachable.
