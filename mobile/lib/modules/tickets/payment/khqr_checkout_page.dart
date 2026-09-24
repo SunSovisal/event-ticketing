@@ -13,7 +13,6 @@ import 'package:itc_events/modules/tickets/payment/khqr_card.dart';
 import 'package:itc_events/modules/tickets/payment/models/payment_method.dart';
 import 'package:itc_events/modules/tickets/payment/payment_success_page.dart';
 import 'package:itc_events/modules/tickets/ticket_controller.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 class KhqrCheckoutPage extends StatefulWidget {
   const KhqrCheckoutPage({
@@ -326,25 +325,19 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
             },
           ),
         ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: showExpiredActions
-                ? FilledButton(
-                    onPressed: _checking ? null : _generateNewQr,
-                    child: _checking
-                        ? _ButtonSpinner(label: 'checking_payment'.tr)
-                        : Text('generate_new_qr'.tr),
-                  )
-                : FilledButton(
-                    onPressed: _checking ? null : () => _confirmPaid(),
-                    child: _checking
-                        ? _ButtonSpinner(label: 'checking_payment'.tr)
-                        : Text('i_have_paid'.tr),
-                  ),
+        if (showExpiredActions)
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: FilledButton(
+                onPressed: _checking ? null : _generateNewQr,
+                child: _checking
+                    ? _ButtonSpinner(label: 'checking_payment'.tr)
+                    : Text('generate_new_qr'.tr),
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -352,7 +345,10 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
   Widget _buildAbaPayBody(BuildContext context) {
     final payment = _payment;
     final showExpiredActions = _qrExpired || _error != null;
-    final qr = payment?.qrCode ?? '';
+    final merchant = payment?.merchantName ?? 'GoITC';
+    final currency = (payment?.currency ?? widget.event.priceCurrency)
+        .toUpperCase();
+    final amount = payment?.amount ?? widget.event.priceAmount;
 
     return Column(
       children: [
@@ -376,38 +372,13 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
                         ),
                         const SizedBox(height: 16),
                       ],
-                      Image.asset('assets/payments/aba_pay.png', width: 140),
-                      const SizedBox(height: 20),
-                      if (qr.isNotEmpty)
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: QrImageView(
-                              key: const Key('aba_payway_qr'),
-                              data: qr,
-                              size: 240,
-                              backgroundColor: Colors.white,
-                              eyeStyle: const QrEyeStyle(
-                                eyeShape: QrEyeShape.square,
-                                color: Colors.black,
-                              ),
-                              dataModuleStyle: const QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.square,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
+                      if (payment != null)
+                        KhqrCard(
+                          receiverName: merchant,
+                          amount: amount,
+                          currency: currency,
+                          qr: payment.qrCode ?? '',
+                          expired: _qrExpired,
                         ),
                       const SizedBox(height: 16),
                       Text(
@@ -448,38 +419,26 @@ class _KhqrCheckoutPageState extends State<KhqrCheckoutPage>
             },
           ),
         ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: showExpiredActions
-                ? FilledButton(
-                    onPressed: _checking ? null : _generateNewQr,
-                    child: _checking
-                        ? _ButtonSpinner(label: 'checking_payment'.tr)
-                        : Text('generate_new_qr'.tr),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_hasAbaDeeplink)
-                        FilledButton(
-                          onPressed: _checking || _openingAba ? null : _openAba,
-                          child: _openingAba
-                              ? _ButtonSpinner(label: 'opening_aba'.tr)
-                              : Text('pay_with_aba_mobile'.tr),
-                        ),
-                      if (_hasAbaDeeplink) const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: _checking ? null : () => _confirmPaid(),
-                        child: Text(
-                          _checking ? 'checking_payment'.tr : 'i_have_paid'.tr,
-                        ),
-                      ),
-                    ],
-                  ),
+        if (showExpiredActions || _hasAbaDeeplink)
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: showExpiredActions
+                  ? FilledButton(
+                      onPressed: _checking ? null : _generateNewQr,
+                      child: _checking
+                          ? _ButtonSpinner(label: 'checking_payment'.tr)
+                          : Text('generate_new_qr'.tr),
+                    )
+                  : FilledButton(
+                      onPressed: _checking || _openingAba ? null : _openAba,
+                      child: _openingAba
+                          ? _ButtonSpinner(label: 'opening_aba'.tr)
+                          : Text('pay_with_aba_mobile'.tr),
+                    ),
+            ),
           ),
-        ),
       ],
     );
   }

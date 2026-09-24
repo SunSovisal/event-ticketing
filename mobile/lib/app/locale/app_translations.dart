@@ -503,7 +503,6 @@ Map<String, String> _en() => {
       'Could not open Simulator UAT. Offload ABA Mobile if it is installed, then try again. Or scan this QR from Simulator UAT.',
   'payway_domain_blocked':
       'PayWay blocked this server. Ask ABA to whitelist your public IP for sandbox.',
-  'i_have_paid': 'I have paid',
   'checking_payment': 'Checking payment…',
   'payment_not_confirmed_yet':
       'Payment not confirmed yet. Wait a few seconds, then tap again.',
@@ -1068,7 +1067,6 @@ Map<String, String> _kh() => {
       'មិនអាចបើក Simulator UAT បានទេ។ សូមលុប ABA Mobile បើមាន រួចព្យាយាមម្ដងទៀត។ ឬស្កេន QR នេះពី Simulator UAT។',
   'payway_domain_blocked':
       'PayWay បានទប់ស្កាត់ម៉ាស៊ីនមេនេះ។ សូមឲ្យ ABA ដាក់ IP សាធារណៈរបស់អ្នកក្នុង whitelist។',
-  'i_have_paid': 'ខ្ញុំបានទូទាត់ហើយ',
   'checking_payment': 'កំពុងពិនិត្យការទូទាត់…',
   'payment_not_confirmed_yet':
       'មិនទាន់រកឃើញការទូទាត់ទេ។ រង់ចាំបន្តិច រួចចុចម្ដងទៀត។',
